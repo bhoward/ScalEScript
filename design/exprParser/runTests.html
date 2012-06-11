@@ -1,0 +1,14 @@
+<html>
+<head>
+    <title>Test Suite Runner</title>
+    <script type="text/javascript" src="jsunity-0.6.js"></script>
+    <script type="text/javascript" src="parser.js"></script>
+    <script type="text/javascript" src="testSuite.js"></script>
+</head>
+<body>
+    <script type="text/javascript">
+    jsUnity.log = function (s) { document.write("<div>" + s + "</div>"); }
+    jsUnity.run(testSuite);
+    </script>
+</body>
+</html>
