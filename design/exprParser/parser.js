@@ -1,3 +1,7 @@
+// By-Hand Translation of Scala Expression Parser/Evaluator
+// Brian Howard, Summer 2012
+
+
 var Option = function Option(x) {
 	if (this instanceof Option) {
 		// constructor call with new
@@ -177,7 +181,7 @@ Function.prototype.orelse = function(f) {
     }
 }
 
-var eval = function eval(e) {
+Expression.eval = function eval(e) {
     return (function(e) {
         return Constant.unapply(e).map(function(v) {
         	return v;
