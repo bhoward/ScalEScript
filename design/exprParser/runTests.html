@@ -1,0 +1,30 @@
+<html>
+<head>
+    <title>Test Suite Runner</title>
+    <script type="text/javascript" src="jsunity-0.6.js"></script>
+    <script type="text/javascript" src="parser.js"></script>
+    <script type="text/javascript" src="testSuite.js"></script>
+    <style type="text/css">
+    .normal {
+        color: blue;
+    }
+    .pass {
+        color: green;
+    }
+    .fail {
+        color:red;
+    }
+    </style>
+</head>
+<body>
+    <script type="text/javascript">
+    jsUnity.log = function (s) {
+        var css="normal";
+        if (/^\[PASSED\]/.test(s)) css = "pass";
+        if (/^\[FAILED\]/.test(s)) css = "fail";
+        document.write("<div class='" + css + "'>" + s + "</div>");
+    }
+    jsUnity.run(testSuite);
+    </script>
+</body>
+</html>
