@@ -26,42 +26,28 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	)
 	
 	lazy val iE7: P[Expr] =
-	( iE7L ~ op7 ~ iE8 ^^
-		{case left ~ op ~ right => println(op+" matched"); BinOpExpr(op, left, right)}
-	| iE8 ~ op7 ~ ":" ~ iE7R ^^
-		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
-	| iE8
+	( iE8 ~ iE7Rest ^^
+	    {left ~ rest => }
 	)
-	lazy val iE7L: P[Expr] =
-	( iE7L ~ op7 ~ iE8 ^^
-		{case left ~ op  ~ right => BinOpExpr(op, left, right)}
-	| iE8
+	lazy val iE7Rest: P[Expr] = 
+	( op7R ~ iE8 ~ iE7R ^^
+	    {op ~ left ~ right => }
+	| op7 iE8 ~ iE7L ^^
+		{op ~ left ~ right => }
+	|   
 	)
 	lazy val iE7R: P[Expr] =
-	( iE8 ~ op7 ~ ":" ~ iE7R ^^
-		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
-	| iE8
+	( op7R ~ iE8 ~ iE7R ^^
+	    {op ~ left ~ right => }
+	|   
+	)
+	lazy val ie7L: P[Expr] =
+	( op7 ~ iE8 ~ iE7L ^^
+	    {op ~ left ~ right => }
+	|
 	)
 	
 	lazy val iE8: P[Expr] =
-	( iE8L ~ op8 ~ iE9 ^^
-		{case left ~ op ~ right => println(op+" matched"); BinOpExpr(op, left, right)}
-	| iE9 ~ op8 ~ ":" ~ iE8R ^^
-		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
-	| iE9
-	)
-	lazy val iE8L: P[Expr] =
-	( iE8L ~ op8 ~ iE9 ^^
-		{case left ~ op ~ right => BinOpExpr(op, left, right)}
-	| iE9
-	)
-	lazy val iE8R: P[Expr] =
-	( iE9 ~ op8 ~ ":" ~ iE8R ^^
-		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
-	| iE9
-	)
-	
-	lazy val iE9: P[Expr] = 
 	( prefixExpr
 	)
 	
@@ -79,7 +65,7 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	)
 	
   lazy val op7: P[String] = "+" | "-"
-  //lazy val op7R: P[String] = ""
+  lazy val op7R: P[String] = "+:" | "-:"
 
   lazy val op8: P[String] = "*" | "/" | "%"
 }
