@@ -1,8 +1,36 @@
 // By-Hand Translation of Scala Expression Parser/Evaluator
 // Brian Howard, Summer 2012
 
-// Original Scala source (not including the Option/Some/None part):
+// Original Scala source:
 /*
+// Option/Some/None come from the standard library, but they could be implemented like this:
+sealed trait Option[+T] {
+  def isEmpty: Boolean
+  def get: T
+  def map[U](f: T => U): Option[U]
+}
+
+case class Some[+T](value: T) extends Option[T] {
+  def isEmpty: Boolean = false
+  def get: T = value
+  def map[U](f: T => U): Option[U] = Some(f(value))
+}
+
+case object None extends Option[Nothing] {
+  def isEmpty: Boolean = true
+  def get: Nothing = error("get from None")
+  def map[U](f: Nothing => U): Option[U] = None
+}
+
+object Option {
+  def apply[T](x: T): Option[T] =
+    if (x == null) {
+      None
+    } else {
+      Some(x)
+    }
+}
+
 sealed trait Expression {
 }
 
