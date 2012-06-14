@@ -49,9 +49,91 @@ object Expression {
     case Quotient(left, right) => eval(left) / eval(right)
   }
 }
+
+trait Parsers {
+  sealed trait Result[+A]
+  case class Success[+A](value: A, rem: String) extends Result[A]
+  case class Failure(msg: String) extends Result[Nothing]
+  
+  case class ~[+A, +B](a: A, b: B)
+  
+  trait Parser[+A] extends (String => Result[A]) { outer =>
+    def ~[B](that: => Parser[B]): Parser[A ~ B] = new SequenceParser(this, that)
+    
+    def |[B >: A](that: => Parser[B]): Parser[B] = new DisParser(this, that)
+    
+    def ~>[B](that: => Parser[B]): Parser[B] =
+      this ~ that ^^ { case a ~ b => b }
+    
+    def <~[B](that: => Parser[B]): Parser[A] =
+      this ~ that ^^ { case a ~ b => a }
+    
+    def * : Parser[List[A]] =
+      ( this ~ * ^^ { case a ~ b => a :: b }
+      | success(Nil)
+      )
+    
+    def ^^[B](f: A => B): Parser[B] = new Parser[B] {
+      def apply(s: String): Result[B] = outer(s) match {
+        case Success(v, rem) => Success(f(v), rem)
+        case f: Failure => f
+      }
+    }
+  }
+  
+  class KeywordParser(str: String) extends Parser[String] {
+    def apply(s: String): Result[String] = {
+      if (s.startsWith(str)) {
+        Success(str, s.substring(str.length))
+      } else {
+        Failure("Expected '%s' got '%s'".format(str, s.substring(0, str.length)))
+      }
+    }
+  }
+  
+  class SequenceParser[+A, +B](l: => Parser[A], r: => Parser[B]) extends Parser[A ~ B] {
+    lazy val left = l
+    lazy val right = r
+    
+    def apply(s: String): Result[A ~ B] = left(s) match {
+      case Success(a, rem) => right(rem) match {
+        case Success(b, rem) => Success(new ~(a, b), rem)
+        case f: Failure => f
+      }
+      case f: Failure => f
+    }
+  }
+  
+  class DisParser[+A](l: => Parser[A], r: => Parser[A]) extends Parser[A] {
+    lazy val left = l
+    lazy val right = r
+    
+    def apply(s: String): Result[A] = left(s) match {
+      case res: Success[A] => res
+      case _: Failure => right(s)
+    }
+  }
+  
+  def success[A](v: A) = new Parser[A] {
+    def apply(s: String): Result[A] = Success(v, s)
+  }
+}
+
+trait RegexParsers extends Parsers {
+  implicit def keyword(str: String): Parser[String] = new KeywordParser(str)
+  
+  implicit def regex(r: scala.util.matching.Regex): Parser[String] = new Parser[String] {
+    def apply(s: String): Result[String] = {
+      r.findPrefixOf(s) match {
+        case Some(str) => Success(str, s.substring(str.length))
+        case None => Failure("Expected '%s' got '%s'".format(r, s))
+      }
+    }
+  }
+}
 */
 
-var Option = function Option(x) {
+var Option = function(x) {
 	if (this instanceof Option) {
 		// constructor call with new
 		// do nothing
@@ -65,7 +147,7 @@ var Option = function Option(x) {
 	}
 }
 
-var Some = function Some(value) {
+var Some = function(value) {
     if (this instanceof Some) {
 	    // Option.apply(this, []); -- call the super class ctor (doesn't apply for a trait?)
         this.value = value;
@@ -113,7 +195,7 @@ None.unapply = function(x) {
 var Expression = function() {
 }
 
-var Constant = function Constant(value) {
+var Constant = function(value) {
 	if (this instanceof Constant) {
 	    // Use read-only properties for vals?
     	this.value = value;
@@ -230,26 +312,117 @@ Function.prototype.orelse = function(f) {
     }
 }
 
-Expression.eval = function eval(e) {
+Expression.eval = function(e) {
     return (function(e) {
         return Constant.unapply(e).map(function(v) {
         	return v;
         });
     }).orelse(function(e) {
         return Sum.unapply(e).map(function(a) {
-        	return eval(a[0]) + eval(a[1]);
+        	return Expression.eval(a[0]) + Expression.eval(a[1]);
         });
     }).orelse(function(e) {
         return Difference.unapply(e).map(function(a) {
-        	return eval(a[0]) - eval(a[1]);
+        	return Expression.eval(a[0]) - Expression.eval(a[1]);
         });
     }).orelse(function(e) {
         return Product.unapply(e).map(function(a) {
-        	return eval(a[0]) * eval(a[1]);
+        	return Expression.eval(a[0]) * Expression.eval(a[1]);
         });
     }).orelse(function(e) {
         return Quotient.unapply(e).map(function(a) {
-        	return eval(a[0]) / eval(a[1]);
+        	return Expression.eval(a[0]) / Expression.eval(a[1]);
         });
     })(e).get()
+}
+
+// call this as Parsers.apply(x) to mixin its methods to x
+var Parsers = function() {
+    var parsers = this;
+    
+    this.Result = function() {
+    }
+    
+    this.Success = function(value, rem) {
+        if (this instanceof Success) {
+            this.value = value;
+            this.rem = rem;
+        } else {
+            return new Success(value, rem);
+        }
+    }
+    Success.prototype = new Result();
+    Success.prototype.constructor = Success;
+    Success.prototype.toString = function() {
+        return "Success(" + this.value + ", " + this.rem + ")";
+    }
+    Success.unapply = function(x) {
+        if (x instanceof Success) {
+            return Some([x.value, x.rem]);
+        } else {
+            return None;
+        }
+    }
+    
+    this.Failure = function(msg) {
+        if (this instanceof Failure) {
+            this.msg = msg;
+        } else {
+            return new Failure(msg);
+        }
+    }
+    Failure.prototype = new Result();
+    Failure.prototype.constructor = Failure;
+    Failure.prototype.toString = function() {
+        return "Failure(" + this.msg + ")";
+    }
+    Failure.unapply = function(x) {
+        if (x instanceof Failure) {
+            return Some(msg);
+        } else {
+            return None;
+        }
+    }
+    
+    this["~"] = function(a, b) {
+        if (this instanceof parsers["~"]) {
+            this.a = a;
+            this.b = b;
+        } else {
+            return new parsers["~"](a, b);
+        }
+    }
+    this["~"].prototype.toString = function() {
+        return this.a + "~" + this.b;
+    }
+    this["~"].unapply = function(x) {
+        if (x instanceof parsers["~"]) {
+            return Some([x.a, x.b]);
+        } else {
+            return None;
+        }
+    }
+    
+    this.Parser = function() {
+        var outer = this;
+        
+        this["~"] = function(that) {
+            return new SequenceParser(function() {return this}, that); // pass this as a thunk for cbn
+        }
+        
+        // TODO
+    }
+    
+    this.SequenceParser = function(l, r) {
+        var left = l();
+        var right = r();
+        
+        this.apply = function(s) {
+            // TODO
+        }
+    }
+    SequenceParser.prototype = new Parser();
+    SequenceParser.prototype.constructor = SequenceParser;
+    
+    // TODO
 }
