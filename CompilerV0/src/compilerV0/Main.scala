@@ -3,6 +3,7 @@ package compilerV0
 object Main {
   def main(args: Array[String]) {
     println(Parser("1"))
+    println(Parser("1   "))
     println(Parser("1 + 5"))
     println(Parser("2 * 6"))
     /*

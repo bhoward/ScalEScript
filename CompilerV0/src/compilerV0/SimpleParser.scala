@@ -23,7 +23,7 @@ trait SimpleParser[AST] extends RegexParsers with PackratParsers {
 }
 
 trait JavaComments { this: RegexParsers =>
-  override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))+""".r
+  override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))*""".r
 }
 
 trait CommonLiterals { this: RegexParsers =>

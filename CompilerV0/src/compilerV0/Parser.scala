@@ -4,7 +4,7 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	def top = expr
   
 	lazy val expr: P[Expr] =
-	( expr1
+	( simpleExpr
 	)
 	
 	lazy val expr1: P[Expr] = 
@@ -26,39 +26,39 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	)
 	
 	lazy val iE7: P[Expr] =
-	( iE8
-	| iE7L ~ op7 ~ iE8 ^^
+	( iE7L ~ op7 ~ iE8 ^^
 		{case left ~ op ~ right => println(op+" matched"); BinOpExpr(op, left, right)}
 	| iE8 ~ op7 ~ ":" ~ iE7R ^^
 		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
+	| iE8
 	)
 	lazy val iE7L: P[Expr] =
-	( iE8 
-	| iE7L ~ op7 ~ iE8 ^^
+	( iE7L ~ op7 ~ iE8 ^^
 		{case left ~ op  ~ right => BinOpExpr(op, left, right)}
+	| iE8
 	)
 	lazy val iE7R: P[Expr] =
-	( iE8
-	| iE8 ~ op7 ~ ":" ~ iE7R ^^
+	( iE8 ~ op7 ~ ":" ~ iE7R ^^
 		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
+	| iE8
 	)
 	
 	lazy val iE8: P[Expr] =
-	( iE9
-	| iE8L ~ op8 ~ iE9 ^^
+	( iE8L ~ op8 ~ iE9 ^^
 		{case left ~ op ~ right => println(op+" matched"); BinOpExpr(op, left, right)}
 	| iE9 ~ op8 ~ ":" ~ iE8R ^^
 		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
+	| iE9
 	)
 	lazy val iE8L: P[Expr] =
-	( iE9 
-	| iE8L ~ op8 ~ iE9 ^^
+	( iE8L ~ op8 ~ iE9 ^^
 		{case left ~ op ~ right => BinOpExpr(op, left, right)}
+	| iE9
 	)
 	lazy val iE8R: P[Expr] =
-	( iE9
-	| iE9 ~ op8 ~ ":" ~ iE8R ^^
+	( iE9 ~ op8 ~ ":" ~ iE8R ^^
 		{case left ~ op ~ _ ~ right => BinOpExpr(op, right, left)}
+	| iE9
 	)
 	
 	lazy val iE9: P[Expr] = 
@@ -75,10 +75,11 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	( floatingPointNumber ^^
 		{case numLit => println("Double matched"); NumExpr(Ndouble(numLit.toDouble))}
 	| wholeNumber ^^
-	  	{case numLit => println("Int matched"); NumExpr(Nint(numLit.toInt)); }
+	  	{case numLit => println("Int matched: "+numLit); NumExpr(Nint(numLit.toInt)); }
 	)
-
+	
   lazy val op7: P[String] = "+" | "-"
+  //lazy val op7R: P[String] = ""
 
   lazy val op8: P[String] = "*" | "/" | "%"
 }
