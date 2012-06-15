@@ -133,63 +133,120 @@ trait RegexParsers extends Parsers {
 }
 */
 
-var Option = function(x) {
-	if (this instanceof Option) {
+var std = {};
+
+std.Option = function(x) {
+	if (this instanceof std.Option) {
 		// constructor call with new
 		// do nothing
 	} else {
 		// factory call without new
 		if (x === null) { // and/or undefined?
-			return None;
+			return std.None;
 		} else {
-			return Some(x);
+			return std.Some(x);
 		}
 	}
 }
 
-var Some = function(value) {
-    if (this instanceof Some) {
-	    // Option.apply(this, []); -- call the super class ctor (doesn't apply for a trait?)
+std.Some = function(value) {
+    if (this instanceof std.Some) {
         this.value = value;
     } else {
-        return new Some(value);
+        return new std.Some(value);
     }
 }
-Some.prototype = new Option();
-Some.prototype.constructor = Some;
+std.Some.prototype = new std.Option();
+std.Some.prototype.constructor = std.Some;
 // Can't put methods in prototype if they depend on constructor args
 // (Alternately, save ctor args in hidden instance field for later use)
-Some.prototype.toString = function() {
+std.Some.prototype.toString = function() {
     return "Some(" + this.value + ")";
 }
-Some.prototype.isEmpty = function() {
+std.Some.prototype.isEmpty = function() {
     return false;
 }
-Some.prototype.get = function() {
+std.Some.prototype.get = function() {
     return this.value;
 }
-Some.prototype.map = function(f) {
-    return Some(f(this.value));
+std.Some.prototype.map = function(f) {
+    return std.Some(f(this.value));
 }
-Some.unapply = function(x) {
+std.Some.unapply = function(x) {
 	return x; // special case: it already is Some(value) or None...
 }
 
-var None = new Option();
-None.toString = function() {
+std.None = new std.Option();
+std.None.toString = function() {
     return "None";
 }
-None.isEmpty = function() {
+std.None.isEmpty = function() {
     return true;
 }
-None.get = function() {
+std.None.get = function() {
     return undefined;
 }
-None.map = function(f) {
-    return None;
+std.None.map = function(f) {
+    return std.None;
 }
-None.unapply = function(x) {
-	return x instanceof None;
+std.None.unapply = function(x) {
+	return x instanceof std.None;
+}
+
+std.List = function() {
+	if (this instanceof std.List) {
+		// constructor call with new
+		// do nothing
+	} else {
+		// factory call without new
+		var args = Array.prototype.slice.apply(arguments); // Special-case for varargs
+		var result = std.Nil;
+		while (args.length > 0) {
+		    result = std["::"](args.pop(), result);
+		}
+		return result;
+	}
+}
+
+std["::"] = function(head, tail) {
+    if (this instanceof std["::"]) {
+        this.head = head;
+        this.tail = tail;
+    } else {
+        return new std["::"](head, tail);
+    }
+}
+std["::"].prototype = new std.List();
+std["::"].prototype.constructor = std["::"];
+std["::"].prototype.toString = function() {
+    return this.head + "::" + this.tail;
+}
+std["::"].prototype.isEmpty = function() {
+    return false;
+}
+std["::"].prototype.map = function(f) {
+    return std["::"](f(this.head), this.tail.map(f));
+}
+std["::"].unapply = function(x) {
+	if (x isinstanceof std["::"]) {
+	   return std.Some([head, tail]);
+	} else {
+	   return std.None;
+	}
+}
+
+std.Nil = new std.List();
+std.Nil.toString = function() {
+    return "Nil";
+}
+std.Nil.isEmpty = function() {
+    return true;
+}
+std.Nil.map = function(f) {
+    return std.Nil;
+}
+std.Nil.unapply = function(x) {
+	return x instanceof std.Nil;
 }
 
 var Expression = function() {
@@ -210,9 +267,9 @@ Constant.prototype.toString = function() {
 }
 Constant.unapply = function(x) {
     if (x instanceof Constant) {
-        return Some(x.value);
+        return std.Some(x.value);
     } else {
-        return None;
+        return std.None;
     }
 }
 
@@ -231,9 +288,9 @@ Sum.prototype.toString = function() {
 }
 Sum.unapply = function(x) {
     if (x instanceof Sum) {
-        return Some([x.left, x.right]);
+        return std.Some([x.left, x.right]);
     } else {
-        return None;
+        return std.None;
     }
 }
 
@@ -252,9 +309,9 @@ Difference.prototype.toString = function() {
 }
 Difference.unapply = function(x) {
     if (x instanceof Difference) {
-        return Some([x.left, x.right]);
+        return std.Some([x.left, x.right]);
     } else {
-        return None;
+        return std.None;
     }
 }
 
@@ -273,9 +330,9 @@ Product.prototype.toString = function() {
 }
 Product.unapply = function(x) {
     if (x instanceof Product) {
-        return Some([x.left, x.right]);
+        return std.Some([x.left, x.right]);
     } else {
-        return None;
+        return std.None;
     }
 }
 
@@ -294,9 +351,9 @@ Quotient.prototype.toString = function() {
 }
 Quotient.unapply = function(x) {
     if (x instanceof Quotient) {
-        return Some([x.left, x.right]);
+        return std.Some([x.left, x.right]);
     } else {
-        return None;
+        return std.None;
     }
 }
 
@@ -358,9 +415,9 @@ var Parsers = function() {
     }
     Success.unapply = function(x) {
         if (x instanceof Success) {
-            return Some([x.value, x.rem]);
+            return std.Some([x.value, x.rem]);
         } else {
-            return None;
+            return std.None;
         }
     }
     
@@ -378,9 +435,9 @@ var Parsers = function() {
     }
     Failure.unapply = function(x) {
         if (x instanceof Failure) {
-            return Some(msg);
+            return std.Some(msg);
         } else {
-            return None;
+            return std.None;
         }
     }
     
@@ -397,9 +454,9 @@ var Parsers = function() {
     }
     this["~"].unapply = function(x) {
         if (x instanceof parsers["~"]) {
-            return Some([x.a, x.b]);
+            return std.Some([x.a, x.b]);
         } else {
-            return None;
+            return std.None;
         }
     }
     
@@ -408,6 +465,40 @@ var Parsers = function() {
         
         this["~"] = function(that) {
             return new SequenceParser(function() {return this}, that); // pass this as a thunk for cbn
+        }
+        
+        this["|"] = function(that) {
+            return new DisParser(function() {return this}, that);
+        }
+        
+        this["~>"] = function(that) {
+            return this["~"](that)["^^"](function(x) {
+                return (function(x) {
+                    return parsers["~"].unapply(x).map(function(a) {
+                        return a[1];
+                    });
+                })(x).get();
+            });
+        }
+
+        this["<~"] = function(that) {
+            return this["~"](that)["^^"](function(x) {
+                return (function(x) {
+                    return parsers["~"].unapply(x).map(function(a) {
+                        return a[0];
+                    });
+                })(x).get();
+            });
+        }
+        
+        this["*"] = function() {
+            return this["~"](this["*"])["^^"](function(x) {
+                return (function(x) {
+                    return parsers["~"].unapply(x).map(function(a) {
+                        return std["::"](a[0], a[1]);
+                    });
+                })(x).get();
+            })["|"](function() {success(std.Nil)});
         }
         
         // TODO
