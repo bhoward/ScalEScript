@@ -17,7 +17,8 @@ object Main {
     println(Parser("if (5 < 5) 5 else 6"))
     println(Parser("while (true) {5 4 3 2 1}"))
     */
-    println(Parser("1 + 4 + 3"))
+    println(Parser("1 +: 4 +: 3"))
     println(Parser("1 + 3 * 5"))
+    println(Parser("1 * 3 + 5"))
   }
 }

@@ -13,3 +13,7 @@ case class NumExpr(num: Numeric) extends Expr
 case class IfThenElseStmt(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class IfThenStmt(test: Expr, trueClause: Expr) extends Expr
 case class WhileStmt(test: Expr, body: Expr) extends Expr
+
+sealed trait OpPair
+case class LeftOpPair(op: String, right: Expr) extends OpPair
+case class RightOpPair(op: String, right: Expr) extends OpPair
