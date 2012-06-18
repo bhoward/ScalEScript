@@ -239,7 +239,7 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	
 	lazy val block: P[List[Expr]] =
 	( rep(block1) ~ expr ^^
-		{case stmt ~ expr  => expr :: stmt}
+		{case stmt ~ expr  => stmt ++ List[Expr](expr)}
 	| rep(block1) ^^
 		{case stmt => stmt}
 	)
