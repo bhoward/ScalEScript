@@ -14,6 +14,18 @@ case class IfThenElseStmt(test: Expr, trueClause: Expr, falseClause: Expr) exten
 case class IfThenStmt(test: Expr, trueClause: Expr) extends Expr
 case class WhileStmt(test: Expr, body: Expr) extends Expr
 
-sealed trait OpPair
-case class LeftOpPair(op: String, right: Expr) extends OpPair
-case class RightOpPair(op: String, right: Expr) extends OpPair
+sealed trait OpPair {
+  def isLeft() : Boolean;
+  def getOp() : String;
+  def getExpr() : Expr;
+}
+case class LeftOpPair(op: String, expr: Expr) extends OpPair {
+  def isLeft() : Boolean = true;
+  def getOp() : String = op;
+  def getExpr() : Expr = expr;
+}
+case class RightOpPair(op: String, expr: Expr) extends OpPair {
+  def isLeft(): Boolean = false;
+  def getOp() : String = op;
+  def getExpr() : Expr = expr;
+}
