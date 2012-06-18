@@ -23,5 +23,12 @@ object Main {
     println(Parser("1 +: 4 +: 3"))
     println(Parser("1 + 3 * 5"))
     println(Parser("1 * 3 + 5"))
+    
+    println(Parser("{ 1; 2; 3; 4; }"))
+    println(Parser("{ 1; 2; 3; 4 }"))
+    println(Parser("{ 1; }"))
+    println(Parser("{ 1 }"))
+    println(Parser("{ }"))
+    println(Parser("{if (5 > 3) 5 else 6; if (5 >= 6) 5 else 6; if (5 <= 5) 5 else 6; if (5 < 5) 5 else 6}"))
   }
 }

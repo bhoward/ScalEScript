@@ -34,10 +34,10 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	    {case base ~ rest => 
 	      	if (rest.size == 0) {
 	      		base;
-	      	} else if (rest.head.isInstanceOf[LeftOpPair]) {
-	      		buildLeft(base, rest.asInstanceOf[List[LeftOpPair]])
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
 	      	} else {
-	      		buildRight(base, rest.asInstanceOf[List[RightOpPair]])
+	      		buildRight(base, rest)
 	      	}
 	    }
 	)
@@ -68,10 +68,10 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	    {case base ~ rest => 
 	      	if (rest.size == 0) {
 	      		base;
-	      	} else if (rest.head.isInstanceOf[LeftOpPair]) {
-	      		buildLeft(base, rest.asInstanceOf[List[LeftOpPair]])
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
 	      	} else {
-	      		buildRight(base, rest.asInstanceOf[List[RightOpPair]])
+	      		buildRight(base, rest)
 	      	}
 	    }
 	)
@@ -98,10 +98,10 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	    {case base ~ rest => 
 	      	if (rest.size == 0) {
 	      		base;
-	      	} else if (rest.head.isInstanceOf[LeftOpPair]) {
-	      		buildLeft(base, rest.asInstanceOf[List[LeftOpPair]])
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
 	      	} else {
-	      		buildRight(base, rest.asInstanceOf[List[RightOpPair]])
+	      		buildRight(base, rest)
 	      	}
 	    }
 	)
@@ -128,10 +128,10 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	    {case base ~ rest => 
 	      	if (rest.size == 0) {
 	      		base;
-	      	} else if (rest.head.isInstanceOf[LeftOpPair]) {
-	      		buildLeft(base, rest.asInstanceOf[List[LeftOpPair]])
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
 	      	} else {
-	      		buildRight(base, rest.asInstanceOf[List[RightOpPair]])
+	      		buildRight(base, rest)
 	      	}
 	    }
 	)
@@ -162,10 +162,10 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	    {case base ~ rest => 
 	      	if (rest.size == 0) {
 	      		base;
-	      	} else if (rest.head.isInstanceOf[LeftOpPair]) {
-	      		buildLeft(base, rest.asInstanceOf[List[LeftOpPair]])
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
 	      	} else {
-	      		buildRight(base, rest.asInstanceOf[List[RightOpPair]])
+	      		buildRight(base, rest)
 	      	}
 	    }
 	)
@@ -192,10 +192,10 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	    {case base ~ rest => 
 	      	if (rest.size == 0) {
 	      		base;
-	      	} else if (rest.head.isInstanceOf[LeftOpPair]) {
-	      		buildLeft(base, rest.asInstanceOf[List[LeftOpPair]])
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
 	      	} else {
-	      		buildRight(base, rest.asInstanceOf[List[RightOpPair]])
+	      		buildRight(base, rest)
 	      	}
 	    }
 	)
@@ -227,7 +227,33 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	| simpleExpr
 	)
 	
-	lazy val simpleExpr: P[Expr] = 
+	lazy val simpleExpr: P[Expr] =
+	( blockExpr
+	| simpleExpr1
+	)
+	
+	lazy val blockExpr: P[Expr] =
+	( "{" ~ block ~ "}" ^^
+		{case _ ~ stmt ~ _ => BlockExpr(stmt)}
+	)
+	
+	lazy val block: P[List[Expr]] =
+	( rep(block1) ~ expr ^^
+		{case stmt ~ expr  => expr :: stmt}
+	| rep(block1) ^^
+		{case stmt => stmt}
+	)
+	
+	lazy val block1: P[Expr] =
+	( blockStat ~ ";" ^^
+	    {case stmt ~ _ => stmt}
+	)
+	
+	lazy val blockStat: P[Expr] = 
+	( expr1
+    )
+	
+	lazy val simpleExpr1: P[Expr] = 
 	( ("true" | "false") ^^
 	    {case boolLit => BoolExpr(boolLit.toBoolean)}
 	| floatingPointNumber ^^
@@ -254,14 +280,14 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	lazy val op8: P[String] = "*" | "/" | "%"
 	lazy val op8R: P[String] = "*:" | "/:" | "%:"
   
-	def buildLeft(base : Expr, rest : List[LeftOpPair]) : Expr =
+	def buildLeft(base : Expr, rest : List[OpPair]) : Expr =
 		rest match {
 			case Nil => base
-			case LeftOpPair(op, expr) :: tail => buildLeft(BinOpExpr(op, base, expr), tail)
+			case (opPair : OpPair) :: tail => buildLeft(BinOpExpr(opPair.getOp(), base, opPair.getExpr()), tail)
     	}
-	def buildRight(base : Expr, rest : List[RightOpPair]) : Expr = 
+	def buildRight(base : Expr, rest : List[OpPair]) : Expr = 
 		rest match {
         	case Nil => base
-        	case RightOpPair(op, expr) :: tail => buildRight(BinOpExpr(op, expr, base), tail)
+        	case (opPair : OpPair) :: tail => buildRight(BinOpExpr(opPair.getOp(), opPair.getExpr(), base), tail)
     	}
 }
