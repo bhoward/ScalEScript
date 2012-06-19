@@ -254,12 +254,18 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
     )
 	
 	lazy val simpleExpr1: P[Expr] = 
-	( ("true" | "false") ^^
+	( "println" ~ "(" ~ expr ~ ")" ^^ 
+	    {case _ ~ _ ~ expr ~ _ => PrintlnExpr(expr)}
+	| "print" ~ "(" ~ expr ~ ")" ^^ 
+	    {case _ ~ _ ~ expr ~ _ => PrintExpr(expr)}
+	| ("true" | "false") ^^
 	    {case boolLit => BoolExpr(boolLit.toBoolean)}
 	| floatingPointNumber ^^
 		{case numLit => NumExpr(Ndouble(numLit.toDouble))}
 	| wholeNumber ^^
 	  	{case numLit => NumExpr(Nint(numLit.toInt)); }
+	| stringLiteral ^^
+		{case strLit => StringExpr(strLit)}
 	)
 	
 	lazy val op1: P[String] = "||" | "||"

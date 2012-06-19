@@ -36,11 +36,16 @@ object Main {
     println(Parser("{ 1 }"))
     println(Parser("{ }"))
     println(Parser("{if (5 > 3) 5 else 6; if (5 >= 6) 5 else 6; if (5 <= 5) 5 else 6; if (5 < 5) 5 else 6}"))
+<<<<<<< HEAD
     println(Parser("{ }"))
     */
+=======
+    
     //Print and println statement
     println(Parser("print(5)"));
     println(Parser("""println("hello world")"""))
+    
+>>>>>>> 3ad090fffbe1d5e02824d1dc7e52212c99419843
     println();
     /* CodeGeneration testing */
     
