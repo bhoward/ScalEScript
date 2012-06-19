@@ -61,6 +61,13 @@ object Main {
     println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; }"))
     println("Code Generated: " + CodeGeneration(Parser("{ 1; 2; 3; 4; }")))
     
+    println("Parsed Expression: " + Parser(""""hey""""))
+    println("Code Generated: " + CodeGeneration(Parser(""""hey"""")))
+    println("Parsed Expression: " + Parser("print(5)"));
+    println("Code Generated: " + CodeGeneration(Parser("print(5)")))
+    println("Parsed Expression: " + Parser("""println("hello world")"""))
+    println("Code Generated: " + CodeGeneration(Parser("""println("hello world")""")))
+    
     val scalaSource = """{println("Here we go!"); println( if (5 > 3) 5 else 6 ) }""";
     val jsSource = CodeGeneration(Parser(scalaSource));
     
