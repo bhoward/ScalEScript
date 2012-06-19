@@ -23,19 +23,21 @@ object Main {
     println(Parser("if (5 >= 6) 5 else 6"))
     println(Parser("if (5 <= 5) 5 else 6"))
     println(Parser("if (5 < 5) 5 else 6"))
-    
+    */
     //While statement
     println(Parser("while (true) 5"))
-    */
+    
     
     //Block statement
+    /*
     println(Parser("{ 1; 2; 3; 4; }"))
     println(Parser("{ 1; 2; 3; 4 }"))
     println(Parser("{ 1; }"))
     println(Parser("{ 1 }"))
     println(Parser("{ }"))
     println(Parser("{if (5 > 3) 5 else 6; if (5 >= 6) 5 else 6; if (5 <= 5) 5 else 6; if (5 < 5) 5 else 6}"))
-    
+    println(Parser("{ }"))
+    */
     println();
     /* CodeGeneration testing */
     
@@ -50,5 +52,12 @@ object Main {
     println("Code Generated: " + CodeGeneration(Parser("if (true || false) 5")))
     println("Parsed Expression: " + Parser("if (5 > 3) 5 else 6"))
     println("Code Generated: " + CodeGeneration(Parser("if (5 > 3) 5 else 6")))
+    println("Parsed Expression: " + Parser("while (true) 5"))
+    println("Code Generated: " + CodeGeneration(Parser("while (true) 5")))
+    println("Parsed Expression: " + Parser("{ }"))
+    println("Code Generated: " + CodeGeneration(Parser("{ }")))
+    println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; }"))
+    println("Code Generated: " + CodeGeneration(Parser("{ 1; 2; 3; 4; }")))
+    
   }
 }
