@@ -1,0 +1,11 @@
+body {
+    white-space-collapse: discard;
+    float: left;
+    background: silver;
+}
+div.code{
+    background: white;
+    color: black;
+    font-family: Courier New;
+    white-space: pre-wrap;
+}
