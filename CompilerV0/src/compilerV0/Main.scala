@@ -1,5 +1,8 @@
 package compilerV0
 
+import java.io.File;
+import java.io.FileWriter;
+
 object Main {
   def main(args: Array[String]) {
      /* Parser testing */
@@ -70,18 +73,31 @@ object Main {
     
     println();
     
-    val scalaSource = """{println("Here we go!"); println( 1 + 3 * 5 ) }""";
-    val jsSource = CodeGeneration(Parser(scalaSource));
-    
-    println(makeHTML(scalaSource, jsSource));
+    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
+    testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
+    testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
+    testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
   }
   
-  def makeHTML(scalaSource : String, jsSource : String) : String = {
-    val p1 : String = """<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div class="ScalaCode">""";
-    val p2 : String = """</div><h2>Javascript Source:</h2><div class="JSCode">""";
-    val p3 : String = """</div><h2>Javascript Execution:</h2><div class="JSExec"><script language="JavaScript">""";
-    val p4 : String = """</script></div></body>""";
+  def testCompiler(testName : String, scalaSource : String) {
+    val ast = Parser(scalaSource);
+    val jsSource = CodeGeneration(ast);
+    writeToFile("""src\HTML\"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
+  }
+  
+  def writeToFile(fileName : String, contents : String){
+    val fw = new FileWriter(fileName); 
+    fw.write(contents); 
+    fw.close();
+  }
+  
+  def makeHTML(scalaSource : String, ast : String, jsSource : String) : String = {
+    val p1 : String = """<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">""";
+    val p2 : String = """</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">""";
+    val p3 : String = """</div><h2>Javascript Source:</h2><div id="JSCode" class="code">""";
+    val p4 : String = """</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">""";
+    val p5 : String = """</script></div></body>""";
     
-    return p1 + scalaSource + p2 + jsSource + p3 + jsSource + p4;
+    return p1 + scalaSource + p2 + ast + p3 + jsSource + p4 + jsSource + p5;
   }
 }
