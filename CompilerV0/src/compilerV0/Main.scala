@@ -11,8 +11,6 @@ object Main {
     println(Parser("if (false) 6 else 7"))
     println(Parser("while (true) 6"))
     */
-    println("Parsed Expression: " + Parser("if (true || false) 5"))
-    println("Code Generated: " + CodeGeneration(Parser("if (true || false) 5")))
     
     //println(Parser("if (false && true) 5 else 6"))
     //println(Parser("if (true == true) 5 else 6"))
