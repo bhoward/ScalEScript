@@ -9,7 +9,7 @@ object CodeGeneration {
     case IfThenElseStmt(predicate, truevalue, falsevalue) => 
       "ifThenElse( " + generate(predicate) + ", " + generate(truevalue) + ", " + generate(falsevalue) + " )"
     case WhileStmt(predicate, body) => "whileLoop( " + generate(predicate) + ", " + generate(body) + " )"
-    case BlockExpr(listofstatements) => "(function() = { \n" + blockProcess(listofstatements) + " })()"
+    case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     case StringExpr(value) => value
     case PrintExpr(msg) => "document.write(" + generate(msg) + ")"
     case PrintlnExpr(msg) => "document.writeln(" + generate(msg) + ")"
