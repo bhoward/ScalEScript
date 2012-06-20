@@ -5,13 +5,15 @@ object CodeGeneration {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
-    case IfThenExpr(predicate, expr) => "ifThen( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
-    "(function() { \n" + generate(predicate)  + " })()" + " )"
+    case IfThenExpr(predicate, expr) => "ifThen( " + 
+    "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
+    "(function() { \n" + "return " + generate(predicate)  + " })()" + " )"
     case IfThenElseExpr(predicate, truevalue, falsevalue) => 
-      "ifThenElse( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + "(function() { \n" + generate(truevalue)  + " })()" + ", " +
-      "(function() { \n" + generate(falsevalue)  + " })()" + " )"
-    case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
-                                       "(function() { \n" + generate(body)  + " })()" + " )"
+      "ifThenElse( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + "(function() { \n" + 
+      "return " + generate(truevalue)  + " })()" + ", " +"(function() { \n" + 
+      "return " + generate(falsevalue)  + " })()" + " )"
+    case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
+                                       "(function() { \n" + "return " + generate(body)  + " })()" + " )"
     case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     case StringExpr(value) => value
     case PrintExpr(msg) => "document.write(" + generate(msg) + ")"
@@ -20,6 +22,7 @@ object CodeGeneration {
   }
   def blockProcess(loe : List[Expr]):String = loe match {
     case List() => ""
+    case List(x) => "return " + generate(x)
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
   }
   def apply(source: Stmt): String = generate (source)
