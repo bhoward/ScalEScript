@@ -1,19 +1,23 @@
 package compilerV0
 
-object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
-	def top = expr
+object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
+	def top = stmt
   
+	lazy val stmt: P[Stmt] =
+	( expr
+	)
+	
 	lazy val expr: P[Expr] =
 	( expr1
 	)
 	
 	lazy val expr1: P[Expr] = 
 	( "if" ~ "(" ~ expr ~ ")" ~ expr ~ "else" ~ expr ^^
-		{case _ ~ _ ~ test~ _ ~ trueClause ~ _ ~ falseClause => IfThenElseStmt(test, trueClause, falseClause)}
+		{case _ ~ _ ~ test~ _ ~ trueClause ~ _ ~ falseClause => IfThenElseExpr(test, trueClause, falseClause)}
 	| "if" ~ "(" ~ expr ~ ")" ~ expr ^^ 
-	      {case _ ~ _ ~ test~ _ ~ trueClause => IfThenStmt(test, trueClause)} 
+	      {case _ ~ _ ~ test~ _ ~ trueClause => IfThenExpr(test, trueClause)} 
 	| "while" ~ "(" ~ expr ~ ")" ~ expr ^^
-		{case _ ~ _ ~ test~ _ ~ body=> WhileStmt(test, body)}
+		{case _ ~ _ ~ test~ _ ~ body=> WhileExpr(test, body)}
 	| postfixExpr
 	)
 	

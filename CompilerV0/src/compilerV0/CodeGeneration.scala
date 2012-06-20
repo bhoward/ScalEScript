@@ -1,16 +1,16 @@
 package compilerV0
 
 object CodeGeneration {
-  def generate (ast : Expr):String = ast match {
+  def generate (ast : Stmt):String = ast match {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
-    case IfThenStmt(predicate, expr) => "ifThen( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
+    case IfThenExpr(predicate, expr) => "ifThen( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
     "(function() { \n" + generate(predicate)  + " })()" + " )"
-    case IfThenElseStmt(predicate, truevalue, falsevalue) => 
+    case IfThenElseExpr(predicate, truevalue, falsevalue) => 
       "ifThenElse( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + "(function() { \n" + generate(truevalue)  + " })()" + ", " +
       "(function() { \n" + generate(falsevalue)  + " })()" + " )"
-    case WhileStmt(predicate, body) => "whileLoop( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
+    case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
                                        "(function() { \n" + generate(body)  + " })()" + " )"
     case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     case StringExpr(value) => value
@@ -22,7 +22,7 @@ object CodeGeneration {
     case List() => ""
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
   }
-  def apply(source: Expr): String = generate (source)
+  def apply(source: Stmt): String = generate (source)
   
   
  
