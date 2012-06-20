@@ -57,13 +57,15 @@ object Main {
     println("Code Generated: " + CodeGeneration(Parser("if (true || false) 5")))
     println("Parsed Expression: " + Parser("if (5 > 3) 5 else 6"))
     println("Code Generated: " + CodeGeneration(Parser("if (5 > 3) 5 else 6")))
+    
     println("Parsed Expression: " + Parser("while (true) 5"))
     println("Code Generated: " + CodeGeneration(Parser("while (true) 5")))
+    
     println("Parsed Expression: " + Parser("{ }"))
     println("Code Generated: " + CodeGeneration(Parser("{ }")))
     println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; }"))
     println("Code Generated: " + CodeGeneration(Parser("{ 1; 2; 3; 4; }")))
-    
+    /*
     println("Parsed Expression: " + Parser(""""hey""""))
     println("Code Generated: " + CodeGeneration(Parser(""""hey"""")))
     println("Parsed Expression: " + Parser("print(5)"));
@@ -77,6 +79,7 @@ object Main {
     testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
     testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
     testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
+    */
   }
   
   def testCompiler(testName : String, scalaSource : String) {
