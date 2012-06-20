@@ -1,7 +1,15 @@
 <html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{println(if (true) 6); println(if (false) 6)}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(PrintlnExpr(IfThenStmt(BoolExpr(true),NumExpr(Nint(6)))), PrintlnExpr(IfThenStmt(BoolExpr(false),NumExpr(Nint(6))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
-document.writeln(ifThen( true, Nint(6) )); 
-document.writeln(ifThen( false, Nint(6) )); 
+document.writeln(ifThen( (function() { 
+true })(), (function() { 
+true })() )); 
+document.writeln(ifThen( (function() { 
+false })(), (function() { 
+false })() )); 
  })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
-document.writeln(ifThen( true, Nint(6) )); 
-document.writeln(ifThen( false, Nint(6) )); 
+document.writeln(ifThen( (function() { 
+true })(), (function() { 
+true })() )); 
+document.writeln(ifThen( (function() { 
+false })(), (function() { 
+false })() )); 
  })()</script></div></body>

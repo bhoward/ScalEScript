@@ -5,10 +5,13 @@ object CodeGeneration {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
-    case IfThenStmt(predicate, expr) => "ifThen( " + generate(predicate) + ", " + generate(expr) + " )"
+    case IfThenStmt(predicate, expr) => "ifThen( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
+    "(function() { \n" + generate(predicate)  + " })()" + " )"
     case IfThenElseStmt(predicate, truevalue, falsevalue) => 
-      "ifThenElse( " + generate(predicate) + ", " + generate(truevalue) + ", " + generate(falsevalue) + " )"
-    case WhileStmt(predicate, body) => "whileLoop( " + generate(predicate) + ", " + generate(body) + " )"
+      "ifThenElse( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + "(function() { \n" + generate(truevalue)  + " })()" + ", " +
+      "(function() { \n" + generate(falsevalue)  + " })()" + " )"
+    case WhileStmt(predicate, body) => "whileLoop( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + 
+                                       "(function() { \n" + generate(body)  + " })()" + " )"
     case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     case StringExpr(value) => value
     case PrintExpr(msg) => "document.write(" + generate(msg) + ")"

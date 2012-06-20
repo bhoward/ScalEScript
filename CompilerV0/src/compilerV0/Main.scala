@@ -82,7 +82,7 @@ object Main {
   def testCompiler(testName : String, scalaSource : String) {
     val ast = Parser(scalaSource);
     val jsSource = CodeGeneration(ast);
-    writeToFile("""src\HTML\"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
+    writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
   }
   
   def writeToFile(fileName : String, contents : String){
@@ -100,4 +100,5 @@ object Main {
     
     return p1 + scalaSource + p2 + ast + p3 + jsSource + p4 + jsSource + p5;
   }
+  
 }
