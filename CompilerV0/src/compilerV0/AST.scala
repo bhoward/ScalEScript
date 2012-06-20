@@ -8,6 +8,7 @@ sealed trait Expr extends Stmt
 case class BoolExpr(bool : Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str : String) extends Expr
+case class VarExpr(id: String) extends Expr
 case class BlockExpr(body: List[Expr]) extends Expr
 case class BinOpExpr(op: String, left: Expr, right: Expr) extends Expr
 case class UnOpExpr(op: String, expr: Expr) extends Expr
@@ -18,8 +19,8 @@ case class PrintExpr(expr: Expr) extends Expr
 case class PrintlnExpr(expr: Expr) extends Expr
 
 sealed trait Stmt
-case class VarDeclStmt(id : String, varType: String, value : Expr)
-case class ValDeclStmt(id : String, varType: String, value : Expr)
+case class VarDeclStmt(ids : List[String], varType: String, value : Expr) extends Stmt
+case class ValDeclStmt(ids : List[String], varType: String, value : Expr) extends Stmt
 
 sealed trait OpPair {
   def isLeft() : Boolean;

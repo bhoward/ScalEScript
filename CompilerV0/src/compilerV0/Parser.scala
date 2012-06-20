@@ -4,8 +4,38 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	def top = stmt
   
 	lazy val stmt: P[Stmt] =
-	( expr
+	( dcl
+	| expr
 	)
+	
+	//This doesn't match up directly with dcl in scala language atm. May want to change later on. 
+	//(It requires not only declaration but also assignment - this is not required in classes)
+	lazy val dcl: P[Stmt] =
+	( "var" ~ varDcl ^^
+	  {case _ ~ varDcl => varDcl}
+	| "val" ~ valDcl ^^
+	  {case _ ~ valDcl => valDcl}
+	)
+	
+	lazy val varDcl: P[Stmt] = 
+	( rep1(id) ~ ":" ~ id ~ "=" ~ expr ^^
+	    {case ids ~ _ ~ valType ~ _ ~ value => VarDeclStmt(ids, valType, value)}
+	)
+	
+	lazy val valDcl: P[Stmt] = 
+	( rep1(id) ~ ":" ~ id ~ "=" ~ expr ^^
+	    {case ids ~ _ ~ valType ~ _ ~ value => ValDeclStmt(ids, valType, value)}
+	)
+
+	lazy val id: P[String] =
+	( plainid
+	)
+	
+	lazy val plainid: P[String] =
+	( varid
+	)
+	
+	def varid: Parser[String] = ("""[A-Za-z][A-Za-z0-9]*""").r
 	
 	lazy val expr: P[Expr] =
 	( expr1
@@ -13,11 +43,11 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	
 	lazy val expr1: P[Expr] = 
 	( "if" ~ "(" ~ expr ~ ")" ~ expr ~ "else" ~ expr ^^
-		{case _ ~ _ ~ test~ _ ~ trueClause ~ _ ~ falseClause => IfThenElseExpr(test, trueClause, falseClause)}
+		{case _ ~ _ ~ test ~ _ ~ trueClause ~ _ ~ falseClause => IfThenElseExpr(test, trueClause, falseClause)}
 	| "if" ~ "(" ~ expr ~ ")" ~ expr ^^ 
-	      {case _ ~ _ ~ test~ _ ~ trueClause => IfThenExpr(test, trueClause)} 
+	      {case _ ~ _ ~ test ~ _ ~ trueClause => IfThenExpr(test, trueClause)} 
 	| "while" ~ "(" ~ expr ~ ")" ~ expr ^^
-		{case _ ~ _ ~ test~ _ ~ body=> WhileExpr(test, body)}
+		{case _ ~ _ ~ test ~ _ ~ body=> WhileExpr(test, body)}
 	| postfixExpr
 	)
 	
@@ -257,6 +287,7 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	( expr1
     )
 	
+    //Put println here for the moment, it should just be implemented in to a function when they are added
 	lazy val simpleExpr1: P[Expr] = 
 	( "println" ~ "(" ~ expr ~ ")" ^^ 
 	    {case _ ~ _ ~ expr ~ _ => PrintlnExpr(expr)}
@@ -270,6 +301,15 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	  	{case numLit => NumExpr(Nint(numLit.toInt)); }
 	| stringLiteral ^^
 		{case strLit => StringExpr(strLit)}
+	)
+	
+	lazy val path: P[Expr] = 
+	( qualId
+	)
+	
+	lazy val qualId: P[Expr] =
+	( id ^^ 
+	    {id => VarExpr(id)}
 	)
 	
 	lazy val op1: P[String] = "||" | "||"
