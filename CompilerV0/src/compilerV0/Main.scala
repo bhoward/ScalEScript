@@ -40,13 +40,13 @@ object Main {
     println(Parser("{ }"))
     */
     //Print and println statement
-    println(Parser("print(5)"));
-    println(Parser("""println("hello world")"""))
+    //println(Parser("print(5)"));
+    //println(Parser("""println("hello world")"""))
     
     //Vals and Vars
-    println(Parser("{var t : Int = 5; }"))
-    println(Parser("{val t0, t1 : Int = 5; }"))
-    println(Parser("{var t : Int = 5; t}"))
+    //println(Parser("{var t : Int = 5; }"))
+    //println(Parser("{val t0, t1 : Int = 5; }"))
+    //println(Parser("{var t : Int = 5; t}"))
     
     println();
     /* CodeGeneration testing */
@@ -56,7 +56,6 @@ object Main {
     println(CodeGeneration (Parser("1 + 5")))
     println(CodeGeneration (Parser("1 * 5")))
     println(CodeGeneration (Parser("1.0 + 3 * 5")))
-    */
     
     println("Parsed Expression: " + Parser("if (true || false) 5"))
     println("Code Generated: " + CodeGeneration(Parser("if (true || false) 5")))
@@ -70,14 +69,22 @@ object Main {
     println("Code Generated: " + CodeGeneration(Parser("{ }")))
     println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; }"))
     println("Code Generated: " + CodeGeneration(Parser("{ 1; 2; 3; 4; }")))
-    /*
+    
     println("Parsed Expression: " + Parser(""""hey""""))
     println("Code Generated: " + CodeGeneration(Parser(""""hey"""")))
     println("Parsed Expression: " + Parser("print(5)"));
     println("Code Generated: " + CodeGeneration(Parser("print(5)")))
     println("Parsed Expression: " + Parser("""println("hello world")"""))
     println("Code Generated: " + CodeGeneration(Parser("""println("hello world")""")))
+    */
     
+    println("Parsed Expression: " + Parser("{var t : Int = 5; }"))
+    println("Code Generated: " + CodeGeneration(Parser("{var t : Int = 5; }")))
+    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
+    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; }")))
+    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
+    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; }")))
+    /*
     println();
     
     testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");

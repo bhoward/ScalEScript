@@ -1,10 +1,13 @@
 package compilerV0
 
 object CodeGeneration {
+  
   def generate (ast : Expr):String = ast match {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
+    case ValDefStmt(listofvaldecs, valtype, expr) => "" + varProcess(listofvaldecs, expr)
+    case VarDefStmt(listofvardecs, valtype, expr) => "" + varProcess(listofvardecs, expr)
     case IfThenExpr(predicate, expr) => "ifThen( " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + " )"
@@ -25,6 +28,10 @@ object CodeGeneration {
     case List(x) => "return " + generate(x)
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
   }
+  def varProcess(los : List[String], expr : Expr):String = los match{
+    case List() => " " + generate(expr)
+    case x::xs => "var " + x + " = " + varProcess(xs, expr)
+  } 
   def apply(source: Expr): String = generate (source)
   
   
