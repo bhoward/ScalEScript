@@ -1,42 +1,8 @@
 package compilerV0
 
-object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
-	def top = stmt
+object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
+	def top = expr
   
-	lazy val stmt: P[Stmt] =
-	( dcl
-	| expr
-	)
-	
-	//This doesn't match up directly with dcl in scala language atm. May want to change later on. 
-	//(It requires not only declaration but also assignment - this is not required in classes)
-	lazy val dcl: P[Stmt] =
-	( "var" ~ varDcl ^^
-	  {case _ ~ varDcl => varDcl}
-	| "val" ~ valDcl ^^
-	  {case _ ~ valDcl => valDcl}
-	)
-	
-	lazy val varDcl: P[Stmt] = 
-	( rep1(id) ~ ":" ~ id ~ "=" ~ expr ^^
-	    {case ids ~ _ ~ valType ~ _ ~ value => VarDeclStmt(ids, valType, value)}
-	)
-	
-	lazy val valDcl: P[Stmt] = 
-	( rep1(id) ~ ":" ~ id ~ "=" ~ expr ^^
-	    {case ids ~ _ ~ valType ~ _ ~ value => ValDeclStmt(ids, valType, value)}
-	)
-
-	lazy val id: P[String] =
-	( plainid
-	)
-	
-	lazy val plainid: P[String] =
-	( varid
-	)
-	
-	def varid: Parser[String] = ("""[A-Za-z][A-Za-z0-9]*""").r
-	
 	lazy val expr: P[Expr] =
 	( expr1
 	)
@@ -59,6 +25,11 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	( iE0
 	)
 	
+	//Start of infix expression precedence groups
+	//iE0 through iE9 are not defined in the scala grammar. 
+	//These are used to enforce precedence of infix operators in the parsing process.
+    //iE# = infix expression of precedence group #, iE#Rest = helper for iE#, 
+	//iE#L = left associative operator of an infix expression of precedence group #, iE#R = same as iE#L, but right associative
 	lazy val iE0: P[Expr] =
 	( iE1
 	)
@@ -254,6 +225,7 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	lazy val iE9: P[Expr] =
 	( prefixExpr
 	)
+	//End of infix expression precedence groups
 	
 	lazy val prefixExpr: P[Expr] = 
 	( "-" ~ simpleExpr ^^ 
@@ -278,15 +250,90 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 		{case stmt => stmt}
 	)
 	
+	//Not defined in scala grammar. Used to match multiple blockStats seperated by a semicolon
 	lazy val block1: P[Expr] =
 	( blockStat ~ ";" ^^
 	    {case stmt ~ _ => stmt}
 	)
 	
 	lazy val blockStat: P[Expr] = 
-	( expr1
+	( defG
+	| expr1
+    )
+    
+    //Called def in the grammar (which is a reserved word, so I used defG)
+    lazy val defG: P[Expr] =
+    ( patVarDef
     )
 	
+    lazy val patVarDef: P[Expr] =
+    ( "val" ~ patDef ^^
+    	{case _ ~ DefStmt(pats, typeG, expr) => ValDefStmt(pats, typeG, expr)}
+    | "var" ~ varDef ^^
+        {case _ ~ DefStmt(pats, typeG, expr) => VarDefStmt(pats, typeG, expr)}
+    )
+    
+    lazy val varDef: P[DefStmt] =
+    ( patDef
+    )
+    
+    lazy val patDef: P[DefStmt] =
+    ( pattern2 ~ rep(pattern2s) ~ ":" ~ typeG ~ "=" ~ expr ^^
+        {case pat ~ pats ~ _ ~ typeG ~ _ ~ expr => DefStmt(pat :: pats, typeG, expr)}
+    )
+    
+    lazy val pattern2: P[String] =
+    ( varid
+    | pattern3
+    )
+    
+    //Not defined in scala grammar. Used to match multiple ids seperated by a comma
+    lazy val pattern2s: P[String] =
+    ( "," ~ pattern2 ^^
+        {case _ ~ pat => pat}
+    )
+    
+    lazy val pattern3: P[String] =
+    ( simplePattern
+    )
+    
+    lazy val simplePattern: P[String] =
+    ( qualid
+    )
+    
+    lazy val qualid: P[String] =
+    ( id
+    )
+    
+    //Called type in the grammar (which is a reserved word, so I used typeG)
+    lazy val typeG: P[String] =
+    ( infixType
+    )
+    
+    lazy val infixType: P[String] =
+    ( simpleType
+    )
+    
+    lazy val simpleType: P[String] =
+    ( qualId 
+    )
+    
+    lazy val qualId: P[String] = 
+    ( id
+    )
+    
+    lazy val id: P[String] =
+    ( plainid    
+    )
+    
+    lazy val plainid: P[String] =
+    ( upperid
+    | varid
+    )
+    
+    def upperid: Parser[String] = ("""[A-Z][A-Za-z0-9]*""").r
+    def varid: Parser[String] = ("""[a-z][A-Za-z0-9]*""").r
+    
     //Put println here for the moment, it should just be implemented in to a function when they are added
 	lazy val simpleExpr1: P[Expr] = 
 	( "println" ~ "(" ~ expr ~ ")" ^^ 
@@ -301,15 +348,12 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	  	{case numLit => NumExpr(Nint(numLit.toInt)); }
 	| stringLiteral ^^
 		{case strLit => StringExpr(strLit)}
+	| path
 	)
 	
 	lazy val path: P[Expr] = 
-	( qualId
-	)
-	
-	lazy val qualId: P[Expr] =
-	( id ^^ 
-	    {id => VarExpr(id)}
+	( qualId ^^
+	    {case id => VarExpr(id)}
 	)
 	
 	lazy val op1: P[String] = "||" | "||"
@@ -330,6 +374,8 @@ object Parser extends SimpleParser[Stmt] with JavaComments with CommonLiterals {
 	lazy val op8: P[String] = "*" | "/" | "%"
 	lazy val op8R: P[String] = "*:" | "/:" | "%:"
   
+	//Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
+	//These Could be replaced with a foldL or foldR eventually
 	def buildLeft(base : Expr, rest : List[OpPair]) : Expr =
 		rest match {
 			case Nil => base

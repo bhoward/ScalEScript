@@ -4,7 +4,7 @@ sealed trait Numeric
 case class Nint(num : Int) extends Numeric
 case class Ndouble(Num : Double) extends Numeric
 
-sealed trait Expr extends Stmt
+sealed trait Expr
 case class BoolExpr(bool : Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str : String) extends Expr
@@ -18,9 +18,11 @@ case class WhileExpr(test: Expr, body: Expr) extends Expr
 case class PrintExpr(expr: Expr) extends Expr
 case class PrintlnExpr(expr: Expr) extends Expr
 
-sealed trait Stmt
-case class VarDeclStmt(ids : List[String], varType: String, value : Expr) extends Stmt
-case class ValDeclStmt(ids : List[String], varType: String, value : Expr) extends Stmt
+sealed trait Stmt extends Expr
+case class VarDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
+case class ValDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
+
+case class DefStmt(ids : List[String], varType: String, value : Expr)
 
 sealed trait OpPair {
   def isLeft() : Boolean;

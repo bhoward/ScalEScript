@@ -44,9 +44,9 @@ object Main {
     println(Parser("""println("hello world")"""))
     
     //Vals and Vars
-    println(Parser("var t : Int = 5"))
-    println(Parser("val t0 : Int = 5"))
-    println(Parser("{var t : Int = 5; println(t + 5)}"))
+    println(Parser("{var t : Int = 5; }"))
+    println(Parser("{val t0, t1 : Int = 5; }"))
+    println(Parser("{var t : Int = 5; t}"))
     
     println();
     /* CodeGeneration testing */

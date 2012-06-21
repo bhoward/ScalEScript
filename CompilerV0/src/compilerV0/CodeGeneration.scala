@@ -1,7 +1,7 @@
 package compilerV0
 
 object CodeGeneration {
-  def generate (ast : Stmt):String = ast match {
+  def generate (ast : Expr):String = ast match {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
@@ -25,7 +25,7 @@ object CodeGeneration {
     case List(x) => "return " + generate(x)
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
   }
-  def apply(source: Stmt): String = generate (source)
+  def apply(source: Expr): String = generate (source)
   
   
  
