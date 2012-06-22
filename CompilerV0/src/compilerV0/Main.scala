@@ -82,8 +82,10 @@ object Main {
     println("Code Generated: " + CodeGeneration(Parser("{var t : Int = 5; }")))
     println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
     println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; }")))
-    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
-    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; }")))
+    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
+    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5;}")))
+    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; 4 + 5;}"))
+    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; 4 + 5;}")))
     /*
     println();
     

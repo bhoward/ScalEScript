@@ -6,8 +6,10 @@ object CodeGeneration {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
-    case ValDefStmt(listofvaldecs, valtype, expr) => "" + varProcess(listofvaldecs, expr)
-    case VarDefStmt(listofvardecs, valtype, expr) => "" + varProcess(listofvardecs, expr)
+    case ValDefStmt(listofvaldecs, valtype, expr) => "var " + varProcess(listofvaldecs, expr) + 
+                                                     " " + varProcessAux(listofvaldecs, expr)
+    case VarDefStmt(listofvardecs, valtype, expr) => "var " + varProcess(listofvardecs, expr) + 
+                                                     " " + varProcessAux(listofvardecs, expr)
     case IfThenExpr(predicate, expr) => "ifThen( " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + " )"
@@ -25,13 +27,17 @@ object CodeGeneration {
   }
   def blockProcess(loe : List[Stmt]):String = loe match {
     case List() => ""
-    case List(x) => "return " + generate(x)
+    case List(x) => if (x.isExpr()) "return " + generate(x) + " ;" else "return ;"
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
   }
   def varProcess(los : List[String], expr : Expr):String = los match{
-    case List() => " " + generate(expr)
-    case x::xs => "var " + x + " = " + varProcess(xs, expr)
+    case List(x)=> x + " ; \n"
+    case x::xs => x + " , " + varProcess(xs, expr)
   } 
+  def varProcessAux(los : List[String], expr : Expr):String = los match{
+    case List() => generate(expr)
+    case x::xs => x + " = " + varProcessAux(xs, expr)
+  }
   def apply(source: Expr): String = generate (source)
   
   
