@@ -243,7 +243,7 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 		{case _ ~ stmt ~ _ => BlockExpr(stmt)}
 	)
 	
-	lazy val block: P[List[Expr]] =
+	lazy val block: P[List[Stmt]] =
 	( rep(block1) ~ expr ^^
 		{case stmt ~ expr  => stmt ++ List[Expr](expr)}
 	| rep(block1) ^^
@@ -251,22 +251,22 @@ object Parser extends SimpleParser[Expr] with JavaComments with CommonLiterals {
 	)
 	
 	//Not defined in scala grammar. Used to match multiple blockStats seperated by a semicolon
-	lazy val block1: P[Expr] =
+	lazy val block1: P[Stmt] =
 	( blockStat ~ ";" ^^
 	    {case stmt ~ _ => stmt}
 	)
 	
-	lazy val blockStat: P[Expr] = 
+	lazy val blockStat: P[Stmt] = 
 	( defG
 	| expr1
     )
     
     //Called def in the grammar (which is a reserved word, so I used defG)
-    lazy val defG: P[Expr] =
+    lazy val defG: P[Stmt] =
     ( patVarDef
     )
 	
-    lazy val patVarDef: P[Expr] =
+    lazy val patVarDef: P[Stmt] =
     ( "val" ~ patDef ^^
     	{case _ ~ DefStmt(pats, typeG, expr) => ValDefStmt(pats, typeG, expr)}
     | "var" ~ varDef ^^

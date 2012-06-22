@@ -2,7 +2,7 @@ package compilerV0
 
 object CodeGeneration {
   
-  def generate (ast : Expr):String = ast match {
+  def generate (ast : Stmt):String = ast match {
     case NumExpr(value) => value.toString
     case BoolExpr(value) => value.toString
     case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
@@ -23,7 +23,7 @@ object CodeGeneration {
     case PrintlnExpr(msg) => "document.writeln(" + generate(msg) + ")"
     case _ => "failure"
   }
-  def blockProcess(loe : List[Expr]):String = loe match {
+  def blockProcess(loe : List[Stmt]):String = loe match {
     case List() => ""
     case List(x) => "return " + generate(x)
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
