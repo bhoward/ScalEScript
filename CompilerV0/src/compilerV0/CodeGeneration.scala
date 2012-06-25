@@ -15,7 +15,7 @@ object CodeGeneration {
     "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + " )"
     case IfThenElseExpr(predicate, truevalue, falsevalue) => 
-      "ifThenElse( " + "(function() { \n" + generate(predicate)  + " })()" + ", " + "(function() { \n" + 
+      "ifThenElse( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + "(function() { \n" + 
       "return " + generate(truevalue)  + " })()" + ", " +"(function() { \n" + 
       "return " + generate(falsevalue)  + " })()" + " )"
     case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
