@@ -79,13 +79,13 @@ object Main {
     */
     
     println("Parsed Expression: " + Parser("{var t : Int = 5; }"))
-    println("Code Generated: " + CodeGeneration(Parser("{var t : Int = 5; }")))
+    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5; }")))
     println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
-    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; }")))
+    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; }")))
     println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
-    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5;}")))
+    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5;}")))
     println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
-    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
+    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
     println();
     
     testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -97,7 +97,7 @@ object Main {
   
   def testCompiler(testName : String, scalaSource : String) {
     val ast = Parser(scalaSource);
-    val jsSource = CodeGeneration(ast);
+    val jsSource = CodeGenerator(ast);
     writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
   }
   

@@ -1,6 +1,6 @@
 package compilerV0
 
-object CodeGeneration {
+object CodeGenerator {
   
   def generate (ast : Stmt):String = ast match {
     case NumExpr(value) => value.toString
