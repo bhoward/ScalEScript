@@ -84,16 +84,15 @@ object Main {
     println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; }")))
     println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
     println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5;}")))
-    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; 4 + 5;}"))
-    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; 4 + 5;}")))
-    /*
+    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
+    println("Code Generated: " + CodeGeneration(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
     println();
     
     testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
     testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
     testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
     testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
-    */
+    testCompiler("vars", """println({val t0, t1 : Int = 5; t0 + t1;})""");
   }
   
   def testCompiler(testName : String, scalaSource : String) {

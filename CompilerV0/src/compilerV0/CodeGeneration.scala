@@ -10,6 +10,7 @@ object CodeGeneration {
                                                      " " + varProcessAux(listofvaldecs, expr)
     case VarDefStmt(listofvardecs, valtype, expr) => "var " + varProcess(listofvardecs, expr) + 
                                                      " " + varProcessAux(listofvardecs, expr)
+    case VarExpr(varName) => varName
     case IfThenExpr(predicate, expr) => "ifThen( " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
     "(function() { \n" + "return " + generate(predicate)  + " })()" + " )"
@@ -31,11 +32,12 @@ object CodeGeneration {
     case x::xs => generate(x) + "; \n" + blockProcess(xs)
   }
   def varProcess(los : List[String], expr : Expr):String = los match{
-    case List(x)=> x + " ; \n"
+    case Nil => ""
+    case x::Nil => x + " ; \n"
     case x::xs => x + " , " + varProcess(xs, expr)
   } 
   def varProcessAux(los : List[String], expr : Expr):String = los match{
-    case List() => generate(expr)
+    case Nil => generate(expr)
     case x::xs => x + " = " + varProcessAux(xs, expr)
   }
   def apply(source: Expr): String = generate (source)
