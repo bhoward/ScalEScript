@@ -18,6 +18,19 @@ object TypeVerifier {
 	  	scalaTypes.put("String", List[String]("AnyRef"));
 	}
 	
+	def checkType(exprType : String, paramType : String): Boolean = {
+		if (scalaTypes.contains(exprType)) {
+			if (exprType == paramType) {
+				return true;
+			} else {
+				return (scalaTypes.get(exprType).get).foldLeft(false)((result, parentType) => result || checkType(parentType, paramType))
+			}
+		}
+		
+		//Unknown type
+		return false;
+	}
+	
 	def verifyInit(ast : Expr) : Boolean = {
 		var map : Map[String, String] = scala.collection.mutable.Map[String, String]()
 		var maps : List[Map[String, String]] = map :: Nil
@@ -27,7 +40,7 @@ object TypeVerifier {
 	def verify(ast : Stmt, maps : List[Map[String, String]]) : Boolean = ast match {
 	  	case BlockExpr(listofstatements) => {
 	  		var myMaps : List[Map[String, String]] = scala.collection.mutable.Map[String, String]()::maps
-	  		listofstatements.foldLeft(true)((y, x) => y && verify(x, myMaps))
+	  		listofstatements.foldLeft(true)((result, stmt) => result && verify(stmt, myMaps))
 	  	}
 	  	case BinOpExpr(op, l, r) => verify(l, maps) && verify(r, maps)
 	  	case IfThenExpr(predicate, expr) => verify(predicate, maps) && verify(expr, maps)
@@ -71,6 +84,14 @@ object TypeVerifier {
 	
 	def apply(source: Expr): Boolean = {
 		initScalaTypes;
+		/*
+		println(scalaTypes);
+		println(checkType("Boolean", "Boolean"))
+		println(checkType("Boolean", "AnyVal"))
+		println(checkType("Boolean", "Any"))
+		println(checkType("Boolean", "Bloop"))
+		println(checkType("Bloop", "Any"))
+		*/
 		verifyInit(source);
 	}
 }

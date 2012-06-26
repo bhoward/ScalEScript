@@ -95,7 +95,6 @@ object Main {
     testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
     testCompiler("vars", """println({val t0, t1 : Double = 5.0; t0 + t1;})"""); */
     println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; println(t1)}; t0 + t1;})""")));
-    
   }
   
   def testCompiler(testName : String, scalaSource : String) {
