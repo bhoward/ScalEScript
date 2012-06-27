@@ -96,7 +96,6 @@ object TypeVerifier {
 	  		if (predicateType != "Boolean") {
 	  			throw new Exception("If statements require a predicate of type Boolean");
 	  		} else {
-	  			println("IfThen returning type "+firstCommonSuperType(exprType, "Unit"));
 	  			return firstCommonSuperType(exprType, "Unit")
 	  		}
 	  	}
