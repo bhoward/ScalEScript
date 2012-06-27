@@ -269,22 +269,35 @@ object Parser extends RegexParsers with PackratParsers {
     //Called def in the grammar (which is a reserved word, so I used defG)
     lazy val defG: P[Stmt] =
     ( patVarDef
+    |"def" ~ funDef ^^ 
+      {case name ~ args ~ body => FunDefStmt(name, args, body)}
     )
 	
     lazy val patVarDef: P[Stmt] =
     ( "val" ~ patDef ^^
-    	{case _ ~ DefStmt(pats, typeG, expr) => ValDefStmt(pats, typeG, expr)}
+    	{case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr)}
     | "var" ~ varDef ^^
-        {case _ ~ DefStmt(pats, typeG, expr) => VarDefStmt(pats, typeG, expr)}
+        {case _ ~ DefWrapper(pats, typeG, expr) => VarDefStmt(pats, typeG, expr)}
     )
     
-    lazy val varDef: P[DefStmt] =
+    lazy val varDef: P[DefWrapper] =
     ( patDef
     )
     
-    lazy val patDef: P[DefStmt] =
+    lazy val funDef: P[] =
+      (FunSig ~ ":" ~ typeG ~ "=" ~ expr ^^
+          {case }
+      )
+      
+    lazy val FunSig:P[] = 
+      (
+          
+      )
+    
+    
+    lazy val patDef: P[DefWrapper] =
     ( pattern2 ~ rep(pattern2s) ~ ":" ~ typeG ~ "=" ~ expr ^^
-        {case pat ~ pats ~ _ ~ typeG ~ _ ~ expr => DefStmt(pat :: pats, typeG, expr)}
+        {case pat ~ pats ~ _ ~ typeG ~ _ ~ expr => DefWrapper(pat :: pats, typeG, expr)}
     )
     
     lazy val pattern2: P[String] =
