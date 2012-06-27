@@ -65,7 +65,7 @@ object TypeVerifier {
 		try { 
 			verify(ast, maps)
 		} catch {
-			case e: Exception => {println(e.getMessage()); return false}
+			case e: Exception => {println(e.getMessage()+"\nException: "+e); return false}
 		}
 		return true;
 	}
@@ -87,7 +87,13 @@ object TypeVerifier {
 	  		if (type1 != type2) {
 	  			throw new Exception("Binary operator "+op+" cannot be applied to types "+type1+" and "+type2+".");
 	  		} else {
-	  			return type1
+	  			op match {
+	  			  	case ">=:" | "<=:" | ">:" | "<:" => return "Boolean"
+	  			  	case ">=" | "<=" | ">" | "<" => return "Boolean"
+	  			  	case "==:" | "!=:" => return "Boolean"
+	  			  	case "==" | "!=" => return "Boolean"
+	  			  	case _ => return type1;
+	  			}
 	  		}
 	  	}
 	  	case IfThenExpr(predicate, expr) => {
