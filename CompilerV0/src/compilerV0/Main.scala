@@ -93,8 +93,10 @@ object Main {
     testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
     testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
     testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
-    testCompiler("vars", """println({val t0, t1 : Double = 5.0; t0 + t1;})"""); */
-    println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; println(t1)}; t0 + t1;})""")));
+    testCompiler("vars", """println({val t0, t1 : Double = 5.0; t0 + t1;})"""); 
+    */
+    println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; val t1 : Int = 7; println(t1)}; t0 + t1;})""")));
+    println(TypeVerifier(Parser("""{var x, y, z : Int = if (true) 5.0 else 6.0;}""")));
   }
   
   def testCompiler(testName : String, scalaSource : String) {
