@@ -9,7 +9,7 @@ sealed abstract class Stmt {
 }
 case class VarDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
 case class ValDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
-case class FunDefStmt(name : String, args : List[(String, String)], body : Expr) extends Stmt
+case class FunDefStmt(name : String, args : List[(String, String)],retType : String, body : Expr) extends Stmt
 
 sealed abstract class Expr extends Stmt {
   override def isExpr() : Boolean = {true}
@@ -30,7 +30,7 @@ case class PrintlnExpr(expr: Expr) extends Expr
 
 
 case class DefWrapper(ids : List[String], varType: String, value : Expr)
-
+case class FunWrapper(name : String, args : List[(String, String)], retType : String,  body : Expr)
 
 sealed trait OpPair {
   def isLeft() : Boolean;

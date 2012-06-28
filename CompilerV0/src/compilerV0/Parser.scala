@@ -270,7 +270,7 @@ object Parser extends RegexParsers with PackratParsers {
     lazy val defG: P[Stmt] =
     ( patVarDef
     |"def" ~ funDef ^^ 
-      {case name ~ args ~ body => FunDefStmt(name, args, body)}
+      {case  _~ FunWrapper(name, args,retType, body)  => FunDefStmt(name, args,retType, body)}
     )
 	
     lazy val patVarDef: P[Stmt] =
@@ -284,16 +284,43 @@ object Parser extends RegexParsers with PackratParsers {
     ( patDef
     )
     
-    lazy val funDef: P[] =
-      (FunSig ~ ":" ~ typeG ~ "=" ~ expr ^^
-          {case }
-      )
+    lazy val funDef: P[FunWrapper] =
+    (funSig ~ ":" ~ typeG ~ "=" ~ expr ^^
+    	{case  (name, args) ~ _ ~ retType ~ _ ~ body => FunWrapper(name, args, retType, body)}
+    )
       
-    lazy val FunSig:P[] = 
-      (
-          
-      )
+    lazy val funSig: P[(String, List[(String, String)])] = 
+    (id ~ paramClauses ^^
+        {case id ~ paramClauses => (id, paramClauses)}
+    )
     
+    lazy val paramClauses: P[List[(String, String)]] = 
+    (paramClause
+          
+    )
+    
+    lazy val paramClause: P[List[(String, String)]] =
+    ("(" ~ params ~ ")" ^^ 
+        {case _ ~ params ~ _ => params}
+    )
+    
+    lazy val params : P[List[(String, String)]] = 
+    (param ^^ 
+        {case param => List(param)}
+    |param ~ "," ~ params ^^ 
+        {case param ~ _ ~ params => param :: params}
+    )
+    
+    lazy val param : P[(String, String)] =
+    (id ~ ":" ~ paramType ^^
+        {case id ~ _ ~ paramType => (id, paramType)}
+        
+    )
+    
+    lazy val paramType : P[String] = 
+    (typeG
+        
+    )
     
     lazy val patDef: P[DefWrapper] =
     ( pattern2 ~ rep(pattern2s) ~ ":" ~ typeG ~ "=" ~ expr ^^
