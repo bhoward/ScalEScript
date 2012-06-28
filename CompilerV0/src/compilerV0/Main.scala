@@ -47,6 +47,7 @@ object Main {
 	    println(Parser("{val t0, t1 : Int = 5; }"))
 	    println(Parser("{var t : Int = 5; t}"))
 	    */  
+	    println(Parser("{def boots (x : Int, y : Int, z : String): Int = x + y;}"))
 	    println();
 	    
 	    /* CodeGeneration testing */

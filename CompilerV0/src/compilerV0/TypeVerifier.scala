@@ -114,7 +114,7 @@ object TypeVerifier {
 	  		} else {
 	  			var commonType = firstCommonSuperType(trueType, falseType);
 	  			if (commonType == "") {
-	  				throw new Exception("No common subtype found for "+trueType+" and "+falseType+". (Why not Any?)")
+	  				throw new Exception("No common supertype found for "+trueType+" and "+falseType+". (Why not Any?)")
 	  			} else {
 	  				return commonType
 	  			}
@@ -157,6 +157,11 @@ object TypeVerifier {
 	  			throw new Exception("Type "+exprType+" does not match the required type "+vartype+" for vars "+prettyPrint(listOfVarNames)+".")
 	  		}
 	  		return "";
+    	}
+    	case FunDefStmt(name, args, retType, body) => {
+    	    
+    	  
+    	    return ""
     	}
     	case StringExpr(value) => "String"
     	case NumExpr(value) => {
