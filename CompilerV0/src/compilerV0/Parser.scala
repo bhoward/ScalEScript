@@ -301,6 +301,8 @@ object Parser extends RegexParsers with PackratParsers {
     lazy val paramClause: P[List[VarDclStmt]] =
     ( "(" ~ params ~ ")" ^^ 
         {case _ ~ params ~ _ => params}
+    | "(" ~ ")" ^^
+    	{case _ ~ _ => Nil}
     )
     
     lazy val params : P[List[VarDclStmt]] = 

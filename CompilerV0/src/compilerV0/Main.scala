@@ -46,10 +46,11 @@ object Main {
 	    println(Parser("{var t : Int = 5; }"))
 	    println(Parser("{val t0, t1 : Int = 5; }"))
 	    println(Parser("{var t : Int = 5; t}"))  
-	    */
+	    
 		//Functions
 		println(Parser("foo(5, 6)"))
 	    println(Parser("""{def boots (x : Int, y : Int, z : String): Int = x + y; boots(5, 6, "shoes")}"""))
+		*/
 		println();
 	    
 	    /* CodeGeneration testing */
@@ -93,7 +94,10 @@ object Main {
 	    
 	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
-	    */
+	    
+		println("Parsed Expression: " + Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}"""))
+	    println("Code Generated: " + CodeGenerator(Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""")))
+	   	*/
 	    println();
 	    
 	    /* TypeVerifier testing */
@@ -101,15 +105,17 @@ object Main {
 		println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; val t1 : Int = 7; println(t1)}; t0 + t1;})""")));
 	    println(TypeVerifier(Parser("""{var x, y, z : Int = if (true) 5.0 else 6.0;}""")));
 	    */
-	    println(TypeVerifier(Parser("""{var f : Int = 5; def bar (x : Any, y : Int, s : String): AnyVal = f; bar("", 5, "");}""")));
-	    println();
+	    //println(TypeVerifier(Parser("""{var f : Int = 5; def bar (x : Any, y : Int, s : String): AnyVal = f; bar("", 5, "");}""")));
+	    //println();
 	    
 	    /* Entire Compiler testing */
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
 	    testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
 	    testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
 	    testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
-	    testCompiler("vars", """println({var t0, t1 : Double = 5.0; t0 + t1;})"""); 
+	    testCompiler("vars", """println({var t0, t1 : Double = 5.0; t0 + t1;})""");
+	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""");
+	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
