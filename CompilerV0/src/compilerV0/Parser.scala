@@ -269,8 +269,8 @@ object Parser extends RegexParsers with PackratParsers {
     //Called def in the grammar (which is a reserved word, so I used defG)
     lazy val defG: P[Stmt] =
     ( patVarDef
-    |"def" ~ funDef ^^ 
-      {case  _ ~ FunWrapper(name, args, retType, body)  => FunDefStmt(name, args, retType, body)}
+    | "def" ~ funDef ^^ 
+      	{case  _ ~ FunWrapper(name, args, retType, body)  => FunDefStmt(name, args, retType, body)}
     )
 	
     lazy val patVarDef: P[Stmt] =
@@ -285,41 +285,38 @@ object Parser extends RegexParsers with PackratParsers {
     )
     
     lazy val funDef: P[FunWrapper] =
-    (funSig ~ ":" ~ typeG ~ "=" ~ expr ^^
+    ( funSig ~ ":" ~ typeG ~ "=" ~ expr ^^
     	{case  (name, args) ~ _ ~ retType ~ _ ~ body => FunWrapper(name, args, retType, body)}
     )
       
     lazy val funSig: P[(String, List[VarDclStmt])] = 
-    (id ~ paramClauses ^^
+    ( id ~ paramClauses ^^
         {case id ~ paramClauses => (id, paramClauses)}
     )
     
     lazy val paramClauses: P[List[VarDclStmt]] = 
-    (paramClause
-          
+    ( paramClause  
     )
     
     lazy val paramClause: P[List[VarDclStmt]] =
-    ("(" ~ params ~ ")" ^^ 
+    ( "(" ~ params ~ ")" ^^ 
         {case _ ~ params ~ _ => params}
     )
     
     lazy val params : P[List[VarDclStmt]] = 
-    (param ~ "," ~ params ^^ 
+    ( param ~ "," ~ params ^^ 
         {case param ~ _ ~ params => param :: params}
-    |param ^^ 
+    | param ^^ 
         {case param => List(param)}
     )
     
     lazy val param : P[VarDclStmt] =
-    (id ~ ":" ~ paramType ^^
-        {case id ~ _ ~ paramType => VarDclStmt(List(id), paramType)}
-        
+    ( id ~ ":" ~ paramType ^^
+        {case id ~ _ ~ paramType => VarDclStmt(List(id), paramType)}     
     )
     
     lazy val paramType : P[String] = 
-    (typeG
-        
+    ( typeG  
     )
     
     lazy val patDef: P[DefWrapper] =
@@ -385,6 +382,8 @@ object Parser extends RegexParsers with PackratParsers {
 	    {case _ ~ _ ~ expr ~ _ => PrintlnExpr(expr)}
 	| "print" ~ "(" ~ expr ~ ")" ^^ 
 	    {case _ ~ _ ~ expr ~ _ => PrintExpr(expr)}
+	| path ~ argumentExprs ^^ //Defined as simpleExpr1 ~ argumentExprs in the grammar?
+		{case funcName ~ args => FunExpr(funcName, args)}
 	| ("true" | "false") ^^
 	    {case boolLit => BoolExpr(boolLit.toBoolean)}
 	| floatingPointNumber ^^
@@ -393,12 +392,26 @@ object Parser extends RegexParsers with PackratParsers {
 	  	{case numLit => NumExpr(Nint(numLit.toInt)); }
 	| stringLiteral ^^
 		{case strLit => StringExpr(strLit)}
-	| path
+	| path ^^ 
+		{case varId => VarExpr(varId)}
 	)
 	
-	lazy val path: P[Expr] = 
-	( qualId ^^
-	    {case id => VarExpr(id)}
+	lazy val argumentExprs : P[List[Expr]] = 
+	( "(" ~ exprs ~ ")" ^^
+	    {case _ ~ exprs ~ _ => exprs}
+	| "(" ~ ")" ^^
+	  	{case _ ~ _ => Nil}
+	)
+	
+	lazy val exprs : P[List[Expr]] = 
+	( expr ~ "," ~ exprs ^^
+	    {case expr ~ _ ~ exprs => expr :: exprs}
+	| expr ^^
+		{case expr => List(expr)}
+	) 
+	
+	lazy val path: P[String] = 
+	( qualId
 	)
 	
 	lazy val op1: P[String] = "||" | "||"
@@ -496,5 +509,5 @@ object Parser extends RegexParsers with PackratParsers {
 }
 
 trait JavaComments { this: RegexParsers =>
-  override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))*""".r
+  	override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))*""".r
 }
