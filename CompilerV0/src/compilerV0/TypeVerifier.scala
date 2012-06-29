@@ -140,21 +140,21 @@ object TypeVerifier {
 	  	case VarExpr(varName) => {
 	  		return getVarType(maps, varName);
 	  	}
-	  	case ValDefStmt(listOfValNames, valtype, expr) => {
+	  	case ValDefStmt(listOfValNames, valType, expr) => {
 	  		var exprType = verify(expr, maps);
-	  		if (checkType(exprType, valtype)) {
-	  			putAllVars(maps.head, listOfValNames, valtype)
+	  		if (checkType(exprType, valType)) {
+	  			putAllVars(maps.head, listOfValNames, valType)
 	  		} else {
-	  			throw new Exception("Type "+exprType+" does not match the required type "+valtype+" for vals "+prettyPrint(listOfValNames)+".")
+	  			throw new Exception("Type "+exprType+" does not match the required type "+valType+" for vals "+prettyPrint(listOfValNames)+".")
 	  		}
 	  		return "";
 	  	}
-    	case VarDefStmt(listOfVarNames, vartype, expr) => {
+    	case VarDefStmt(listOfVarNames, varType, expr) => {
     		var exprType = verify(expr, maps);
-	  		if (checkType(exprType, vartype)) {
-	  			putAllVars(maps.head, listOfVarNames, vartype)
+	  		if (checkType(exprType, varType)) {
+	  			putAllVars(maps.head, listOfVarNames, varType)
 	  		} else {
-	  			throw new Exception("Type "+exprType+" does not match the required type "+vartype+" for vars "+prettyPrint(listOfVarNames)+".")
+	  			throw new Exception("Type "+exprType+" does not match the required type "+varType+" for vars "+prettyPrint(listOfVarNames)+".")
 	  		}
 	  		return "";
     	}
