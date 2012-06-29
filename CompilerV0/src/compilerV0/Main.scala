@@ -86,9 +86,11 @@ object Main {
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
 	    */
-	    println("Parsed Expression: " + Parser("{def boots (x : Int, y : Int, z : String): Int = x + y;}"))
+	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}")))
 	    
-	    println("Code Generated: " + CodeGenerator(Parser("{def boots (x : Int, y : Int, z : String): Int = x + y;}")))
+	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
 	    println();
 	    
 	    /* TypeVerifier testing */

@@ -24,7 +24,7 @@ object CodeGenerator {
     	case PrintExpr(msg) => "document.write(" + generate(msg) + ")"
     	case PrintlnExpr(msg) => "document.writeln(" + generate(msg) + ")"
     	case FunDefStmt(name, args, retType, body) => "function " + name + " ( " + funArgProcess(args) + " ) " + 
-    	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return ;"
+    	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return "
     	                                               else "return " + generate(body)) +
     	                                               "; \n }"
     	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)                                            
