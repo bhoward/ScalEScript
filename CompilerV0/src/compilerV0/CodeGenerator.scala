@@ -12,7 +12,7 @@ object CodeGenerator {
     	case VarExpr(varName) => varName
     	case IfThenExpr(predicate, expr) => "ifThen( " + 
     		"(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
-    		"(function() { \n" + "return " + generate(predicate)  + " })()" + " )"
+    		"(function() { \n" + "return " + generate(expr)  + " })()" + " )"
     	case IfThenElseExpr(predicate, truevalue, falsevalue) => 
     		"ifThenElse( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + "(function() { \n" + 
     		"return " + generate(truevalue)  + " })()" + ", " +"(function() { \n" + 
@@ -27,8 +27,14 @@ object CodeGenerator {
     	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return "
     	                                               else "return " + generate(body)) +
     	                                               "; \n }"
-    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)                                            
+    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)
+    	case FunExpr(name, args) => name + "(" + exprsProcess(args) + ")"
     	case _ => "failure"
+	}
+	def exprsProcess(loe : List[Expr]):String = loe match {
+	  	case Nil => ""
+	  	case x::Nil => generate(x)
+	  	case x::xs => generate(x) + ", " + exprsProcess(xs)
 	}
 	def blockProcess(loe : List[Stmt]):String = loe match {
     	case List() => ""
