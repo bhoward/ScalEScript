@@ -45,9 +45,9 @@ object Main {
 	    //Vals and Vars
 	    println(Parser("{var t : Int = 5; }"))
 	    println(Parser("{val t0, t1 : Int = 5; }"))
-	    println(Parser("{var t : Int = 5; t}"))
-	    */  
+	    println(Parser("{var t : Int = 5; t}"))  
 	    println(Parser("{def boots (x : Int, y : Int, z : String): Int = x + y;}"))
+	    */
 	    println();
 	    
 	    /* CodeGeneration testing */
@@ -85,8 +85,12 @@ object Main {
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5;}")))
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
-	    println();
 	    */
+	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}")))
+	    
+	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
 	    println();
 	    
 	    /* TypeVerifier testing */
