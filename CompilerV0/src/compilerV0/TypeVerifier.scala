@@ -65,7 +65,7 @@ object TypeVerifier {
 		try { 
 			verify(ast, maps)
 		} catch {
-			case e: Exception => {println(e.getMessage()+"\nException: "+e); return false}
+			case e: Exception => {println(e); return false}
 		}
 		return true;
 	}
@@ -158,8 +158,23 @@ object TypeVerifier {
 	  		}
 	  		return "";
     	}
+    	case VarDclStmt(ids, varType) => {
+	  		putAllVars(maps.head, ids, varType)
+	  		return "";
+    	}
     	case FunDefStmt(name, params, retType, body) => {
-    	    
+    		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
+    		//add params to the new map (by verifying them)
+    		params.map(param => verify(param, myMaps))
+    		//verify body vs return type (with the new map)
+    	    var bodyType = verify(body, myMaps);
+	  		if (checkType(bodyType, retType)) {
+	  			var paramTypes = params.map(param => param.varType)
+	  			//add to map
+	  			putFunc(maps.head, name, paramTypes, retType);
+	  		} else {
+	  			throw new Exception("Body type "+bodyType+" does not match the required return type "+retType+" for function "+name+".")
+	  		}
     	  
     	    return ""
     	}
@@ -175,12 +190,12 @@ object TypeVerifier {
     	    		argTypes = argTypes.tail;
     	    		paramTypes = paramTypes.tail;
     	    	}
-    	    	if (argTypes.length > 0) {
-    	    		throw new Exception("Too many arguements specified for function "+id+".")
-    	    	} else if (paramTypes.length > 0) {
-    	    		throw new Exception("Not enough arguements specified for function "+id+".")
-    	    	}
     	    }
+	    	if (argTypes.length > 0) {
+	    		throw new Exception("Too many arguements specified for function "+id+".")
+	    	} else if (paramTypes.length > 0) {
+	    		throw new Exception("Not enough arguements specified for function "+id+".")
+	    	}
     		return retType;
     	}
     	case StringExpr(value) => "String"
@@ -236,9 +251,24 @@ object TypeVerifier {
 	  		}
 	  	}
 	}
+	def putFunc(map : Map[String, Type], funcName: String, params : List[String], retType : String): Boolean = {
+		if (!map.contains(funcName)) {
+			if (!scalaTypes.contains(retType)) { //Unknown return type
+				throw new Exception("Unknown return type "+retType+" for function "+funcName+".")
+			} else if (params.foldLeft(false)((result, param) => result || !scalaTypes.contains(param))) { //Unknown param type
+				throw new Exception("Unknown parameter type found in parameters: "+params+" for function "+funcName+".")
+			} else {
+				var paramTypes : List[VarType] = params.map(param => new VarType(param))
+				map.put(funcName, new FuncType(retType, paramTypes)); 
+				return true;
+			}
+		} else {
+			throw new Exception("The function "+funcName+" is already defined in the current scope.")
+		}
+	}
 	def putAllVars(map : Map[String, Type], varNames: List[String], varType : String): Boolean = {
 		if (!scalaTypes.contains(varType)) { //Unknown type
-			throw new Exception("Unknown type "+varType+".")
+			throw new Exception("Unknown type "+varType+" for vars "+prettyPrint(varNames)+".")
 		}
 		return putAllVarsH(map, varNames, varType);
 	}

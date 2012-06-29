@@ -46,9 +46,11 @@ object Main {
 	    println(Parser("{var t : Int = 5; }"))
 	    println(Parser("{val t0, t1 : Int = 5; }"))
 	    println(Parser("{var t : Int = 5; t}"))  
-	    println(Parser("{def boots (x : Int, y : Int, z : String): Int = x + y;}"))
 	    */
-	    println();
+		//Functions
+		println(Parser("foo(5, 6)"))
+	    println(Parser("""{def boots (x : Int, y : Int, z : String): Int = x + y; boots(5, 6, "shoes")}"""))
+		println();
 	    
 	    /* CodeGeneration testing */
 	    /*
@@ -85,12 +87,13 @@ object Main {
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5;}")))
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
-	    */
+	   
 	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}")))
 	    
 	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
+	    */
 	    println();
 	    
 	    /* TypeVerifier testing */
@@ -98,6 +101,7 @@ object Main {
 		println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; val t1 : Int = 7; println(t1)}; t0 + t1;})""")));
 	    println(TypeVerifier(Parser("""{var x, y, z : Int = if (true) 5.0 else 6.0;}""")));
 	    */
+	    println(TypeVerifier(Parser("""{var f : Int = 5; def bar (x : Any, y : Int, s : String): AnyVal = f; bar("", 5, "");}""")));
 	    println();
 	    
 	    /* Entire Compiler testing */
