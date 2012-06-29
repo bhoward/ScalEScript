@@ -9,7 +9,7 @@ sealed abstract class Stmt {
 }
 case class VarDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
 case class ValDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
-case class FunDefStmt(name : String, args : List[VarDclStmt], retType : String, body : Expr) extends Stmt
+case class FunDefStmt(name : String, params : List[VarDclStmt], retType : String, body : Expr) extends Stmt
 case class VarDclStmt(ids : List[String], varType: String) extends Stmt
 
 sealed abstract class Expr extends Stmt {
@@ -19,6 +19,7 @@ case class BoolExpr(bool : Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str : String) extends Expr
 case class VarExpr(id: String) extends Expr
+case class FunExpr(id: String, args : List[Expr]) extends Expr
 case class BlockExpr(body: List[Stmt]) extends Expr
 case class BinOpExpr(op: String, left: Expr, right: Expr) extends Expr
 case class UnOpExpr(op: String, expr: Expr) extends Expr
@@ -34,17 +35,33 @@ case class DefWrapper(ids : List[String], varType: String, value : Expr)
 case class FunWrapper(name : String, args : List[VarDclStmt], retType : String,  body : Expr)
 
 sealed trait OpPair {
-  def isLeft() : Boolean;
-  def getOp() : String;
-  def getExpr() : Expr;
+	def isLeft() : Boolean;
+  	def getOp() : String;
+  	def getExpr() : Expr;
 }
 case class LeftOpPair(op: String, expr: Expr) extends OpPair {
-  def isLeft() : Boolean = true;
-  def getOp() : String = op;
-  def getExpr() : Expr = expr;
+	def isLeft() : Boolean = true;
+  	def getOp() : String = op;
+  	def getExpr() : Expr = expr;
 }
 case class RightOpPair(op: String, expr: Expr) extends OpPair {
-  def isLeft(): Boolean = false;
-  def getOp() : String = op;
-  def getExpr() : Expr = expr;
+	def isLeft(): Boolean = false;
+  	def getOp() : String = op;
+  	def getExpr() : Expr = expr;
+}
+
+sealed trait Type {
+	def isVar() : Boolean;
+	def getType() : String;
+	def getArgTypes() : List[VarType];
+}
+case class VarType(varType : String) extends Type {
+	def isVar() : Boolean = true;
+	def getType() : String = varType;
+	def getArgTypes() : List[VarType] = Nil;
+}
+case class FuncType(retType : String, argTypes : List[VarType]) extends Type {
+	def isVar() : Boolean = false;
+	def getType() : String = retType;
+	def getArgTypes() : List[VarType] = argTypes;
 }

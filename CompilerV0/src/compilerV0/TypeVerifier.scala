@@ -60,8 +60,8 @@ object TypeVerifier {
 	}
 	
 	def verifyInit(ast : Expr) : Boolean = {
-		var map : Map[String, String] = scala.collection.mutable.Map[String, String]()
-		var maps : List[Map[String, String]] = map :: Nil
+		var map : Map[String, Type] = scala.collection.mutable.Map[String, Type]()
+		var maps : List[Map[String, Type]] = map :: Nil
 		try { 
 			verify(ast, maps)
 		} catch {
@@ -70,9 +70,9 @@ object TypeVerifier {
 		return true;
 	}
 	
-	def verify(ast : Stmt, maps : List[Map[String, String]]) : String = ast match {
+	def verify(ast : Stmt, maps : List[Map[String, Type]]) : String = ast match {
 	  	case BlockExpr(listofstatements) => {
-	  		var myMaps : List[Map[String, String]] = scala.collection.mutable.Map[String, String]()::maps
+	  		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
 	  		var stmtTypes : List[String] = listofstatements.map(stmt => verify(stmt, myMaps))
 	  		var lastStmtType = stmtTypes.last;
 	  		if (lastStmtType == "") {
@@ -138,12 +138,12 @@ object TypeVerifier {
         	return "Unit"
         }
 	  	case VarExpr(varName) => {
-	  		return getType(maps, varName);
+	  		return getVarType(maps, varName);
 	  	}
 	  	case ValDefStmt(listOfValNames, valtype, expr) => {
 	  		var exprType = verify(expr, maps);
 	  		if (checkType(exprType, valtype)) {
-	  			putAll(maps.head, listOfValNames, valtype)
+	  			putAllVars(maps.head, listOfValNames, valtype)
 	  		} else {
 	  			throw new Exception("Type "+exprType+" does not match the required type "+valtype+" for vals "+prettyPrint(listOfValNames)+".")
 	  		}
@@ -152,16 +152,36 @@ object TypeVerifier {
     	case VarDefStmt(listOfVarNames, vartype, expr) => {
     		var exprType = verify(expr, maps);
 	  		if (checkType(exprType, vartype)) {
-	  			putAll(maps.head, listOfVarNames, vartype)
+	  			putAllVars(maps.head, listOfVarNames, vartype)
 	  		} else {
 	  			throw new Exception("Type "+exprType+" does not match the required type "+vartype+" for vars "+prettyPrint(listOfVarNames)+".")
 	  		}
 	  		return "";
     	}
-    	case FunDefStmt(name, args, retType, body) => {
+    	case FunDefStmt(name, params, retType, body) => {
     	    
     	  
     	    return ""
+    	}
+    	case FunExpr(id, args) => {
+    		var funcTypes : (String, List[String]) = getFuncType(maps, id);
+    		var retType : String = funcTypes._1
+    		var paramTypes : List[String] = funcTypes._2
+    		var argTypes : List[String] = args.map(arg => verify(arg, maps))
+    	    while (argTypes.length > 0 && paramTypes.length > 0) {
+    	    	if (!checkType(argTypes.head, paramTypes.head)){
+    	    		throw new Exception("Arguement type "+argTypes.head+" does not match the required type "+paramTypes.head+" for function "+id+".")
+    	    	} else {
+    	    		argTypes = argTypes.tail;
+    	    		paramTypes = paramTypes.tail;
+    	    	}
+    	    	if (argTypes.length > 0) {
+    	    		throw new Exception("Too many arguements specified for function "+id+".")
+    	    	} else if (paramTypes.length > 0) {
+    	    		throw new Exception("Not enough arguements specified for function "+id+".")
+    	    	}
+    	    }
+    		return retType;
     	}
     	case StringExpr(value) => "String"
     	case NumExpr(value) => {
@@ -185,27 +205,49 @@ object TypeVerifier {
 	  			return contains(rest, varName)
 	  	}
 	} */
-	def getType(maps : List[Map[String, String]], varName: String) : String = maps match {
+	def getVarType(maps : List[Map[String, Type]], varName: String) : String = maps match {
 	  	case Nil => throw new Exception("Unknown variable "+varName+".");
 	  	case currentScope::rest => {
-	  		if (currentScope.contains(varName))
-	  			return currentScope.get(varName).get
-	  		else
-	  			return getType(rest, varName)
+	  		if (currentScope.contains(varName)) {
+	  			var theType : Type = currentScope.get(varName).get
+	  			if (theType.isVar()) {
+	  				return theType.getType();
+	  			} else {
+	  				throw new Exception("Tried to use the function "+varName+" in a variable context (no parentheses).")
+	  			}
+  			} else {
+	  			return getVarType(rest, varName)
+	  		}
 	  	}
 	}
-	def putAll(map : Map[String, String], varNames: List[String], varType : String): Boolean = {
+	def getFuncType(maps : List[Map[String, Type]], funcName: String) : (String, List[String]) = maps match {
+	  	case Nil => throw new Exception("Unknown function "+funcName+".");
+	  	case currentScope::rest => {
+	  		if (currentScope.contains(funcName)) {
+	  			var theType : Type = currentScope.get(funcName).get
+	  			if (!theType.isVar()) {
+	  				var argTypes : List[VarType] = theType.getArgTypes();
+	  				return (theType.getType(), argTypes.map(argType => argType.getType()));
+	  			} else {
+	  				throw new Exception("Tried to use the variable "+funcName+" in a function context (with parentheses).")
+	  			}
+  			} else {
+	  			return getFuncType(rest, funcName)
+	  		}
+	  	}
+	}
+	def putAllVars(map : Map[String, Type], varNames: List[String], varType : String): Boolean = {
 		if (!scalaTypes.contains(varType)) { //Unknown type
 			throw new Exception("Unknown type "+varType+".")
 		}
-		return putAllH(map, varNames, varType);
+		return putAllVarsH(map, varNames, varType);
 	}
-	def putAllH(map : Map[String, String], varNames: List[String], varType : String): Boolean = varNames match {
+	def putAllVarsH(map : Map[String, Type], varNames: List[String], varType : String): Boolean = varNames match {
 	  	case Nil => return true;
 	 	case x::xs => {
 	 		if (!map.contains(x)) {
-	 			map.put(x, varType); 
-	 			return putAll(map, xs, varType);
+	 			map.put(x, new VarType(varType)); 
+	 			return putAllVars(map, xs, varType);
 	 		} else {
 	 			throw new Exception("The variable "+x+" is already defined in the current scope.")
 	 		}
