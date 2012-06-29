@@ -23,11 +23,16 @@ object CodeGenerator {
     	case StringExpr(value) => value
     	case PrintExpr(msg) => "document.write(" + generate(msg) + ")"
     	case PrintlnExpr(msg) => "document.writeln(" + generate(msg) + ")"
+    	case FunDefStmt(name, args, retType, body) => "function " + name + " ( " + funArgProcess(args) + " ) " + 
+    	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return ;"
+    	                                               else "return " + generate(body)) +
+    	                                               "; \n }"
+    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)                                            
     	case _ => "failure"
 	}
 	def blockProcess(loe : List[Stmt]):String = loe match {
     	case List() => ""
-    	case List(x) => if (x.isExpr()) "return " + generate(x) + " ;" else "return ;"
+    	case List(x) => if (x.isExpr()) "return " + generate(x) + " ;" else generate(x) + ";\n return ;"
     	case x::xs => generate(x) + "; \n" + blockProcess(xs)
 	}
 	def varProcess(los : List[String], expr : Expr):String = los match{
@@ -38,6 +43,11 @@ object CodeGenerator {
 	def varProcessAux(los : List[String], expr : Expr):String = los match{
   		case Nil => generate(expr)
   		case x::xs => x + " = " + varProcessAux(xs, expr)
+	}
+	def funArgProcess(lov : List[VarDclStmt]):String = lov match{
+	  case List() => ""
+	  case List(x) => generate(x)
+	  case x::xs => generate(x) + ", " + funArgProcess(xs)
 	}
 	def apply(source: Expr): String = generate (source)
 }
