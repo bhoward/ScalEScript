@@ -378,7 +378,7 @@ object Parser extends RegexParsers with PackratParsers {
     def upperid: Parser[String] = ("""[A-Z][A-Za-z0-9]*""").r
     def varid: Parser[String] = ("""[a-z][A-Za-z0-9]*""").r
     
-    //Put println here for the moment, it should just be implemented in to a function when they are added
+    //Put println here for the moment, it should just be implemented as a function when they are added
 	lazy val simpleExpr1: P[Expr] = 
 	( "println" ~ "(" ~ expr ~ ")" ^^ 
 	    {case _ ~ _ ~ expr ~ _ => PrintlnExpr(expr)}
