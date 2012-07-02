@@ -6,7 +6,7 @@ object TypeVerifier {
 	//ScalaTypes maps a string which is a type name to the list of its parent types (including itself), starting from Any
 	var scalaTypes : Map[String, List[String]] = Map[String, List[String]]()
   
-	def initScalaTypes {
+	def initScalaTypes(): Unit = {
 	  	scalaTypes.put("Any", List[String]("Any"));
 	  	
 	  	scalaTypes.put("AnyVal", List[String]("Any", "AnyVal"));
