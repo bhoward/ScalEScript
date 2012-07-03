@@ -514,6 +514,7 @@ var Parsers = function() {
         			});
         		})(outer.apply(s)).get();
         	}
+        	return result;
         }
     }
     
@@ -581,10 +582,12 @@ var Parsers = function() {
         result.apply = function(s) {
         	return Success(v, s);
         }
+        return result;
     }
 }
 
 var RegexParsers = function() {
+    // These two functions are not (yet?) "implicit"
 	this.keyword = function(str) {
 		return new KeywordParser(str); // will it find this through the prototype?
 	}
@@ -592,8 +595,14 @@ var RegexParsers = function() {
 	this.regex = function(r) {
 		var result = new Parser();
 		result.apply = function(s) {
-			// TODO
+			var a = r.exec(s)
+			if (a !== null && a.index === 0) {
+			    return Success(a[0], s.substring(a[0].length));
+			} else {
+			    return Failure("Expected '" + r + "' got '" + s + "'");
+			}
 		}
+		return result;
 	}
 }
 RegexParsers.prototype = new Parsers();
