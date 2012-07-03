@@ -248,11 +248,12 @@ object Parser extends RegexParsers with PackratParsers {
 		{case _ ~ stmt ~ _ => BlockExpr(stmt)}
 	)
 	
+	//Filter out the nulls (empty statements)
 	lazy val block: P[List[Stmt]] =
 	( rep(block1) ~ expr ^^
-		{case stmt ~ expr  => stmt ++ List[Expr](expr)}
+		{case stmt ~ expr  => stmt.filter((x => x != null)) ++ List[Expr](expr)}
 	| rep(block1) ^^
-		{case stmt => stmt}
+		{case stmt => stmt.filter((x => x != null))}
 	)
 	
 	//Not defined in scala grammar. Used to match multiple blockStats seperated by a semicolon
@@ -264,6 +265,7 @@ object Parser extends RegexParsers with PackratParsers {
 	lazy val blockStat: P[Stmt] = 
 	( defG
 	| expr1
+	| "" ^^ {case _ => null}
     )
     
     //Called def in the grammar (which is a reserved word, so I used defG)
