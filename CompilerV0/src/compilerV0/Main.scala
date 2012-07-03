@@ -117,13 +117,16 @@ object Main {
 	    testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
 	    testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
 	    testCompiler("vars", """println({var t0, t1 : Double = 5.0; t0 + t1;})""");
-	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""");
+	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); 5;}""");
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
 		try {
 			val ast = Parser(scalaSource);
+			if (!TypeVerifier(ast)) {
+				throw new Exception("Failed the type checker.")
+			}
 			val jsSource = CodeGenerator(ast);
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
 			println(testName+".html was successfully created.");
