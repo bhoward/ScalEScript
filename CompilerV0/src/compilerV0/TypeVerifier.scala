@@ -69,12 +69,17 @@ object TypeVerifier {
 	def verify(ast : Stmt, maps : List[Map[String, Type]]) : String = ast match {
 	  	case BlockExpr(listofstatements) => {
 	  		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
+	  		
 	  		var stmtTypes : List[String] = listofstatements.map(stmt => verify(stmt, myMaps))
-	  		var lastStmtType = stmtTypes.last;
-	  		if (lastStmtType == "") {
-	  			return "Unit"
+	  		if (stmtTypes.length > 0) {
+		  		var lastStmtType = stmtTypes.last;
+		  		if (lastStmtType == "") {
+		  			return "Unit"
+		  		} else {
+		  			return lastStmtType
+		  		}
 	  		} else {
-	  			return lastStmtType
+	  			return "Unit"
 	  		}
 	  	}
 	  	case BinOpExpr(op, l, r) => {
@@ -162,13 +167,14 @@ object TypeVerifier {
     		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
     		//add params to the new map (by verifying them)
     		params.map(param => verify(param, myMaps))
+    		
+    		var paramTypes = params.map(param => param.varType)
+  			//add to map
+  			putFunc(maps.head, name, paramTypes, retType);
+    		
     		//verify body vs return type (with the new map)
     	    var bodyType = verify(body, myMaps);
-	  		if (checkType(bodyType, retType)) {
-	  			var paramTypes = params.map(param => param.varType)
-	  			//add to map
-	  			putFunc(maps.head, name, paramTypes, retType);
-	  		} else {
+	  		if (!checkType(bodyType, retType)) {
 	  			throw new Exception("Body type "+bodyType+" does not match the required return type "+retType+" for function "+name+".")
 	  		}
     	  
