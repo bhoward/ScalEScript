@@ -37,8 +37,9 @@ object CodeGenerator {
 	  	case x::xs => generate(x) + ", " + exprsProcess(xs)
 	}
 	def blockProcess(loe : List[Stmt]):String = loe match {
-    	case List() => ""
-    	case List(x) => if (x.isExpr()) "return " + generate(x) + " ;" else generate(x) + ";\n return ;"
+    	case List() => "return ;"
+    	case List(x) => if (x.isExpr()) "return " + generate(x) + 
+    	                                " ;" else throw new Exception("The last line in the block is a Stmt, Expected Expr")
     	case x::xs => generate(x) + "; \n" + blockProcess(xs)
 	}
 	def varProcess(los : List[String], expr : Expr):String = los match{

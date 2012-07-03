@@ -53,35 +53,36 @@ object Main {
 		*/
 		println();
 	    
-	    /* CodeGeneration testing */
+	    /* CodeGenerator testing */
 	    /*
-	    println(CodeGeneration (Parser("1   ")))
-	    println(CodeGeneration (Parser("1 + 5")))
-	    println(CodeGeneration (Parser("1 * 5")))
-	    println(CodeGeneration (Parser("1.0 + 3 * 5")))
+	    println(CodeGenerator (Parser("1   ")))
+	    println(CodeGenerator (Parser("1 + 5")))
+	    println(CodeGenerator (Parser("1 * 5")))
+	    println(CodeGenerator (Parser("1.0 + 3 * 5")))
 	    
 	    println("Parsed Expression: " + Parser("if (true || false) 5"))
-	    println("Code Generated: " + CodeGeneration(Parser("if (true || false) 5")))
+	    println("Code Generated: " + CodeGenerator(Parser("if (true || false) 5")))
 	    println("Parsed Expression: " + Parser("if (5 > 3) 5 else 6"))
-	    println("Code Generated: " + CodeGeneration(Parser("if (5 > 3) 5 else 6")))
+	    println("Code Generated: " + CodeGenerator(Parser("if (5 > 3) 5 else 6")))
 	    
 	    println("Parsed Expression: " + Parser("while (true) 5"))
-	    println("Code Generated: " + CodeGeneration(Parser("while (true) 5")))
-	    
+	    println("Code Generated: " + CodeGenerator(Parser("while (true) 5")))
+	    */
 	    println("Parsed Expression: " + Parser("{ }"))
-	    println("Code Generated: " + CodeGeneration(Parser("{ }")))
+	    println("Code Generated: " + CodeGenerator(Parser("{ }")))
 	    println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; }"))
-	    println("Code Generated: " + CodeGeneration(Parser("{ 1; 2; 3; 4; }")))
-	    
+	    println("Code Generated: " + CodeGenerator(Parser("{ 1; 2; 3; 4; }")))
+	    /*
 	    println("Parsed Expression: " + Parser(""""hey""""))
-	    println("Code Generated: " + CodeGeneration(Parser(""""hey"""")))
+	    println("Code Generated: " + CodeGenerator(Parser(""""hey"""")))
 	    println("Parsed Expression: " + Parser("print(5)"));
-	    println("Code Generated: " + CodeGeneration(Parser("print(5)")))
+	    println("Code Generated: " + CodeGenerator(Parser("print(5)")))
 	    println("Parsed Expression: " + Parser("""println("hello world")"""))
-	    println("Code Generated: " + CodeGeneration(Parser("""println("hello world")""")))
-	
+	    println("Code Generated: " + CodeGenerator(Parser("""println("hello world")""")))
+	    */
 	    println("Parsed Expression: " + Parser("{var t : Int = 5; }"))
 	    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5; }")))
+	    /*
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; }")))
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
