@@ -62,11 +62,7 @@ object TypeVerifier {
 	def verifyInit(ast : Expr) : Boolean = {
 		var map : Map[String, Type] = scala.collection.mutable.Map[String, Type]()
 		var maps : List[Map[String, Type]] = map :: Nil
-		try { 
-			verify(ast, maps)
-		} catch {
-			case e: Exception => {println(e); return false}
-		}
+		verify(ast, maps)
 		return true;
 	}
 	

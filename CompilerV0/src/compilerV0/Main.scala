@@ -67,22 +67,22 @@ object Main {
 	    
 	    println("Parsed Expression: " + Parser("while (true) 5"))
 	    println("Code Generated: " + CodeGenerator(Parser("while (true) 5")))
-	    */
-	    println("Parsed Expression: " + Parser("{ }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{ }")))
-	    println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{ 1; 2; 3; 4; }")))
-	    /*
+	    
+	    println("Parsed Expression: " + Parser("{ ; ; ; ;}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{ ; ; ; ; }")))
+	    println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; ; ;}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{ 1; 2; 3; 4; ; ;}")))
+	    
 	    println("Parsed Expression: " + Parser(""""hey""""))
 	    println("Code Generated: " + CodeGenerator(Parser(""""hey"""")))
 	    println("Parsed Expression: " + Parser("print(5)"));
 	    println("Code Generated: " + CodeGenerator(Parser("print(5)")))
 	    println("Parsed Expression: " + Parser("""println("hello world")"""))
 	    println("Code Generated: " + CodeGenerator(Parser("""println("hello world")""")))
-	    */
+	    
 	    println("Parsed Expression: " + Parser("{var t : Int = 5; }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5; }")))
-	    /*
+	    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5;}")))
+	    
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; }")))
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
@@ -110,6 +110,8 @@ object Main {
 	    //println();
 	    
 	    /* Entire Compiler testing */
+	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
+	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
 	    testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
 	    testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
@@ -120,13 +122,14 @@ object Main {
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
-		val ast = Parser(scalaSource);
-	    if (!TypeVerifier(ast)){
-	    	println("Scala source did not pass the typeVerifier");
-	    	return;
-	    }
-	    val jsSource = CodeGenerator(ast);
-	    writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
+		try {
+			val ast = Parser(scalaSource);
+			val jsSource = CodeGenerator(ast);
+			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
+			println(testName+".html was successfully created.");
+		} catch {
+			case e: Exception => {println("Error while compiling "+testName+". "+e);}
+		}
     }
   
 	def writeToFile(fileName : String, contents : String){
