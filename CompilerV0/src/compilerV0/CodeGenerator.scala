@@ -2,9 +2,10 @@ package compilerV0
 
 object CodeGenerator {
 	def generate (ast : Stmt):String = ast match {
-    	case NumExpr(value) => value.toString
+    	case NumExpr(wrappedval) => wrappedval match{case Nint(value) => value.toString
+    	                                             case Ndouble(value) => value.toString}
     	case BoolExpr(value) => value.toString
-    	case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + op + " " + generate(r) + ")"
+    	case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + (if(op == "==") "===" else op) + " " + generate(r) + ")"
     	case ValDefStmt(listofvaldecs, valtype, expr) => "var " + varProcess(listofvaldecs, expr) + 
                                                      " " + varProcessAux(listofvaldecs, expr)
     	case VarDefStmt(listofvardecs, valtype, expr) => "var " + varProcess(listofvardecs, expr) + 

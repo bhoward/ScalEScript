@@ -1,13 +1,13 @@
 <html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">println({{5; 4; ; ; ; 6;}; {}})</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">PrintlnExpr(BlockExpr(List(BlockExpr(List(NumExpr(Nint(5)), NumExpr(Nint(4)), NumExpr(Nint(6)))), BlockExpr(List()))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">document.writeln((function() { 
 (function() { 
-Nint(5); 
-Nint(4); 
-return Nint(6) ; })(); 
+5; 
+4; 
+return 6 ; })(); 
 return (function() { 
 return ; })() ; })())</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">document.writeln((function() { 
 (function() { 
-Nint(5); 
-Nint(4); 
-return Nint(6) ; })(); 
+5; 
+4; 
+return 6 ; })(); 
 return (function() { 
 return ; })() ; })())</script></div></body>

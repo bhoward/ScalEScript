@@ -119,6 +119,7 @@ object Main {
 	    testCompiler("vars", """println({var t0, t1 : Double = 5.0; t0 + t1;})""");
 	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); 5;}""");
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
+	    testCompiler("recurfun1", """println({def fact(x: Int):Int = {println(x); if (x == 0) 1 else x * fact(x-1)};fact(5);})""");
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
