@@ -12,12 +12,12 @@ object CodeGenerator {
                                                      " " + varProcessAux(listofvardecs, expr)
     	case VarExpr(varName) => varName
     	case IfThenExpr(predicate, expr) => "ifThen( " + 
-    		"(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
-    		"(function() { \n" + "return " + generate(expr)  + " })()" + " )"
+    		"(function() { \n" + "return " + generate(predicate)  + " })" + ", " + 
+    		"(function() { \n" + "return " + generate(expr)  + " })" + " )"
     	case IfThenElseExpr(predicate, truevalue, falsevalue) => 
-    		"ifThenElse( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + "(function() { \n" + 
-    		"return " + generate(truevalue)  + " })()" + ", " +"(function() { \n" + 
-    		"return " + generate(falsevalue)  + " })()" + " )"
+    		"ifThenElse( " + "(function() { \n" + "return " + generate(predicate)  + " })" + ", " + "(function() { \n" + 
+    		"return " + generate(truevalue)  + " })" + ", " +"(function() { \n" + 
+    		"return " + generate(falsevalue)  + " })" + " )"
     	case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
 			"(function() { \n" + "return " + generate(body)  + " })()" + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"

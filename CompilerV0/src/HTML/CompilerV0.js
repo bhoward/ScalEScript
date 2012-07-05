@@ -1,13 +1,13 @@
 function ifThen(test, trueClause) {
-    if (test) {
-        return trueClause;
+    if (test()) {
+        return trueClause();
     }
 }
 function ifThenElse(test, trueClause, falseClause) {
-    if (test) {
-        return trueClause;
+    if (test()) {
+        return trueClause();
     } else {
-        return falseClause;
+        return falseClause();
     }
 }
 function whileLoop(test, body) {
