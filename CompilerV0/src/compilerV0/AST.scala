@@ -26,10 +26,6 @@ case class UnOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class WhileExpr(test: Expr, body: Expr) extends Expr
-case class PrintExpr(expr: Expr) extends Expr
-case class PrintlnExpr(expr: Expr) extends Expr
-
-
 
 case class DefWrapper(ids : List[String], varType: String, value : Expr)
 case class FunWrapper(name : String, args : List[VarDclStmt], retType : String,  body : Expr)

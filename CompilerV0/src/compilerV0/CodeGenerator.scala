@@ -22,8 +22,6 @@ object CodeGenerator {
 			"(function() { \n" + "return " + generate(body)  + " })()" + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     	case StringExpr(value) => value
-    	case PrintExpr(msg) => "document.write(" + generate(msg) + ")"
-    	case PrintlnExpr(msg) => "document.writeln(" + generate(msg) + ")"
     	case FunDefStmt(name, args, retType, body) => "function " + name + " ( " + funArgProcess(args) + " ) " + 
     	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return "
     	                                               else "return " + generate(body)) +

@@ -16,6 +16,13 @@ function whileLoop(test, body) {
     }
 }
 
+function println(stmt) {
+    document.writeln(stmt);
+}
+function print(stmt) {
+    document.write(stmt);
+}
+
 function Nint(num) {
     return num;
 }

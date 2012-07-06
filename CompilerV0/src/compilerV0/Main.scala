@@ -18,7 +18,7 @@ object Main {
 	    
 	    //If statement
 	    println(Parser("if (true) 6"))
-	    println(Parser("if (false) 6 else 7"))    
+	    println(Parser("if (5) 5 else 7"))    
 	    println(Parser("if (false && true) 5 else 6"))
 	    println(Parser("if (true == true) 5 else 6"))
 	    println(Parser("if (true != false) 5 else 6"))
@@ -44,7 +44,7 @@ object Main {
 	    
 	    //Vals and Vars
 	    println(Parser("{var t : Int = 5; }"))
-	    println(Parser("{val t0, t1 : Int = 5; }"))
+	    println(Parser("{var t2, t1 : Double = 5.0; t2 + t1;}"))
 	    println(Parser("{var t : Int = 5; t}"))  
 	    
 		//Functions
@@ -110,6 +110,7 @@ object Main {
 	    //println();
 	    
 	    /* Entire Compiler testing */
+	    
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -117,9 +118,9 @@ object Main {
 	    testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
 	    testCompiler("ifThenElse", """{println(if (true) 6 else 5); println(if (false) 6 else 5)}""");
 	    testCompiler("vars", """println({var t0, t1 : Double = 5.0; t0 + t1;})""");
-	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); 5;}""");
+	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); println(5);}""");
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
-	    testCompiler("recurfun1", """println({def fact(x: Int):Int = {println(x); if (x == 0) 1 else x * fact(x-1)};fact(5);})""");
+	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
