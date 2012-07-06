@@ -501,19 +501,109 @@ var Parsers = function() {
             })["|"](function() {success(std.Nil)});
         }
         
-        // TODO
+        this["^^"] = function(f) {
+        	var result = new Parser();
+        	result.apply = function(s) {
+        		return (function(x) {
+        			return Success.unapply(x).map(function(a) {
+        				return Success(f(a[0]), a[1]); // TODO will it need to be f.apply(a[0])? Do we need a separate apply for Scala functions?
+        			});
+        		}).orelse(function(x) {
+        			return Failure.unapply(x).map(function(a) {
+        				return x;
+        			});
+        		})(outer.apply(s)).get();
+        	}
+        	return result;
+        }
     }
+    
+    this.KeywordParser = function(str) {
+    	this.apply = function(s) {
+    		if (s.substring(0, str.length) === str) {
+    			return Success(str, s.substring(str.length));
+    		} else {
+    			return Failure("Expected '" + str +
+    				"' got '" + s.substring(str.length) + "'");
+    		}
+    	}
+    }
+    KeywordParser.prototype = new Parser();
+    KeywordParser.prototype.constructor = KeywordParser;
     
     this.SequenceParser = function(l, r) {
         var left = l();
         var right = r();
         
         this.apply = function(s) {
-            // TODO
+            return (function(x) {
+            	return Success.unapply(x).map(function(a) {
+            		return (function(x) {
+            			return Success.unapply(x).map(function(b) {
+            				return Success(new parsers["~"](a[0], b[0]), b[1]);
+            			});
+            		}).orelse(function(x) {
+            			return Failure.unapply(x).map(function(b) {
+            				return x;
+            			});
+            		})(right.apply(a[1])).get();
+            	});
+            }).orelse(function(x) {
+            	return Failure.unapply(x).map(function(a) {
+            		return x;
+            	});
+            })(left.apply(s)).get();
         }
     }
     SequenceParser.prototype = new Parser();
     SequenceParser.prototype.constructor = SequenceParser;
     
-    // TODO
+    this.DisParser = function(l, r) {
+        var left = l();
+        var right = r();
+        
+        this.apply = function(s) {
+            return (function(x) {
+            	return Success.unapply(x).map(function(a) {
+            		return x;
+            	});
+            }).orelse(function(x) {
+            	return Failure.unapply(x).map(function(a) {
+            		return right.apply(s);
+            	});
+            })(left.apply(s)).get();
+        }
+    }
+    DisParser.prototype = new Parser();
+    DisParser.prototype.constructor = DisParser;
+    
+    this.success = function(v) {
+    	var result = new Parser();
+        result.apply = function(s) {
+        	return Success(v, s);
+        }
+        return result;
+    }
 }
+
+var RegexParsers = function() {
+    // These two functions are not (yet?) "implicit"
+	this.keyword = function(str) {
+		return new KeywordParser(str); // will it find this through the prototype?
+	}
+	
+	this.regex = function(r) {
+		var result = new Parser();
+		result.apply = function(s) {
+			var a = r.exec(s)
+			if (a !== null && a.index === 0) {
+			    return Success(a[0], s.substring(a[0].length));
+			} else {
+			    return Failure("Expected '" + r + "' got '" + s + "'");
+			}
+		}
+		return result;
+	}
+}
+RegexParsers.prototype = new Parsers();
+RegexParsers.prototype.constructor = RegexParsers;
