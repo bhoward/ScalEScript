@@ -1,7 +1,7 @@
-<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">println({var t0, t1 : Double = 5.0; t0 + t1;})</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">PrintlnExpr(BlockExpr(List(VarDefStmt(List(t0, t1),Double,NumExpr(Ndouble(5.0))), BinOpExpr(+,VarExpr(t0),VarExpr(t1)))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">document.writeln((function() { 
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">println({var t0, t1 : Double = 5.0; t0 + t1;})</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">FunExpr(println,List(BlockExpr(List(VarDefStmt(List(t0, t1),Double,NumExpr(Ndouble(5.0))), BinOpExpr(+,VarExpr(t0),VarExpr(t1))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">println((function() { 
 var t0 , t1 ; 
- t0 = t1 = Ndouble(5.0); 
-return (t0 + t1) ; })())</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">document.writeln((function() { 
+ t0 = t1 = 5.0; 
+return (t0 + t1) ; })())</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">println((function() { 
 var t0 , t1 ; 
- t0 = t1 = Ndouble(5.0); 
+ t0 = t1 = 5.0; 
 return (t0 + t1) ; })())</script></div></body>

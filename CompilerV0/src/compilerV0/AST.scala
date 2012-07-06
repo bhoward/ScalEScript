@@ -4,7 +4,7 @@ sealed trait Numeric
 case class Nint(num : Int) extends Numeric
 case class Ndouble(Num : Double) extends Numeric
 
-sealed abstract class Stmt {
+sealed trait Stmt {
   def isExpr() : Boolean = {false}
 }
 case class VarDefStmt(ids : List[String], varType: String, value : Expr) extends Stmt
@@ -12,7 +12,7 @@ case class ValDefStmt(ids : List[String], varType: String, value : Expr) extends
 case class FunDefStmt(name : String, params : List[VarDclStmt], retType : String, body : Expr) extends Stmt
 case class VarDclStmt(ids : List[String], varType: String) extends Stmt
 
-sealed abstract class Expr extends Stmt {
+sealed trait Expr extends Stmt {
   override def isExpr() : Boolean = {true}
 }
 case class BoolExpr(bool : Boolean) extends Expr
@@ -26,10 +26,6 @@ case class UnOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class WhileExpr(test: Expr, body: Expr) extends Expr
-case class PrintExpr(expr: Expr) extends Expr
-case class PrintlnExpr(expr: Expr) extends Expr
-
-
 
 case class DefWrapper(ids : List[String], varType: String, value : Expr)
 case class FunWrapper(name : String, args : List[VarDclStmt], retType : String,  body : Expr)

@@ -61,6 +61,8 @@ object TypeVerifier {
 	
 	def verifyInit(ast : Expr) : Boolean = {
 		var map : Map[String, Type] = scala.collection.mutable.Map[String, Type]()
+		putFunc(map, "println", List("Any"), "Unit");
+		putFunc(map, "print", List("Any"), "Unit");
 		var maps : List[Map[String, Type]] = map :: Nil
 		verify(ast, maps)
 		return true;
@@ -130,14 +132,6 @@ object TypeVerifier {
 	  			return "Unit";
 	  		}
   	    }
-        case PrintExpr(msg) => {
-        	var msgType = verify(msg, maps)
-        	return "Unit"
-        }
-        case PrintlnExpr(msg) => {
-        	var msgType = verify(msg, maps)
-        	return "Unit"
-        }
 	  	case VarExpr(varName) => {
 	  		return getVarType(maps, varName);
 	  	}

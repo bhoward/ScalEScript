@@ -1,9 +1,9 @@
-<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); 5;}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(FunDefStmt(bar,List(VarDclStmt(List(x),Int), VarDclStmt(List(y),Int), VarDclStmt(List(z),String)),Int,FunExpr(bar,List(NumExpr(Nint(5)), NumExpr(Nint(6)), StringExpr("")))), NumExpr(Nint(5))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); println(5);}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(FunDefStmt(bar,List(VarDclStmt(List(x),Int), VarDclStmt(List(y),Int), VarDclStmt(List(z),String)),Int,FunExpr(bar,List(NumExpr(Nint(5)), NumExpr(Nint(6)), StringExpr("")))), FunExpr(println,List(NumExpr(Nint(5))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
 function bar ( x, y, z ) 
- {return bar(Nint(5), Nint(6), ""); 
+ {return bar(5, 6, ""); 
  }; 
-return Nint(5) ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
+return println(5) ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
 function bar ( x, y, z ) 
- {return bar(Nint(5), Nint(6), ""); 
+ {return bar(5, 6, ""); 
  }; 
-return Nint(5) ; })()</script></div></body>
+return println(5) ; })()</script></div></body>

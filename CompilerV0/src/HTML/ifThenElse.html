@@ -1,17 +1,17 @@
-<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{println(if (true) 6 else 5); println(if (false) 6 else 5)}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(PrintlnExpr(IfThenElseExpr(BoolExpr(true),NumExpr(Nint(6)),NumExpr(Nint(5)))), PrintlnExpr(IfThenElseExpr(BoolExpr(false),NumExpr(Nint(6)),NumExpr(Nint(5))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
-document.writeln(ifThenElse( (function() { 
-return true })(), (function() { 
-return Nint(6) })(), (function() { 
-return Nint(5) })() )); 
-return document.writeln(ifThenElse( (function() { 
-return false })(), (function() { 
-return Nint(6) })(), (function() { 
-return Nint(5) })() )) ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
-document.writeln(ifThenElse( (function() { 
-return true })(), (function() { 
-return Nint(6) })(), (function() { 
-return Nint(5) })() )); 
-return document.writeln(ifThenElse( (function() { 
-return false })(), (function() { 
-return Nint(6) })(), (function() { 
-return Nint(5) })() )) ; })()</script></div></body>
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{println(if (true) 6 else 5); println(if (false) 6 else 5)}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(FunExpr(println,List(IfThenElseExpr(BoolExpr(true),NumExpr(Nint(6)),NumExpr(Nint(5))))), FunExpr(println,List(IfThenElseExpr(BoolExpr(false),NumExpr(Nint(6)),NumExpr(Nint(5)))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
+println(ifThenElse( (function() { 
+return true }), (function() { 
+return 6 }), (function() { 
+return 5 }) )); 
+return println(ifThenElse( (function() { 
+return false }), (function() { 
+return 6 }), (function() { 
+return 5 }) )) ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
+println(ifThenElse( (function() { 
+return true }), (function() { 
+return 6 }), (function() { 
+return 5 }) )); 
+return println(ifThenElse( (function() { 
+return false }), (function() { 
+return 6 }), (function() { 
+return 5 }) )) ; })()</script></div></body>
