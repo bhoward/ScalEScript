@@ -131,6 +131,29 @@ trait RegexParsers extends Parsers {
     }
   }
 }
+
+object ExprParser extends RegexParsers {
+  val NUM = """[1-9]\d*|0""".r
+  val ADDOP = """[-+]""".r
+  val MULOP = """[*\/]""".r
+  
+  def expr: Parser[Expression] =
+    term ~ (ADDOP ~ term).* ^^ { case t ~ rest => rest.foldLeft(t){
+      case (e, "+" ~ t) => Sum(e, t)
+      case (e, "-" ~ t) => Difference(e, t)
+    } }
+  
+  def term: Parser[Expression] =
+    factor ~ (MULOP ~ factor).* ^^ { case f ~ rest => rest.foldLeft(f){
+      case (e, "*" ~ t) => Product(e, t)
+      case (e, "/" ~ t) => Quotient(e, t)
+    } }
+  
+  def factor: Parser[Expression] =
+    ( "(" ~> expr <~ ")"
+    | NUM ^^ { case n => Constant(n.toInt) }
+    )
+}
 */
 
 var std = {};
@@ -172,6 +195,9 @@ std.Some.prototype.get = function() {
 std.Some.prototype.map = function(f) {
     return std.Some(f(this.value));
 }
+std.Some.prototype.flatmap = function(f) {
+    return f(this.value);
+}
 std.Some.unapply = function(x) {
 	return x; // special case: it already is Some(value) or None...
 }
@@ -187,6 +213,9 @@ std.None.get = function() {
     return undefined;
 }
 std.None.map = function(f) {
+    return std.None;
+}
+std.None.flatmap = function(f) {
     return std.None;
 }
 std.None.unapply = function(x) {
@@ -228,11 +257,16 @@ std["::"].prototype.map = function(f) {
     return std["::"](f(this.head), this.tail.map(f));
 }
 std["::"].unapply = function(x) {
-	if (x isinstanceof std["::"]) {
+	if (x instanceof std["::"]) {
 	   return std.Some([head, tail]);
 	} else {
 	   return std.None;
 	}
+}
+std["::"].foldLeft = function(a) {
+    return function(f) {
+        return f(head, tail.foldLeft(a)(f));
+    };
 }
 
 std.Nil = new std.List();
@@ -247,6 +281,11 @@ std.Nil.map = function(f) {
 }
 std.Nil.unapply = function(x) {
 	return x instanceof std.Nil;
+}
+std.Nil.foldLeft = function(a) {
+    return function (f) {
+        return a;
+    };
 }
 
 var Expression = function() {
@@ -401,20 +440,20 @@ var Parsers = function() {
     }
     
     this.Success = function(value, rem) {
-        if (this instanceof Success) {
+        if (this instanceof parsers.Success) {
             this.value = value;
             this.rem = rem;
         } else {
-            return new Success(value, rem);
+            return new parsers.Success(value, rem);
         }
     }
-    Success.prototype = new Result();
-    Success.prototype.constructor = Success;
-    Success.prototype.toString = function() {
+    this.Success.prototype = new this.Result();
+    this.Success.prototype.constructor = this.Success;
+    this.Success.prototype.toString = function() {
         return "Success(" + this.value + ", " + this.rem + ")";
     }
-    Success.unapply = function(x) {
-        if (x instanceof Success) {
+    this.Success.unapply = function(x) {
+        if (x instanceof parsers.Success) {
             return std.Some([x.value, x.rem]);
         } else {
             return std.None;
@@ -422,19 +461,19 @@ var Parsers = function() {
     }
     
     this.Failure = function(msg) {
-        if (this instanceof Failure) {
+        if (this instanceof parsers.Failure) {
             this.msg = msg;
         } else {
-            return new Failure(msg);
+            return new parsers.Failure(msg);
         }
     }
-    Failure.prototype = new Result();
-    Failure.prototype.constructor = Failure;
-    Failure.prototype.toString = function() {
+    this.Failure.prototype = new this.Result();
+    this.Failure.prototype.constructor = this.Failure;
+    this.Failure.prototype.toString = function() {
         return "Failure(" + this.msg + ")";
     }
-    Failure.unapply = function(x) {
-        if (x instanceof Failure) {
+    this.Failure.unapply = function(x) {
+        if (x instanceof parsers.Failure) {
             return std.Some(msg);
         } else {
             return std.None;
@@ -464,15 +503,15 @@ var Parsers = function() {
         var outer = this;
         
         this["~"] = function(that) {
-            return new SequenceParser(function() {return this}, that); // pass this as a thunk for cbn
+            return new parsers.SequenceParser(function() {return outer;}, that);
         }
         
         this["|"] = function(that) {
-            return new DisParser(function() {return this}, that);
+            return new parsers.DisParser(function() {return outer;}, that);
         }
         
         this["~>"] = function(that) {
-            return this["~"](that)["^^"](function(x) {
+            return outer["~"](that)["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return a[1];
@@ -482,7 +521,7 @@ var Parsers = function() {
         }
 
         this["<~"] = function(that) {
-            return this["~"](that)["^^"](function(x) {
+            return outer["~"](that)["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return a[0];
@@ -492,114 +531,116 @@ var Parsers = function() {
         }
         
         this["*"] = function() {
-            return this["~"](this["*"])["^^"](function(x) {
+            return outer["~"](outer["*"])["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return std["::"](a[0], a[1]);
                     });
                 })(x).get();
-            })["|"](function() {success(std.Nil)});
+            })["|"](function() {return parsers.success(std.Nil)});
         }
         
         this["^^"] = function(f) {
-        	var result = new Parser();
-        	result.apply = function(s) {
+        	var result = new parsers.Parser();
+        	result.app = function(s) {
         		return (function(x) {
-        			return Success.unapply(x).map(function(a) {
-        				return Success(f(a[0]), a[1]); // TODO will it need to be f.apply(a[0])? Do we need a separate apply for Scala functions?
+        			return parsers.Success.unapply(x).map(function(a) {
+        				return parsers.Success(f(a[0]), a[1]);
         			});
         		}).orelse(function(x) {
-        			return Failure.unapply(x).map(function(a) {
+        			return parsers.Failure.unapply(x).map(function(a) {
         				return x;
         			});
-        		})(outer.apply(s)).get();
+        		})(outer.app(s)).get();
         	}
         	return result;
         }
     }
     
     this.KeywordParser = function(str) {
-    	this.apply = function(s) {
+    	this.app = function(s) {
     		if (s.substring(0, str.length) === str) {
-    			return Success(str, s.substring(str.length));
+    			return parsers.Success(str, s.substring(str.length));
     		} else {
-    			return Failure("Expected '" + str +
-    				"' got '" + s.substring(str.length) + "'");
+    			return parsers.Failure("Expected '" + str +
+    				"' got '" + s.substring(0, str.length) + "'");
     		}
     	}
     }
-    KeywordParser.prototype = new Parser();
-    KeywordParser.prototype.constructor = KeywordParser;
+    this.KeywordParser.prototype = new this.Parser();
+    this.KeywordParser.prototype.constructor = this.KeywordParser;
     
     this.SequenceParser = function(l, r) {
         var left = l();
         var right = r();
         
-        this.apply = function(s) {
+        this.app = function(s) {
             return (function(x) {
-            	return Success.unapply(x).map(function(a) {
+            	return parsers.Success.unapply(x).map(function(a) {
             		return (function(x) {
-            			return Success.unapply(x).map(function(b) {
-            				return Success(new parsers["~"](a[0], b[0]), b[1]);
+            			return parsers.Success.unapply(x).map(function(b) {
+            				return parsers.Success(new parsers["~"](a[0], b[0]), b[1]);
             			});
             		}).orelse(function(x) {
-            			return Failure.unapply(x).map(function(b) {
+            			return parsers.Failure.unapply(x).map(function(b) {
             				return x;
             			});
-            		})(right.apply(a[1])).get();
+            		})(right.app(a[1])).get();
             	});
             }).orelse(function(x) {
-            	return Failure.unapply(x).map(function(a) {
+            	return parsers.Failure.unapply(x).map(function(a) {
             		return x;
             	});
-            })(left.apply(s)).get();
+            })(left.app(s)).get();
         }
     }
-    SequenceParser.prototype = new Parser();
-    SequenceParser.prototype.constructor = SequenceParser;
+    this.SequenceParser.prototype = new this.Parser();
+    this.SequenceParser.prototype.constructor = this.SequenceParser;
     
     this.DisParser = function(l, r) {
         var left = l();
         var right = r();
         
-        this.apply = function(s) {
+        this.app = function(s) {
             return (function(x) {
             	return Success.unapply(x).map(function(a) {
             		return x;
             	});
             }).orelse(function(x) {
             	return Failure.unapply(x).map(function(a) {
-            		return right.apply(s);
+            		return right.app(s);
             	});
-            })(left.apply(s)).get();
+            })(left.app(s)).get();
         }
     }
-    DisParser.prototype = new Parser();
-    DisParser.prototype.constructor = DisParser;
+    this.DisParser.prototype = new this.Parser();
+    this.DisParser.prototype.constructor = this.DisParser;
     
     this.success = function(v) {
-    	var result = new Parser();
-        result.apply = function(s) {
-        	return Success(v, s);
+    	var result = new parsers.Parser();
+        result.app = function(s) {
+        	return parsers.Success(v, s);
         }
         return result;
     }
 }
 
 var RegexParsers = function() {
+    var regexparsers = this;
+    
     // These two functions are not (yet?) "implicit"
 	this.keyword = function(str) {
-		return new KeywordParser(str); // will it find this through the prototype?
+		return new regexparsers.KeywordParser(str);
 	}
 	
 	this.regex = function(r) {
-		var result = new Parser();
-		result.apply = function(s) {
+		var result = new regexparsers.Parser();
+		result.app = function(s) {
 			var a = r.exec(s)
 			if (a !== null && a.index === 0) {
-			    return Success(a[0], s.substring(a[0].length));
+			    return regexparsers.Success(a[0], s.substring(a[0].length));
 			} else {
-			    return Failure("Expected '" + r + "' got '" + s + "'");
+			    return regexparsers.Failure("Expected '" + r + "' got '" + s + "'");
 			}
 		}
 		return result;
@@ -607,3 +648,66 @@ var RegexParsers = function() {
 }
 RegexParsers.prototype = new Parsers();
 RegexParsers.prototype.constructor = RegexParsers;
+
+var ExprParser = new RegexParsers();
+ExprParser.NUM = /[1-9]\d*|0/
+ExprParser.ADDOP = /[-+]/
+ExprParser.MULOP = /[*\/]/
+ExprParser.expr = function() {
+    return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
+        return this["~"].unapply(x).map(function(a) {
+            return a[1].foldLeft(a[0])(function(p) {
+                return (function(p) {
+                    // Slightly cheating -- not using unapply on pairs or strings...
+                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                        if (a[0] === "+") {
+                            return std.Some(Sum(p[0], a[1]));
+                        } else {
+                            return std.None;
+                        }
+                    });
+                }).orelse(function(p) {
+                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                        if (a[0] === "-") {
+                            return std.Some(Difference(p[0], a[1]));
+                        } else {
+                            return std.None;
+                        }
+                    });
+                })(p).get();
+            });
+        }).get();
+    });
+}
+ExprParser.term = function() {
+    return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
+        return this["~"].unapply(x).map(function(a) {
+            return a[1].foldLeft(a[0])(function(p) {
+                return (function(p) {
+                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                        if (a[0] === "*") {
+                            return std.Some(Product(p[0], a[1]));
+                        } else {
+                            return std.None;
+                        }
+                    });
+                }).orelse(function(p) {
+                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                        if (a[0] === "/") {
+                            return std.Some(Quotient(p[0], a[1]));
+                        } else {
+                            return std.None;
+                        }
+                    });
+                })(p).get();
+            });
+        }).get();
+    });
+}
+ExprParser.factor = function() {
+    return ExprParser.keyword("(")["~>"](ExprParser.expr)["<~"](function() {return ExprParser.keyword(")");})["|"](function() {
+        return ExprParser.regex(ExprParser.NUM)["^^"](function(n) {
+            return Constant(parseInt(n, 10));
+        });}
+    );
+}
