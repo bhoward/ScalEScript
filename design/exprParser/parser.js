@@ -500,18 +500,19 @@ var Parsers = function() {
     }
     
     this.Parser = function() {
-        var outer = this;
-        
         this["~"] = function(that) {
-            return new parsers.SequenceParser(function() {return outer;}, that);
+            var self = this;
+            return new parsers.SequenceParser(function() {return self;}, that);
         }
         
         this["|"] = function(that) {
-            return new parsers.DisParser(function() {return outer;}, that);
+            var self = this;
+            return new parsers.DisParser(function() {return self;}, that);
         }
         
         this["~>"] = function(that) {
-            return outer["~"](that)["^^"](function(x) {
+            var self = this;
+            return self["~"](that)["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return a[1];
@@ -521,7 +522,8 @@ var Parsers = function() {
         }
 
         this["<~"] = function(that) {
-            return outer["~"](that)["^^"](function(x) {
+            var self = this;
+            return self["~"](that)["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return a[0];
@@ -531,7 +533,8 @@ var Parsers = function() {
         }
         
         this["*"] = function() {
-            return outer["~"](outer["*"])["^^"](function(x) {
+            var self = this;
+            return self["~"](self["*"])["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return std["::"](a[0], a[1]);
@@ -541,6 +544,7 @@ var Parsers = function() {
         }
         
         this["^^"] = function(f) {
+            var self = this;
         	var result = new parsers.Parser();
         	result.app = function(s) {
         		return (function(x) {
@@ -551,7 +555,7 @@ var Parsers = function() {
         			return parsers.Failure.unapply(x).map(function(a) {
         				return x;
         			});
-        		})(outer.app(s)).get();
+        		})(self.app(s)).get();
         	}
         	return result;
         }
@@ -655,11 +659,11 @@ ExprParser.ADDOP = /[-+]/
 ExprParser.MULOP = /[*\/]/
 ExprParser.expr = function() {
     return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
-        return this["~"].unapply(x).map(function(a) {
+        return ExprParser["~"].unapply(x).map(function(a) {
             return a[1].foldLeft(a[0])(function(p) {
                 return (function(p) {
                     // Slightly cheating -- not using unapply on pairs or strings...
-                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
                         if (a[0] === "+") {
                             return std.Some(Sum(p[0], a[1]));
                         } else {
@@ -667,7 +671,7 @@ ExprParser.expr = function() {
                         }
                     });
                 }).orelse(function(p) {
-                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
                         if (a[0] === "-") {
                             return std.Some(Difference(p[0], a[1]));
                         } else {
@@ -681,10 +685,10 @@ ExprParser.expr = function() {
 }
 ExprParser.term = function() {
     return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
-        return this["~"].unapply(x).map(function(a) {
+        return ExprParser["~"].unapply(x).map(function(a) {
             return a[1].foldLeft(a[0])(function(p) {
                 return (function(p) {
-                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
                         if (a[0] === "*") {
                             return std.Some(Product(p[0], a[1]));
                         } else {
@@ -692,7 +696,7 @@ ExprParser.term = function() {
                         }
                     });
                 }).orelse(function(p) {
-                    return this["~"].unapply(p[1]).flatmap(function(a) {
+                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
                         if (a[0] === "/") {
                             return std.Some(Quotient(p[0], a[1]));
                         } else {
