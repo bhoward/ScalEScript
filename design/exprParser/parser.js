@@ -409,6 +409,17 @@ Function.prototype.orelse = function(f) {
     };
 };
 
+// Wrap a thunk with Lazy to make it cache the result for future calls
+var Lazy = function(f) {
+    var cached = null;
+    return function() {
+        if (cached === null) {
+            cached = f();
+        }
+        return cached;
+    };
+};
+
 Expression.eval = function(e) {
     return (function(e) {
         return Constant.unapply(e).map(function(v) {
@@ -576,8 +587,8 @@ var Parsers = function() {
     this.KeywordParser.prototype.constructor = this.KeywordParser;
     
     this.SequenceParser = function(l, r) {
-        var left = l();
-        // var right = r(); // Needs to be lazy...
+        var left = Lazy(l);
+        var right = Lazy(r);
         
         this.app = function(s) {
             return (function(x) {
@@ -590,22 +601,22 @@ var Parsers = function() {
                         return parsers.Failure.unapply(x).map(function(b) {
                             return x;
                         });
-                    })(r().app(a[1])).get(); // "r()" was "right"
+                    })(right().app(a[1])).get(); // "r()" was "right"
                 });
             }).orelse(function(x) {
                 return parsers.Failure.unapply(x).map(function(a) {
                     return x;
                 });
-            })(left.app(s)).get();
+            })(left().app(s)).get();
         };
     };
     this.SequenceParser.prototype = new this.Parser();
     this.SequenceParser.prototype.constructor = this.SequenceParser;
     
     this.DisParser = function(l, r) {
-        var left = l();
-        // var right = r(); // See above
-        
+        var left = Lazy(l);
+        var right = Lazy(r);
+                
         this.app = function(s) {
             return (function(x) {
                 return parsers.Success.unapply(x).map(function(a) {
@@ -613,9 +624,9 @@ var Parsers = function() {
                 });
             }).orelse(function(x) {
                 return parsers.Failure.unapply(x).map(function(a) {
-                    return r().app(s); // See above
+                    return right().app(s);
                 });
-            })(left.app(s)).get();
+            })(left().app(s)).get();
         };
     };
     this.DisParser.prototype = new this.Parser();
@@ -658,7 +669,7 @@ var ExprParser = new RegexParsers();
 ExprParser.NUM = /[1-9]\d*|0/;
 ExprParser.ADDOP = /[-+]/;
 ExprParser.MULOP = /[*\/]/;
-ExprParser.expr = function() {
+ExprParser.expr = Lazy(function() {
     return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
             return a[1].foldLeft(a[0])(function(e, p) {
@@ -683,8 +694,8 @@ ExprParser.expr = function() {
             });
         }).get();
     });
-};
-ExprParser.term = function() {
+});
+ExprParser.term = Lazy(function() {
     return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
             return a[1].foldLeft(a[0])(function(e, p) {
@@ -708,11 +719,11 @@ ExprParser.term = function() {
             });
         }).get();
     });
-};
-ExprParser.factor = function() {
+});
+ExprParser.factor = Lazy(function() {
     return ExprParser.keyword("(")["~>"](ExprParser.expr)["<~"](function() {return ExprParser.keyword(")");})["|"](function() {
         return ExprParser.regex(ExprParser.NUM)["^^"](function(n) {
             return Constant(parseInt(n, 10));
         });}
     );
-};
+});

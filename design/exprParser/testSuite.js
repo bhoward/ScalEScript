@@ -69,5 +69,16 @@ var testSuite = {
 	testExprParser4: function() {
 	    var p = ExprParser.expr();
 	    ju.assertIdentical(42, Expression.eval(p.app("12-2+4*8").value));
+	},
+	
+	testLazy: function() {
+	    var x = 0;
+	    var z = Lazy(function() {
+	        x = x + 1;
+	        return x;
+	    });
+	    ju.assertIdentical(0, x);
+	    ju.assertIdentical(2, z() + z());
+	    ju.assertIdentical(1, x);
 	}
 };
