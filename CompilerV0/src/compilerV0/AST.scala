@@ -47,17 +47,17 @@ case class RightOpPair(op: String, expr: Expr) extends OpPair {
 }
 
 sealed trait Type {
-	def isVar() : Boolean;
+	def isFunc() : Boolean;
 	def getType() : String;
-	def getArgTypes() : List[VarType];
+	def getArgTypes() : List[Type];
 }
-case class VarType(varType : String) extends Type {
-	def isVar() : Boolean = true;
+case class ObjType(varType : String) extends Type {
+	def isFunc() : Boolean = false;
 	def getType() : String = varType;
-	def getArgTypes() : List[VarType] = Nil;
+	def getArgTypes() : List[Type] = Nil;
 }
-case class FuncType(retType : String, argTypes : List[VarType]) extends Type {
-	def isVar() : Boolean = false;
+case class FuncType(retType : String, argTypes : List[ObjType]) extends Type {
+	def isFunc() : Boolean = true;
 	def getType() : String = retType;
-	def getArgTypes() : List[VarType] = argTypes;
+	def getArgTypes() : List[Type] = argTypes;
 }

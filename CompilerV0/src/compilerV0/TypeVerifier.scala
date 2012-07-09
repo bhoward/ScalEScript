@@ -260,7 +260,7 @@ object TypeVerifier {
 	  	case currentScope::rest => {
 	  		if (currentScope.contains(varName)) {
 	  			var theType : Type = currentScope.get(varName).get
-	  			if (theType.isVar()) {
+	  			if (!theType.isFunc()) {
 	  				return theType.getType();
 	  			} else {
 	  				throw new Exception("Tried to use the function "+varName+" in a variable context (no parentheses).")
@@ -275,8 +275,8 @@ object TypeVerifier {
 	  	case currentScope::rest => {
 	  		if (currentScope.contains(funcName)) {
 	  			var theType : Type = currentScope.get(funcName).get
-	  			if (!theType.isVar()) {
-	  				var argTypes : List[VarType] = theType.getArgTypes();
+	  			if (theType.isFunc()) {
+	  				var argTypes : List[Type] = theType.getArgTypes();
 	  				return (theType.getType(), argTypes.map(argType => argType.getType()));
 	  			} else {
 	  				throw new Exception("Tried to use the variable "+funcName+" in a function context (with parentheses).")
@@ -293,7 +293,7 @@ object TypeVerifier {
 			} else if (params.foldLeft(false)((result, param) => result || !scalaTypes.contains(param))) { //Unknown param type
 				throw new Exception("Unknown parameter type found in parameters: "+params+" for function "+funcName+".")
 			} else {
-				var paramTypes : List[VarType] = params.map(param => new VarType(param))
+				var paramTypes : List[ObjType] = params.map(param => new ObjType(param))
 				map.put(funcName, new FuncType(retType, paramTypes)); 
 				return true;
 			}
@@ -311,7 +311,7 @@ object TypeVerifier {
 	  	case Nil => return true;
 	 	case x::xs => {
 	 		if (!map.contains(x)) {
-	 			map.put(x, new VarType(varType)); 
+	 			map.put(x, new ObjType(varType)); 
 	 			return putAllVars(map, xs, varType);
 	 		} else {
 	 			throw new Exception("The variable "+x+" is already defined in the current scope.")
