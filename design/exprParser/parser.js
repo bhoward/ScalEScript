@@ -430,7 +430,7 @@ Expression.eval = function(e) {
         return Quotient.unapply(e).map(function(a) {
             return Expression.eval(a[0]) / Expression.eval(a[1]);
         });
-    })(e).get()
+    })(e).get();
 };
 
 // call this as Parsers.apply(x) to mixin its methods to x
@@ -541,7 +541,7 @@ var Parsers = function() {
                         return std["::"](a[0], a[1]);
                     });
                 })(x).get();
-            })["|"](function() {return parsers.success(std.Nil)});
+            })["|"](function() {return parsers.success(std.Nil);});
         };
         
         this["^^"] = function(f) {
@@ -557,7 +557,7 @@ var Parsers = function() {
                         return x;
                     });
                 })(self.app(s)).get();
-            }
+            };
             return result;
         };
     };
@@ -625,7 +625,7 @@ var Parsers = function() {
         var result = new parsers.Parser();
         result.app = function(s) {
             return parsers.Success(v, s);
-        }
+        };
         return result;
     };
 };
@@ -641,13 +641,13 @@ var RegexParsers = function() {
     this.regex = function(r) {
         var result = new regexparsers.Parser();
         result.app = function(s) {
-            var a = r.exec(s)
+            var a = r.exec(s);
             if (a !== null && a.index === 0) {
                 return regexparsers.Success(a[0], s.substring(a[0].length));
             } else {
                 return regexparsers.Failure("Expected '" + r + "' got '" + s + "'");
             }
-        }
+        };
         return result;
     };
 };

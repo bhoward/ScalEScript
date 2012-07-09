@@ -51,7 +51,6 @@ var testSuite = {
 	
 	testExprParser: function() {
 	    var p = ExprParser.expr();
-	    ju.assertIdentical("Success(test, ing)", p.app("2+2").toString());
+	    ju.assertIdentical("Success(Sum(Constant(2), Constant(2)), )", p.app("2+2").toString());
 	}
-}
-
+};
