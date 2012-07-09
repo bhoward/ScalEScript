@@ -137,19 +137,19 @@ object ExprParser extends RegexParsers {
   val ADDOP = """[-+]""".r
   val MULOP = """[*\/]""".r
   
-  def expr: Parser[Expression] =
+  lazy val expr: Parser[Expression] =
     term ~ (ADDOP ~ term).* ^^ { case t ~ rest => rest.foldLeft(t){
       case (e, "+" ~ t) => Sum(e, t)
       case (e, "-" ~ t) => Difference(e, t)
     } }
   
-  def term: Parser[Expression] =
+  lazy val term: Parser[Expression] =
     factor ~ (MULOP ~ factor).* ^^ { case f ~ rest => rest.foldLeft(f){
       case (e, "*" ~ t) => Product(e, t)
       case (e, "/" ~ t) => Quotient(e, t)
     } }
   
-  def factor: Parser[Expression] =
+  lazy val factor: Parser[Expression] =
     ( "(" ~> expr <~ ")"
     | NUM ^^ { case n => Constant(n.toInt) }
     )
