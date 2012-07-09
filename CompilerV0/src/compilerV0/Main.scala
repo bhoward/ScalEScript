@@ -127,9 +127,7 @@ object Main {
 	def testCompiler(testName : String, scalaSource : String) {
 		try {
 			val ast = Parser(scalaSource);
-			if (!TypeVerifier(ast)) {
-				throw new Exception("Failed the type checker.")
-			}
+			TypeVerifier(ast);
 			val jsSource = CodeGenerator(ast);
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
 			println(testName+".html was successfully created.");

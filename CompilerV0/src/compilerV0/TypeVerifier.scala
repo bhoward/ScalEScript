@@ -8,16 +8,33 @@ object TypeVerifier {
 	var verifyStack : List[Stmt] = Nil;
   
 	def initScalaTypes(): Unit = {
-	  	scalaTypes.put("Any", List[String]("Any"));
-	  	
-	  	scalaTypes.put("AnyVal", List[String]("Any", "AnyVal"));
-	  	scalaTypes.put("Double", List[String]("Any", "AnyVal", "Double"));
-	  	scalaTypes.put("Int", List[String]("Any", "AnyVal", "Int"));
-	  	scalaTypes.put("Boolean", List[String]("Any", "AnyVal", "Boolean"));
-	  	scalaTypes.put("Unit", List[String]("Any", "AnyVal", "Unit"));
-	  	
-	  	scalaTypes.put("AnyRef", List[String]("Any", "AnyRef"));
-	  	scalaTypes.put("String", List[String]("Any", "AnyRef", "String"));
+		//Only init if they don't already exist
+		if(scalaTypes.isEmpty){
+		  	addType("Any", "");
+		  	addType("AnyVal", "Any");
+		  	addType("Double", "AnyVal");
+		  	addType("Int", "AnyVal");
+		  	addType("Boolean", "AnyVal");
+		  	addType("Unit", "AnyVal");
+		  	addType("AnyRef", "Any");
+		  	addType("String", "AnyRef");
+		}
+	}
+	
+	def addType(name : String, superType : String) : Unit = {
+		if (!scalaTypes.contains(name)) {
+			if (superType == "") {
+				scalaTypes.put(name, List(name));
+			} else {
+				if (scalaTypes.contains(superType)){
+					scalaTypes.put(name, scalaTypes.get(superType).get++List(name))
+				} else {
+					throw new Exception("The super type "+name+" for type "+name+" is not defined.");
+				}
+			}
+		} else {
+			throw new Exception("The type "+name+" is already defined.");
+		}
 	}
 	
 	def initSymbolTable(): Map[String, Type] = {
@@ -65,12 +82,6 @@ object TypeVerifier {
 		} else {
 			throw new Exception("Unknown type "+type1+".")
 		}
-	}
-	
-	def verifyInit(ast : Expr) : Boolean = {
-		var maps : List[Map[String, Type]] = initSymbolTable() :: Nil
-		verify(ast, maps)
-		return true;
 	}
 	
 	def verifyFunDefBody(name : String, retType: String, body : Expr, maps : List[Map[String, Type]]) : Unit = {
@@ -323,19 +334,8 @@ object TypeVerifier {
 		l.tail.fold(l.head)((result, element) => result + ", " + element)
 	}
 	
-	def apply(source: Expr): Boolean = {
+	def apply(source: Expr): Unit = {
 		initScalaTypes;
-		/*
-		println(firstCommonSuperType("Any", "Any"))
-		println(firstCommonSuperType("Any", "Boolean"))
-		println(firstCommonSuperType("Boolean", "Int"))
-		println(firstCommonSuperType("Unit", "String"))
-		println(checkType("Any", "Any"))
-		println(checkType("Boolean", "Any"))
-		println(checkType("AnyVal", "Any"))
-		println(checkType("Int", "AnyVal"))
-		println(checkType("Int", "AnyRef"))
-		*/
-		verifyInit(source);
+		verify(source, initSymbolTable()::Nil)
 	}
 }
