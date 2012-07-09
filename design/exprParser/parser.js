@@ -159,18 +159,18 @@ object ExprParser extends RegexParsers {
 var std = {};
 
 std.Option = function(x) {
-	if (this instanceof std.Option) {
-		// constructor call with new
-		// do nothing
-	} else {
-		// factory call without new
-		if (x === null) { // and/or undefined?
-			return std.None;
-		} else {
-			return std.Some(x);
-		}
-	}
-}
+    if (this instanceof std.Option) {
+        // constructor call with new
+        // do nothing
+    } else {
+        // factory call without new
+        if (x === null) { // and/or undefined?
+            return std.None;
+        } else {
+            return std.Some(x);
+        }
+    }
+};
 
 std.Some = function(value) {
     if (this instanceof std.Some) {
@@ -178,64 +178,64 @@ std.Some = function(value) {
     } else {
         return new std.Some(value);
     }
-}
+};
 std.Some.prototype = new std.Option();
 std.Some.prototype.constructor = std.Some;
 // Can't put methods in prototype if they depend on constructor args
 // (Alternately, save ctor args in hidden instance field for later use)
 std.Some.prototype.toString = function() {
     return "Some(" + this.value + ")";
-}
+};
 std.Some.prototype.isEmpty = function() {
     return false;
-}
+};
 std.Some.prototype.get = function() {
     return this.value;
-}
+};
 std.Some.prototype.map = function(f) {
     return std.Some(f(this.value));
-}
+};
 std.Some.prototype.flatmap = function(f) {
     return f(this.value);
-}
+};
 std.Some.unapply = function(x) {
-	return x; // special case: it already is Some(value) or None...
-}
+    return x; // special case: it already is Some(value) or None...
+};
 
 std.None = new std.Option();
 std.None.toString = function() {
     return "None";
-}
+};
 std.None.isEmpty = function() {
     return true;
-}
+};
 std.None.get = function() {
     return undefined;
-}
+};
 std.None.map = function(f) {
     return std.None;
-}
+};
 std.None.flatmap = function(f) {
     return std.None;
-}
+};
 std.None.unapply = function(x) {
-	return x instanceof std.None;
-}
+    return x instanceof std.None;
+};
 
 std.List = function() {
-	if (this instanceof std.List) {
-		// constructor call with new
-		// do nothing
-	} else {
-		// factory call without new
-		var args = Array.prototype.slice.apply(arguments); // Special-case for varargs
-		var result = std.Nil;
-		while (args.length > 0) {
-		    result = std["::"](args.pop(), result);
-		}
-		return result;
-	}
-}
+    if (this instanceof std.List) {
+        // constructor call with new
+        // do nothing
+    } else {
+        // factory call without new
+        var args = Array.prototype.slice.apply(arguments); // Special-case for varargs
+        var result = std.Nil;
+        while (args.length > 0) {
+            result = std["::"](args.pop(), result);
+        }
+        return result;
+    }
+};
 
 std["::"] = function(head, tail) {
     if (this instanceof std["::"]) {
@@ -244,157 +244,158 @@ std["::"] = function(head, tail) {
     } else {
         return new std["::"](head, tail);
     }
-}
+};
 std["::"].prototype = new std.List();
 std["::"].prototype.constructor = std["::"];
 std["::"].prototype.toString = function() {
     return this.head + "::" + this.tail;
-}
+};
 std["::"].prototype.isEmpty = function() {
     return false;
-}
+};
 std["::"].prototype.map = function(f) {
     return std["::"](f(this.head), this.tail.map(f));
-}
-std["::"].unapply = function(x) {
-	if (x instanceof std["::"]) {
-	   return std.Some([head, tail]);
-	} else {
-	   return std.None;
-	}
-}
-std["::"].foldLeft = function(a) {
+};
+std["::"].prototype.foldLeft = function(a) {
+    var self = this;
     return function(f) {
-        return f(head, tail.foldLeft(a)(f));
+        return f(self.head, self.tail.foldLeft(a)(f));
     };
-}
+};
+std["::"].unapply = function(x) {
+    if (x instanceof std["::"]) {
+       return std.Some([head, tail]);
+    } else {
+       return std.None;
+    }
+};
 
 std.Nil = new std.List();
 std.Nil.toString = function() {
     return "Nil";
-}
+};
 std.Nil.isEmpty = function() {
     return true;
-}
+};
 std.Nil.map = function(f) {
     return std.Nil;
-}
-std.Nil.unapply = function(x) {
-	return x instanceof std.Nil;
-}
+};
 std.Nil.foldLeft = function(a) {
     return function (f) {
         return a;
     };
-}
+};
+std.Nil.unapply = function(x) {
+    return x instanceof std.Nil;
+};
 
 var Expression = function() {
-}
+};
 
 var Constant = function(value) {
-	if (this instanceof Constant) {
-	    // Use read-only properties for vals?
-    	this.value = value;
+    if (this instanceof Constant) {
+        // Use read-only properties for vals?
+        this.value = value;
     } else {
-    	return new Constant(value);
+        return new Constant(value);
     }
-}
+};
 Constant.prototype = new Expression();
 Constant.prototype.constructor = Constant;
 Constant.prototype.toString = function() {
     return "Constant(" + this.value + ")";
-}
+};
 Constant.unapply = function(x) {
     if (x instanceof Constant) {
         return std.Some(x.value);
     } else {
         return std.None;
     }
-}
+};
 
 var Sum = function(left, right) {
-	if (this instanceof Sum) {
-    	this.left = left;
-    	this.right = right;
+    if (this instanceof Sum) {
+        this.left = left;
+        this.right = right;
     } else {
-    	return new Sum(left, right);
+        return new Sum(left, right);
     }
-}
+};
 Sum.prototype = new Expression();
 Sum.prototype.constructor = Sum;
 Sum.prototype.toString = function() {
     return "Sum(" + this.left + ", " + this.right + ")";
-}
+};
 Sum.unapply = function(x) {
     if (x instanceof Sum) {
         return std.Some([x.left, x.right]);
     } else {
         return std.None;
     }
-}
+};
 
 var Difference = function(left, right) {
-	if (this instanceof Difference) {
-	    this.left = left;
-    	this.right = right;
+    if (this instanceof Difference) {
+        this.left = left;
+        this.right = right;
     } else {
-    	return new Difference(left, right);
+        return new Difference(left, right);
     }
-}
+};
 Difference.prototype = new Expression();
 Difference.prototype.constructor = Difference;
 Difference.prototype.toString = function() {
     return "Difference(" + this.left + ", " + this.right + ")";
-}
+};
 Difference.unapply = function(x) {
     if (x instanceof Difference) {
         return std.Some([x.left, x.right]);
     } else {
         return std.None;
     }
-}
+};
 
 var Product = function(left, right) {
-	if (this instanceof Product) {
-	    this.left = left;
-    	this.right = right;
+    if (this instanceof Product) {
+        this.left = left;
+        this.right = right;
     } else {
-    	return new Product(left, right);
+        return new Product(left, right);
     }
-}
+};
 Product.prototype = new Expression();
 Product.prototype.constructor = Product;
 Product.prototype.toString = function() {
     return "Product(" + this.left + ", " + this.right + ")";
-}
+};
 Product.unapply = function(x) {
     if (x instanceof Product) {
         return std.Some([x.left, x.right]);
     } else {
         return std.None;
     }
-}
+};
 
 var Quotient = function(left, right) {
-	if (this instanceof Quotient) {
-	    this.left = left;
-    	this.right = right;
+    if (this instanceof Quotient) {
+        this.left = left;
+        this.right = right;
     } else {
-    	return new Quotient(left, right);
+        return new Quotient(left, right);
     }
-}
+};
 Quotient.prototype = new Expression();
 Quotient.prototype.constructor = Quotient;
 Quotient.prototype.toString = function() {
     return "Quotient(" + this.left + ", " + this.right + ")";
-}
+};
 Quotient.unapply = function(x) {
     if (x instanceof Quotient) {
         return std.Some([x.left, x.right]);
     } else {
         return std.None;
     }
-}
+};
 
 Function.prototype.orelse = function(f) {
     var that = this;
@@ -405,39 +406,39 @@ Function.prototype.orelse = function(f) {
         } else {
             return r;
         }
-    }
-}
+    };
+};
 
 Expression.eval = function(e) {
     return (function(e) {
         return Constant.unapply(e).map(function(v) {
-        	return v;
+            return v;
         });
     }).orelse(function(e) {
         return Sum.unapply(e).map(function(a) {
-        	return Expression.eval(a[0]) + Expression.eval(a[1]);
+            return Expression.eval(a[0]) + Expression.eval(a[1]);
         });
     }).orelse(function(e) {
         return Difference.unapply(e).map(function(a) {
-        	return Expression.eval(a[0]) - Expression.eval(a[1]);
+            return Expression.eval(a[0]) - Expression.eval(a[1]);
         });
     }).orelse(function(e) {
         return Product.unapply(e).map(function(a) {
-        	return Expression.eval(a[0]) * Expression.eval(a[1]);
+            return Expression.eval(a[0]) * Expression.eval(a[1]);
         });
     }).orelse(function(e) {
         return Quotient.unapply(e).map(function(a) {
-        	return Expression.eval(a[0]) / Expression.eval(a[1]);
+            return Expression.eval(a[0]) / Expression.eval(a[1]);
         });
     })(e).get()
-}
+};
 
 // call this as Parsers.apply(x) to mixin its methods to x
 var Parsers = function() {
     var parsers = this;
     
     this.Result = function() {
-    }
+    };
     
     this.Success = function(value, rem) {
         if (this instanceof parsers.Success) {
@@ -446,19 +447,19 @@ var Parsers = function() {
         } else {
             return new parsers.Success(value, rem);
         }
-    }
+    };
     this.Success.prototype = new this.Result();
     this.Success.prototype.constructor = this.Success;
     this.Success.prototype.toString = function() {
         return "Success(" + this.value + ", " + this.rem + ")";
-    }
+    };
     this.Success.unapply = function(x) {
         if (x instanceof parsers.Success) {
             return std.Some([x.value, x.rem]);
         } else {
             return std.None;
         }
-    }
+    };
     
     this.Failure = function(msg) {
         if (this instanceof parsers.Failure) {
@@ -466,19 +467,19 @@ var Parsers = function() {
         } else {
             return new parsers.Failure(msg);
         }
-    }
+    };
     this.Failure.prototype = new this.Result();
     this.Failure.prototype.constructor = this.Failure;
     this.Failure.prototype.toString = function() {
         return "Failure(" + this.msg + ")";
-    }
+    };
     this.Failure.unapply = function(x) {
         if (x instanceof parsers.Failure) {
             return std.Some(this.msg);
         } else {
             return std.None;
         }
-    }
+    };
     
     this["~"] = function(a, b) {
         if (this instanceof parsers["~"]) {
@@ -487,28 +488,28 @@ var Parsers = function() {
         } else {
             return new parsers["~"](a, b);
         }
-    }
+    };
     this["~"].prototype.toString = function() {
         return this.a + "~" + this.b;
-    }
+    };
     this["~"].unapply = function(x) {
         if (x instanceof parsers["~"]) {
             return std.Some([x.a, x.b]);
         } else {
             return std.None;
         }
-    }
+    };
     
     this.Parser = function() {
         this["~"] = function(that) {
             var self = this;
             return new parsers.SequenceParser(function() {return self;}, that);
-        }
+        };
         
         this["|"] = function(that) {
             var self = this;
             return new parsers.DisParser(function() {return self;}, that);
-        }
+        };
         
         this["~>"] = function(that) {
             var self = this;
@@ -519,7 +520,7 @@ var Parsers = function() {
                     });
                 })(x).get();
             });
-        }
+        };
 
         this["<~"] = function(that) {
             var self = this;
@@ -530,47 +531,47 @@ var Parsers = function() {
                     });
                 })(x).get();
             });
-        }
+        };
         
         this["*"] = function() {
             var self = this;
-            return self["~"](self["*"])["^^"](function(x) {
+            return self["~"](function() {return self["*"]();})["^^"](function(x) {
                 return (function(x) {
                     return parsers["~"].unapply(x).map(function(a) {
                         return std["::"](a[0], a[1]);
                     });
                 })(x).get();
             })["|"](function() {return parsers.success(std.Nil)});
-        }
+        };
         
         this["^^"] = function(f) {
             var self = this;
-        	var result = new parsers.Parser();
-        	result.app = function(s) {
-        		return (function(x) {
-        			return parsers.Success.unapply(x).map(function(a) {
-        				return parsers.Success(f(a[0]), a[1]);
-        			});
-        		}).orelse(function(x) {
-        			return parsers.Failure.unapply(x).map(function(a) {
-        				return x;
-        			});
-        		})(self.app(s)).get();
-        	}
-        	return result;
-        }
-    }
+            var result = new parsers.Parser();
+            result.app = function(s) {
+                return (function(x) {
+                    return parsers.Success.unapply(x).map(function(a) {
+                        return parsers.Success(f(a[0]), a[1]);
+                    });
+                }).orelse(function(x) {
+                    return parsers.Failure.unapply(x).map(function(a) {
+                        return x;
+                    });
+                })(self.app(s)).get();
+            }
+            return result;
+        };
+    };
     
     this.KeywordParser = function(str) {
-    	this.app = function(s) {
-    		if (s.substring(0, str.length) === str) {
-    			return parsers.Success(str, s.substring(str.length));
-    		} else {
-    			return parsers.Failure("Expected '" + str +
-    				"' got '" + s.substring(0, str.length) + "'");
-    		}
-    	}
-    }
+        this.app = function(s) {
+            if (s.substring(0, str.length) === str) {
+                return parsers.Success(str, s.substring(str.length));
+            } else {
+                return parsers.Failure("Expected '" + str +
+                    "' got '" + s.substring(0, str.length) + "'");
+            }
+        };
+    };
     this.KeywordParser.prototype = new this.Parser();
     this.KeywordParser.prototype.constructor = this.KeywordParser;
     
@@ -580,24 +581,24 @@ var Parsers = function() {
         
         this.app = function(s) {
             return (function(x) {
-            	return parsers.Success.unapply(x).map(function(a) {
-            		return (function(x) {
-            			return parsers.Success.unapply(x).map(function(b) {
-            				return parsers.Success(new parsers["~"](a[0], b[0]), b[1]);
-            			});
-            		}).orelse(function(x) {
-            			return parsers.Failure.unapply(x).map(function(b) {
-            				return x;
-            			});
-            		})(r().app(a[1])).get(); // "r()" was "right"
-            	});
+                return parsers.Success.unapply(x).map(function(a) {
+                    return (function(x) {
+                        return parsers.Success.unapply(x).map(function(b) {
+                            return parsers.Success(new parsers["~"](a[0], b[0]), b[1]);
+                        });
+                    }).orelse(function(x) {
+                        return parsers.Failure.unapply(x).map(function(b) {
+                            return x;
+                        });
+                    })(r().app(a[1])).get(); // "r()" was "right"
+                });
             }).orelse(function(x) {
-            	return parsers.Failure.unapply(x).map(function(a) {
-            		return x;
-            	});
+                return parsers.Failure.unapply(x).map(function(a) {
+                    return x;
+                });
             })(left.app(s)).get();
-        }
-    }
+        };
+    };
     this.SequenceParser.prototype = new this.Parser();
     this.SequenceParser.prototype.constructor = this.SequenceParser;
     
@@ -607,56 +608,56 @@ var Parsers = function() {
         
         this.app = function(s) {
             return (function(x) {
-            	return parsers.Success.unapply(x).map(function(a) {
-            		return x;
-            	});
+                return parsers.Success.unapply(x).map(function(a) {
+                    return x;
+                });
             }).orelse(function(x) {
-            	return parsers.Failure.unapply(x).map(function(a) {
-            		return r().app(s); // See above
-            	});
+                return parsers.Failure.unapply(x).map(function(a) {
+                    return r().app(s); // See above
+                });
             })(left.app(s)).get();
-        }
-    }
+        };
+    };
     this.DisParser.prototype = new this.Parser();
     this.DisParser.prototype.constructor = this.DisParser;
     
     this.success = function(v) {
-    	var result = new parsers.Parser();
+        var result = new parsers.Parser();
         result.app = function(s) {
-        	return parsers.Success(v, s);
+            return parsers.Success(v, s);
         }
         return result;
-    }
-}
+    };
+};
 
 var RegexParsers = function() {
     var regexparsers = this;
     
     // These two functions are not (yet?) "implicit"
-	this.keyword = function(str) {
-		return new regexparsers.KeywordParser(str);
-	}
-	
-	this.regex = function(r) {
-		var result = new regexparsers.Parser();
-		result.app = function(s) {
-			var a = r.exec(s)
-			if (a !== null && a.index === 0) {
-			    return regexparsers.Success(a[0], s.substring(a[0].length));
-			} else {
-			    return regexparsers.Failure("Expected '" + r + "' got '" + s + "'");
-			}
-		}
-		return result;
-	}
-}
+    this.keyword = function(str) {
+        return new regexparsers.KeywordParser(str);
+    };
+    
+    this.regex = function(r) {
+        var result = new regexparsers.Parser();
+        result.app = function(s) {
+            var a = r.exec(s)
+            if (a !== null && a.index === 0) {
+                return regexparsers.Success(a[0], s.substring(a[0].length));
+            } else {
+                return regexparsers.Failure("Expected '" + r + "' got '" + s + "'");
+            }
+        }
+        return result;
+    };
+};
 RegexParsers.prototype = new Parsers();
 RegexParsers.prototype.constructor = RegexParsers;
 
 var ExprParser = new RegexParsers();
-ExprParser.NUM = /[1-9]\d*|0/
-ExprParser.ADDOP = /[-+]/
-ExprParser.MULOP = /[*\/]/
+ExprParser.NUM = /[1-9]\d*|0/;
+ExprParser.ADDOP = /[-+]/;
+ExprParser.MULOP = /[*\/]/;
 ExprParser.expr = function() {
     return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
@@ -682,7 +683,7 @@ ExprParser.expr = function() {
             });
         }).get();
     });
-}
+};
 ExprParser.term = function() {
     return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
@@ -707,11 +708,11 @@ ExprParser.term = function() {
             });
         }).get();
     });
-}
+};
 ExprParser.factor = function() {
     return ExprParser.keyword("(")["~>"](ExprParser.expr)["<~"](function() {return ExprParser.keyword(")");})["|"](function() {
         return ExprParser.regex(ExprParser.NUM)["^^"](function(n) {
             return Constant(parseInt(n, 10));
         });}
     );
-}
+};
