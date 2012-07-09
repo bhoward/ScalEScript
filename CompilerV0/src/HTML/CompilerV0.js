@@ -22,10 +22,3 @@ function println(stmt) {
 function print(stmt) {
     document.write(stmt);
 }
-
-function Nint(num) {
-    return num;
-}
-function Ndouble(num) {
-    return num;
-}
