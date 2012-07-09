@@ -137,19 +137,19 @@ object ExprParser extends RegexParsers {
   val ADDOP = """[-+]""".r
   val MULOP = """[*\/]""".r
   
-  def expr: Parser[Expression] =
+  lazy val expr: Parser[Expression] =
     term ~ (ADDOP ~ term).* ^^ { case t ~ rest => rest.foldLeft(t){
       case (e, "+" ~ t) => Sum(e, t)
       case (e, "-" ~ t) => Difference(e, t)
     } }
   
-  def term: Parser[Expression] =
+  lazy val term: Parser[Expression] =
     factor ~ (MULOP ~ factor).* ^^ { case f ~ rest => rest.foldLeft(f){
       case (e, "*" ~ t) => Product(e, t)
       case (e, "/" ~ t) => Quotient(e, t)
     } }
   
-  def factor: Parser[Expression] =
+  lazy val factor: Parser[Expression] =
     ( "(" ~> expr <~ ")"
     | NUM ^^ { case n => Constant(n.toInt) }
     )
@@ -259,7 +259,7 @@ std["::"].prototype.map = function(f) {
 std["::"].prototype.foldLeft = function(a) {
     var self = this;
     return function(f) {
-        return f(self.head, self.tail.foldLeft(a)(f));
+        return self.tail.foldLeft(f(a, self.head))(f);
     };
 };
 std["::"].unapply = function(x) {
@@ -406,6 +406,17 @@ Function.prototype.orelse = function(f) {
         } else {
             return r;
         }
+    };
+};
+
+// Wrap a thunk with Lazy to make it cache the result for future calls
+var Lazy = function(f) {
+    var cached = null;
+    return function() {
+        if (cached === null) {
+            cached = f();
+        }
+        return cached;
     };
 };
 
@@ -576,8 +587,8 @@ var Parsers = function() {
     this.KeywordParser.prototype.constructor = this.KeywordParser;
     
     this.SequenceParser = function(l, r) {
-        var left = l();
-        // var right = r(); // Needs to be lazy...
+        var left = Lazy(l);
+        var right = Lazy(r);
         
         this.app = function(s) {
             return (function(x) {
@@ -590,22 +601,22 @@ var Parsers = function() {
                         return parsers.Failure.unapply(x).map(function(b) {
                             return x;
                         });
-                    })(r().app(a[1])).get(); // "r()" was "right"
+                    })(right().app(a[1])).get(); // "r()" was "right"
                 });
             }).orelse(function(x) {
                 return parsers.Failure.unapply(x).map(function(a) {
                     return x;
                 });
-            })(left.app(s)).get();
+            })(left().app(s)).get();
         };
     };
     this.SequenceParser.prototype = new this.Parser();
     this.SequenceParser.prototype.constructor = this.SequenceParser;
     
     this.DisParser = function(l, r) {
-        var left = l();
-        // var right = r(); // See above
-        
+        var left = Lazy(l);
+        var right = Lazy(r);
+                
         this.app = function(s) {
             return (function(x) {
                 return parsers.Success.unapply(x).map(function(a) {
@@ -613,9 +624,9 @@ var Parsers = function() {
                 });
             }).orelse(function(x) {
                 return parsers.Failure.unapply(x).map(function(a) {
-                    return r().app(s); // See above
+                    return right().app(s);
                 });
-            })(left.app(s)).get();
+            })(left().app(s)).get();
         };
     };
     this.DisParser.prototype = new this.Parser();
@@ -658,61 +669,61 @@ var ExprParser = new RegexParsers();
 ExprParser.NUM = /[1-9]\d*|0/;
 ExprParser.ADDOP = /[-+]/;
 ExprParser.MULOP = /[*\/]/;
-ExprParser.expr = function() {
+ExprParser.expr = Lazy(function() {
     return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
-            return a[1].foldLeft(a[0])(function(p) {
-                return (function(p) {
+            return a[1].foldLeft(a[0])(function(e, p) {
+                return (function() {
                     // Slightly cheating -- not using unapply on pairs or strings...
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "+") {
-                            return std.Some(Sum(p[0], a[1]));
+                            return std.Some(Sum(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                }).orelse(function(p) {
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+                }).orelse(function() {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "-") {
-                            return std.Some(Difference(p[0], a[1]));
+                            return std.Some(Difference(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                })(p).get();
+                })().get();
             });
         }).get();
     });
-};
-ExprParser.term = function() {
+});
+ExprParser.term = Lazy(function() {
     return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
-            return a[1].foldLeft(a[0])(function(p) {
-                return (function(p) {
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+            return a[1].foldLeft(a[0])(function(e, p) {
+                return (function() {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "*") {
-                            return std.Some(Product(p[0], a[1]));
+                            return std.Some(Product(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                }).orelse(function(p) {
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+                }).orelse(function() {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "/") {
-                            return std.Some(Quotient(p[0], a[1]));
+                            return std.Some(Quotient(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                })(p).get();
+                })().get();
             });
         }).get();
     });
-};
-ExprParser.factor = function() {
+});
+ExprParser.factor = Lazy(function() {
     return ExprParser.keyword("(")["~>"](ExprParser.expr)["<~"](function() {return ExprParser.keyword(")");})["|"](function() {
         return ExprParser.regex(ExprParser.NUM)["^^"](function(n) {
             return Constant(parseInt(n, 10));
         });}
     );
-};
+});
