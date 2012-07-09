@@ -10,6 +10,7 @@ var testSuite = {
 		ju.assertIdentical(42, Expression.eval(e));
 	},
 	
+	/*
 	// The following two are just to test the test runner...
 	testEval2: function() {
 	    ju.assertIdentical(2+2, 4);
@@ -18,6 +19,7 @@ var testSuite = {
 	testFail: function() {
 		ju.fail();
 	},
+	*/
 	
 	testKeywordParser: function() {
 	    var r = new RegexParsers();
@@ -52,5 +54,20 @@ var testSuite = {
 	testExprParser: function() {
 	    var p = ExprParser.expr();
 	    ju.assertIdentical("Success(Sum(Constant(2), Constant(2)), )", p.app("2+2").toString());
+	},
+	
+	testExprParser2: function() {
+	    var p = ExprParser.expr();
+	    ju.assertIdentical("Success(Sum(Product(Constant(4), Constant(8)), Difference(Constant(12), Constant(2))), )", p.app("4*8+(12-2)").toString());
+	},
+	
+	testExprParser3: function() {
+	    var p = ExprParser.expr();
+	    ju.assertIdentical("Success(Sum(Difference(Constant(12), Constant(2)), Product(Constant(4), Constant(8))), )", p.app("12-2+4*8").toString());
+	},
+	
+	testExprParser4: function() {
+	    var p = ExprParser.expr();
+	    ju.assertIdentical(42, Expression.eval(p.app("12-2+4*8").value));
 	}
 };

@@ -259,7 +259,7 @@ std["::"].prototype.map = function(f) {
 std["::"].prototype.foldLeft = function(a) {
     var self = this;
     return function(f) {
-        return f(self.head, self.tail.foldLeft(a)(f));
+        return self.tail.foldLeft(f(a, self.head))(f);
     };
 };
 std["::"].unapply = function(x) {
@@ -661,25 +661,25 @@ ExprParser.MULOP = /[*\/]/;
 ExprParser.expr = function() {
     return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
-            return a[1].foldLeft(a[0])(function(p) {
-                return (function(p) {
+            return a[1].foldLeft(a[0])(function(e, p) {
+                return (function() {
                     // Slightly cheating -- not using unapply on pairs or strings...
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "+") {
-                            return std.Some(Sum(p[0], a[1]));
+                            return std.Some(Sum(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                }).orelse(function(p) {
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+                }).orelse(function() {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "-") {
-                            return std.Some(Difference(p[0], a[1]));
+                            return std.Some(Difference(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                })(p).get();
+                })().get();
             });
         }).get();
     });
@@ -687,24 +687,24 @@ ExprParser.expr = function() {
 ExprParser.term = function() {
     return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
-            return a[1].foldLeft(a[0])(function(p) {
-                return (function(p) {
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+            return a[1].foldLeft(a[0])(function(e, p) {
+                return (function() {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "*") {
-                            return std.Some(Product(p[0], a[1]));
+                            return std.Some(Product(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                }).orelse(function(p) {
-                    return ExprParser["~"].unapply(p[1]).flatmap(function(a) {
+                }).orelse(function() {
+                    return ExprParser["~"].unapply(p).flatmap(function(a) {
                         if (a[0] === "/") {
-                            return std.Some(Quotient(p[0], a[1]));
+                            return std.Some(Quotient(e, a[1]));
                         } else {
                             return std.None;
                         }
                     });
-                })(p).get();
+                })().get();
             });
         }).get();
     });
