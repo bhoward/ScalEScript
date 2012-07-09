@@ -1,7 +1,7 @@
 var ju = jsUnity.assertions;
 
 var testSuite = {
-	suiteName: "Eval tests",
+	suiteName: "Eval and Parser tests",
 	// setUp: function() {},
 	// tearDown: function() {},
 	
@@ -10,7 +10,7 @@ var testSuite = {
 		ju.assertIdentical(42, Expression.eval(e));
 	},
 	
-	// The following are just to test the test runner...
+	// The following two are just to test the test runner...
 	testEval2: function() {
 	    ju.assertIdentical(2+2, 4);
 	},
@@ -47,6 +47,11 @@ var testSuite = {
 	    var r = new RegexParsers();
 	    var p = r.keyword("test")["~"](function() {return r.regex(/[1-9]\d*|0/);});
 	    ju.assertIdentical("Success(test~123, )", p.app("test123").toString());
+	},
+	
+	testExprParser: function() {
+	    var p = ExprParser.expr();
+	    ju.assertIdentical("Success(test, ing)", p.app("2+2").toString());
 	}
 }
 

@@ -474,7 +474,7 @@ var Parsers = function() {
     }
     this.Failure.unapply = function(x) {
         if (x instanceof parsers.Failure) {
-            return std.Some(msg);
+            return std.Some(this.msg);
         } else {
             return std.None;
         }
@@ -576,7 +576,7 @@ var Parsers = function() {
     
     this.SequenceParser = function(l, r) {
         var left = l();
-        var right = r();
+        // var right = r(); // Needs to be lazy...
         
         this.app = function(s) {
             return (function(x) {
@@ -589,7 +589,7 @@ var Parsers = function() {
             			return parsers.Failure.unapply(x).map(function(b) {
             				return x;
             			});
-            		})(right.app(a[1])).get();
+            		})(r().app(a[1])).get(); // "r()" was "right"
             	});
             }).orelse(function(x) {
             	return parsers.Failure.unapply(x).map(function(a) {
@@ -603,16 +603,16 @@ var Parsers = function() {
     
     this.DisParser = function(l, r) {
         var left = l();
-        var right = r();
+        // var right = r(); // See above
         
         this.app = function(s) {
             return (function(x) {
-            	return Success.unapply(x).map(function(a) {
+            	return parsers.Success.unapply(x).map(function(a) {
             		return x;
             	});
             }).orelse(function(x) {
-            	return Failure.unapply(x).map(function(a) {
-            		return right.app(s);
+            	return parsers.Failure.unapply(x).map(function(a) {
+            		return r().app(s); // See above
             	});
             })(left.app(s)).get();
         }
