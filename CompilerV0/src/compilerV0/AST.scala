@@ -1,8 +1,8 @@
 package compilerV0
 
 sealed trait Numeric
-case class Nint(num : Int) extends Numeric
-case class Ndouble(Num : Double) extends Numeric
+case class NInt(num : Int) extends Numeric
+case class NDouble(Num : Double) extends Numeric
 
 sealed trait Stmt {
   def isExpr() : Boolean = {false}

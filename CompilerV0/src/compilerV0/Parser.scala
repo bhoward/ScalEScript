@@ -60,13 +60,13 @@ object Parser extends RegexParsers with PackratParsers {
     	
 	lazy val literal: P[Expr] =
 	( "-" ~ floatingPointLiteral ^^
-	    {case _ ~ numLit => NumExpr(Ndouble(-numLit.toDouble)); }
+	    {case _ ~ numLit => NumExpr(NDouble(-numLit.toDouble)); }
 	| floatingPointLiteral ^^
-		{case numLit => NumExpr(Ndouble(numLit.toDouble))}
+		{case numLit => NumExpr(NDouble(numLit.toDouble))}
 	| "-" ~ integerLiteral ^^
-	    {case _ ~ numLit => NumExpr(Nint(-numLit.toInt)); }
+	    {case _ ~ numLit => NumExpr(NInt(-numLit.toInt)); }
 	| integerLiteral ^^
-	  	{case numLit => NumExpr(Nint(numLit.toInt)); }
+	  	{case numLit => NumExpr(NInt(numLit.toInt)); }
 	| booleanLiteral ^^
 	    {case boolLit => BoolExpr(boolLit.toBoolean)}
 	| characterLiteral ^^

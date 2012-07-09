@@ -244,8 +244,8 @@ object TypeVerifier {
 		    	case StringExpr(value) => "String"
 		    	case NumExpr(value) => {
 		    		value match {
-		    		  	case Nint(num) => return "Int"
-		    		  	case Ndouble(num) => return "Double"
+		    		  	case NInt(num) => return "Int"
+		    		  	case NDouble(num) => return "Double"
 		    		}
 		    		return "";
 		    	}
