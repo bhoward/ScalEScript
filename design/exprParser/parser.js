@@ -420,6 +420,25 @@ var Lazy = function(f) {
     };
 };
 
+// This deep equality function will loop on objects with cycles, but should be fine for ADTs
+// Based on an answer to http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+std.equals = function(a, b) {
+    if (a === b) {
+        return true;
+    }
+    if (!(a instanceof Object && b instanceof Object && a.constructor === b.constructor)) {
+        return false;
+    }
+    var x;
+    for (x in a) {
+        if (a.hasOwnProperty(x) && !(b.hasOwnProperty(x) && std.equals(a[x], b[x]))) return false;
+    }
+    for (x in b) {
+        if (b.hasOwnProperty(x) && !a.hasOwnProperty(x)) return false;
+    }
+    return true;
+};
+
 Expression.eval = function(e) {
     return (function(e) {
         return Constant.unapply(e).map(function(v) {
@@ -464,6 +483,9 @@ var Parsers = function() {
     this.Success.prototype.toString = function() {
         return "Success(" + this.value + ", " + this.rem + ")";
     };
+    this.Success.prototype.successful = function() {
+        return true;
+    };
     this.Success.unapply = function(x) {
         if (x instanceof parsers.Success) {
             return std.Some([x.value, x.rem]);
@@ -483,6 +505,9 @@ var Parsers = function() {
     this.Failure.prototype.constructor = this.Failure;
     this.Failure.prototype.toString = function() {
         return "Failure(" + this.msg + ")";
+    };
+    this.Failure.prototype.successful = function() {
+        return false;
     };
     this.Failure.unapply = function(x) {
         if (x instanceof parsers.Failure) {
