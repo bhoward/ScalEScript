@@ -154,7 +154,7 @@ object Parser extends RegexParsers with PackratParsers {
 	    {case args ~ _ ~ body => AnonFuncExpr(args, body)}
 	| id ~ "=>" ~ expr ^^
 	    {case _ => null}
-	| "_" ~ "=>" ~ expr^^
+	| "_" ~ "=>" ~ expr ^^
 	    {case _ => null}
 	| expr1
 	)

@@ -306,7 +306,7 @@ object TypeVerifier {
 			} else if (params.foldLeft(false)((result, param) => result || !scalaTypes.contains(param))) { //Unknown param type
 				throw new Exception("Unknown parameter type found in parameters: "+params+" for function "+funcName+".")
 			} else {
-				var paramTypes : List[ObjType] = params.map(param => new ObjType(param))
+				var paramTypes : List[BaseType] = params.map(param => new BaseType(param))
 				map.put(funcName, new FuncType(retType, paramTypes)); 
 				return true;
 			}
@@ -324,7 +324,7 @@ object TypeVerifier {
 	  	case Nil => return true;
 	 	case x::xs => {
 	 		if (!map.contains(x)) {
-	 			map.put(x, new ObjType(varType)); 
+	 			map.put(x, new BaseType(varType)); 
 	 			return putAllVars(map, xs, varType);
 	 		} else {
 	 			throw new Exception("The variable "+x+" is already defined in the current scope.")

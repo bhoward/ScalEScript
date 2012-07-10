@@ -79,12 +79,12 @@ sealed trait Type {
 	def getType() : String;
 	def getArgTypes() : List[Type];
 }
-case class ObjType(varType : String) extends Type {
+case class BaseType(varType : String) extends Type {
 	def isFunc() : Boolean = false;
 	def getType() : String = varType;
 	def getArgTypes() : List[Type] = Nil;
 }
-case class FuncType(retType : String, argTypes : List[ObjType]) extends Type {
+case class FuncType(retType : String, argTypes : List[BaseType]) extends Type {
 	def isFunc() : Boolean = true;
 	def getType() : String = retType;
 	def getArgTypes() : List[Type] = argTypes;
