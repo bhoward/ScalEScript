@@ -89,9 +89,10 @@ object Main {
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5;}")))
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
-	   
-	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y;}")))
+	    
+		
+	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}"))
+	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}")))
 	    
 	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
@@ -99,6 +100,11 @@ object Main {
 		println("Parsed Expression: " + Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}"""))
 	    println("Code Generated: " + CodeGenerator(Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""")))
 	   	*/
+		//println("Parsed Expression: " + Parser("""{var f : function = (x:Int) => (x+1); f(5)}"""))
+		println("Parsed Expression: " + Parser("""((x:Int) => (x+1))(5)"""))
+		println("Code Generated: " +  CodeGenerator(Parser("""((x:Int) => (x+1))(5)""")))
+	    //println("Code Generated: " + CodeGenerator(Parser("""{var f : function = (x:Int) => (x+1); f(5)}""")))
+		
 	    println();
 	    
 	    /* TypeVerifier testing */
@@ -110,7 +116,7 @@ object Main {
 	    //println();
 	    
 	    /* Entire Compiler testing */
-	    
+	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -122,6 +128,7 @@ object Main {
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
+	    */
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {

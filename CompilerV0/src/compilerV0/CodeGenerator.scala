@@ -27,7 +27,8 @@ object CodeGenerator {
     	                                               else "return " + generate(body)) +
     	                                               "; \n }"
     	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)
-    	case FunExpr(name, args) => name + "(" + exprsProcess(args) + ")"
+    	case FunExpr(name, args) => generate(name) + "(" + exprsProcess(args) + ")"
+    	case AnonFuncExpr(args, body) => "( " + "function " + "(" + funArgProcess(args) + " )" + " { " + "return " + generate(body) + " } " + " ) "
     	case _ => "failure"
 	}
 	def exprsProcess(loe : List[Expr]):String = loe match {

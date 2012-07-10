@@ -221,6 +221,7 @@ object TypeVerifier {
 			  		putAllVars(maps.head, ids, varType)
 			  		return "";
 		    	}
+		    	/*
 		    	case FunExpr(id, args) => {
 		    		var funcTypes : (String, List[String]) = getFuncType(maps, id);
 		    		var retType : String = funcTypes._1
@@ -241,6 +242,7 @@ object TypeVerifier {
 			    	}
 		    		return retType;
 		    	}
+		    	*/
 		    	case StringExpr(value) => "String"
 		    	case NumExpr(value) => {
 		    		value match {
