@@ -710,7 +710,9 @@ ExprParser.NUM = /[1-9]\d*|0/;
 ExprParser.ADDOP = /[-+]/;
 ExprParser.MULOP = /[*\/]/;
 ExprParser.expr = Lazy(function() {
-    return ExprParser.term()["~"](function() {return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();})["^^"](function(x) {
+    return ExprParser.term()["~"](function() {
+        return ExprParser.regex(ExprParser.ADDOP)["~"](ExprParser.term)["*"]();
+    })["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
             return a[1].foldLeft(a[0])(function(e, p) {
                 return (function() {
@@ -736,7 +738,9 @@ ExprParser.expr = Lazy(function() {
     });
 });
 ExprParser.term = Lazy(function() {
-    return ExprParser.factor()["~"](function() {return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();})["^^"](function(x) {
+    return ExprParser.factor()["~"](function() {
+        return ExprParser.regex(ExprParser.MULOP)["~"](ExprParser.factor)["*"]();
+    })["^^"](function(x) {
         return ExprParser["~"].unapply(x).map(function(a) {
             return a[1].foldLeft(a[0])(function(e, p) {
                 return (function() {
@@ -761,7 +765,9 @@ ExprParser.term = Lazy(function() {
     });
 });
 ExprParser.factor = Lazy(function() {
-    return ExprParser.keyword("(")["~>"](ExprParser.expr)["<~"](function() {return ExprParser.keyword(")");})["|"](function() {
+    return ExprParser.keyword("(")["~>"](ExprParser.expr)["<~"](function() {
+        return ExprParser.keyword(")");
+    })["|"](function() {
         return ExprParser.regex(ExprParser.NUM)["^^"](function(n) {
             return Constant(parseInt(n, 10));
         });}
