@@ -411,16 +411,16 @@ Function.prototype.orelse = function(f) {
 
 // Wrap a thunk with Lazy to make it cache the result for future calls
 var Lazy = function(f) {
-    var cached = null;
+    var cached = undefined;
     return function() {
-        if (cached === null) {
+        if (cached === undefined) {
             cached = f();
         }
         return cached;
     };
 };
 
-// This deep equality function will loop on objects with cycles, but should be fine for ADTs
+// This deep equality function will loop on objects with cycles, but should be fine for ADTs.
 // Based on an answer to http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
 std.equals = function(a, b) {
     if (a === b) {
@@ -598,8 +598,27 @@ var Parsers = function() {
         };
     };
     
-    this.KeywordParser = function(str) {
-        this.app = function(s) {
+    // Functionality added beyond the original Scala code:
+    this.whitespace = ""; // override this to skip whitespace
+    
+    this.skipWhitespace = function(s) {
+        if (this.whitespace === "") return s;
+        var a = this.whitespace.exec(s);
+        if (a !== null && a.index === 0) {
+            return s.substring(a[0].length);
+        } else {
+            return s;
+        }
+    };
+    
+    // Defined here instead of in RegexParsers because of difficulty in grabbing
+    // correct "this" when keyword function was there and KeywordParser
+    // class was here
+    this.keyword = function(str) {
+        var self = this;
+        var result = new parsers.Parser();
+        result.app = function(s0) {
+            var s = self.skipWhitespace(s0);
             if (s.substring(0, str.length) === str) {
                 return parsers.Success(str, s.substring(str.length));
             } else {
@@ -607,9 +626,8 @@ var Parsers = function() {
                     "' got '" + s.substring(0, str.length) + "'");
             }
         };
+        return result;
     };
-    this.KeywordParser.prototype = new this.Parser();
-    this.KeywordParser.prototype.constructor = this.KeywordParser;
     
     this.SequenceParser = function(l, r) {
         var left = Lazy(l);
@@ -669,14 +687,10 @@ var Parsers = function() {
 var RegexParsers = function() {
     var regexparsers = this;
     
-    // These two functions are not (yet?) "implicit"
-    this.keyword = function(str) {
-        return new regexparsers.KeywordParser(str);
-    };
-    
     this.regex = function(r) {
         var result = new regexparsers.Parser();
-        result.app = function(s) {
+        result.app = function(s0) {
+            var s = regexparsers.skipWhitespace(s0);
             var a = r.exec(s);
             if (a !== null && a.index === 0) {
                 return regexparsers.Success(a[0], s.substring(a[0].length));
@@ -691,6 +705,7 @@ RegexParsers.prototype = new Parsers();
 RegexParsers.prototype.constructor = RegexParsers;
 
 var ExprParser = new RegexParsers();
+ExprParser.whitespace = /\s+/;
 ExprParser.NUM = /[1-9]\d*|0/;
 ExprParser.ADDOP = /[-+]/;
 ExprParser.MULOP = /[*\/]/;
