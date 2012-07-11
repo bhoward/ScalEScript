@@ -124,7 +124,7 @@ object Main {
 	    println();
 	    
 	    /* Entire Compiler testing */
-	    /*
+	    
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -136,12 +136,13 @@ object Main {
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
-	    */
+	    
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
 		try {
 			val ast = Parser(scalaSource);
+			println(ast);
 			TypeVerifier(ast);
 			val jsSource = CodeGenerator(ast);
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));

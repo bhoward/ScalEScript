@@ -299,7 +299,12 @@ object TypeVerifier {
 	  		return "";
     	}
     	case FunExpr(id, args) => {
-    		var funcTypes : (String, List[String]) = getFuncType(maps, id);
+    		var idStr : String = "";
+    		id match {
+    		  	case VarExpr(str) => {idStr = str}
+    		  	case _ => {throw new Exception("Not yet typechecking non-free functions")} 
+    		}
+    		var funcTypes : (String, List[String]) = getFuncType(maps, idStr);
     		var retType : String = funcTypes._1
     		var paramTypes : List[String] = funcTypes._2
     		var argTypes : List[String] = args.map(arg => verify(arg, maps))
