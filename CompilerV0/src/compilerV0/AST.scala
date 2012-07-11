@@ -16,13 +16,14 @@ case class BoolExpr(bool : Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str : String) extends Expr
 case class VarExpr(id: String) extends Expr
-case class FunExpr(id: String, args : List[Expr]) extends Expr
+case class FunExpr(id: Expr, args : List[Expr]) extends Expr
 case class BlockExpr(body: List[Stmt]) extends Expr
 case class BinOpExpr(op: String, left: Expr, right: Expr) extends Expr
 case class UnOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class WhileExpr(test: Expr, body: Expr) extends Expr
+case class AnonFuncExpr(args: List[VarDclStmt] , body: Expr) extends Expr
 
 //Typed AST
 sealed trait TypedStmt {

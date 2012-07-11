@@ -151,7 +151,7 @@ object Parser extends RegexParsers with PackratParsers {
   
 	lazy val expr: P[Expr] =
 	( bindings ~ "=>" ~ expr ^^
-	    {case _ => null}
+	    {case args ~ _ ~ body => AnonFuncExpr(args, body)}
 	| id ~ "=>" ~ expr ^^
 	    {case _ => null}
 	| "_" ~ "=>" ~ expr ^^
@@ -430,12 +430,12 @@ object Parser extends RegexParsers with PackratParsers {
 	
 	lazy val simpleExpr1: P[Expr] = 
 	( literal
-	| path ~ argumentExprs ^^ //Defined as simpleExpr1 ~ argumentExprs in the grammar. This should be changed eventually
+	| simpleExpr1 ~ argumentExprs ^^ 
 		{case funcName ~ args => FunExpr(funcName, args)}
 	| path ^^ 
 		{case varId => VarExpr(varId)}
 	| "(" ~ exprs ~ ")" ^^
-		{case _ => null}
+		{case _ ~ exprs ~ _ => {if (exprs.length == 1) exprs.head else null}}
 	| "(" ~ ")" ^^
 		{case _ => null}
 	| simpleExpr ~ "." ~ id ^^
@@ -621,24 +621,22 @@ object Parser extends RegexParsers with PackratParsers {
     	{case _ => null}
     )
     
-    lazy val bindings: P[Expr] = 
+    lazy val bindings: P[List[VarDclStmt]] = 
     ( "(" ~ binding ~ bindingsH ~ ")" ^^
-    	{case _ => null}
+    	{case _ ~ arg ~ args ~ _  => arg :: args}
     | "(" ~ binding ~ ")" ^^
-    	{case _ => null}    
+    	{case _ ~ arg ~ _ => List(arg)}    
     )
-    lazy val bindingsH: P[List[Expr]] =
+    lazy val bindingsH: P[List[VarDclStmt]] =
     ( "," ~ binding ~ bindingsH ^^
-    	{case _ => null}
+    	{case _ ~ arg ~ args  => arg :: args}
     | "," ~ binding ^^
-    	{case _ => null}    
+    	{case _ ~ arg => List(arg)}    
     )
     
-    lazy val binding: P[Expr] =
+    lazy val binding: P[VarDclStmt] =
     ( id ~ ":" ~ typeG ^^
-    	{case _ => null}
-    | id ^^
-    	{case _ => null}
+    	{case arg ~ _ ~ typeG => VarDclStmt(List(arg), typeG)}
     | "_" ~ ":" ~ typeG ^^
     	{case _ => null}
     | "_" ^^
