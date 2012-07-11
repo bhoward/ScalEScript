@@ -77,14 +77,17 @@ sealed trait Type {
 	def isFunc() : Boolean;
 	def getType() : String;
 	def getArgTypes() : List[Type];
+	def getRetType() : Type;
 }
 case class BaseType(varType : String) extends Type {
 	def isFunc() : Boolean = false;
 	def getType() : String = varType;
 	def getArgTypes() : List[Type] = Nil;
+	def getRetType() : Type = null;
 }
-case class FuncType(retType : String, argTypes : List[BaseType]) extends Type {
+case class FuncType(retType : Type, argTypes : List[Type]) extends Type {
 	def isFunc() : Boolean = true;
-	def getType() : String = retType;
+	def getType() : String = "";
+	def getRetType() : Type = retType;
 	def getArgTypes() : List[Type] = argTypes;
 }
