@@ -39,8 +39,8 @@ object TypeVerifier {
 	}
 	def initSymbolTable(): Map[String, Type] = {
 		var map : Map[String, Type] = scala.collection.mutable.Map[String, Type]()
-		putFunc(map, "println", List("Any"), "Unit");
-		putFunc(map, "print", List("Any"), "Unit");
+		putFunc(map, "println", List(BaseType("Any")), BaseType("Unit"));
+		putFunc(map, "print", List(BaseType("Any")), BaseType("Unit"));
 		return map;
 	}
 	
@@ -165,7 +165,7 @@ object TypeVerifier {
 		    		var typedParams = params.map(param => verifyVarDclStmt(param.ids, param.varType, myMaps))
 		    		
 		    		var typedBody = verifyExpr(body, myMaps);
-			  		if (!checkType(typedBody.evalType(), BaseType(retType))) {
+			  		if (!checkType(typedBody.evalType(), retType)) {
 			  			throw new Exception("Body type "+typedBody.evalType()+" does not match the required return type "+retType+" for function "+name+".")
 			  		}
 			  		result = TypedFunDefStmt(name, typedParams, retType, typedBody, null) :: result
@@ -184,29 +184,29 @@ object TypeVerifier {
 	}
 	
 	/* Specific Verify Functions start here */
-	def verifyValDefStmt(ids : List[String], valType: String, value : Expr, maps : List[Map[String, Type]]) : TypedValDefStmt = {	
+	def verifyValDefStmt(ids : List[String], valType: Type, value : Expr, maps : List[Map[String, Type]]) : TypedValDefStmt = {	
 		var exprTyped = verifyExpr(value, maps);
-  		if (checkType(exprTyped.evalType(), BaseType(valType))) {
+  		if (checkType(exprTyped.evalType(), valType)) {
   			putAllVars(maps.head, ids, valType)
   		} else {
   			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+valType+" for vals "+prettyPrint(ids)+".")
   		}
   		return TypedValDefStmt(ids, valType, exprTyped, null);
 	}
-	def verifyVarDefStmt(ids : List[String], varType: String, value : Expr, maps : List[Map[String, Type]]) : TypedVarDefStmt = {
+	def verifyVarDefStmt(ids : List[String], varType: Type, value : Expr, maps : List[Map[String, Type]]) : TypedVarDefStmt = {
 		var exprTyped = verifyExpr(value, maps);
-  		if (checkType(exprTyped.evalType(), BaseType(varType))) {
+  		if (checkType(exprTyped.evalType(), varType)) {
   			putAllVars(maps.head, ids, varType)
   		} else {
   			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+varType+" for vars "+prettyPrint(ids)+".")
   		}
   		return TypedVarDefStmt(ids, varType, exprTyped, null);
 	}
-	def verifyVarDclStmt(ids : List[String], varType: String, maps : List[Map[String, Type]]) : TypedVarDclStmt = {
+	def verifyVarDclStmt(ids : List[String], varType: Type, maps : List[Map[String, Type]]) : TypedVarDclStmt = {
 		putAllVars(maps.head, ids, varType)
 		return TypedVarDclStmt(ids, varType, null);
 	}
-	def verifyFunDefStmt(name : String, params : List[VarDclStmt], retType : String, body : Expr, maps : List[Map[String, Type]]) : TypedFunDefStmt = {
+	def verifyFunDefStmt(name : String, params : List[VarDclStmt], retType : Type, body : Expr, maps : List[Map[String, Type]]) : TypedFunDefStmt = {
 		var paramTypes = params.map(param => param.varType)
 		//add to map
 		putFunc(maps.head, name, paramTypes, retType);
@@ -417,39 +417,47 @@ object TypeVerifier {
 	  		}
 	  	}
 	}
-	def putFunc(map : Map[String, Type], funcName: String, params : List[String], retType : String): Boolean = {
+	def putFunc(map : Map[String, Type], funcName: String, params : List[Type], retType : Type): Boolean = {
 		if (!map.contains(funcName)) {
-			if (!scalaTypes.contains(retType)) { //Unknown return type
+			if (!checkScalaTypes(retType)) { //Unknown return type
 				throw new Exception("Unknown return type "+retType+" for function "+funcName+".")
-			} else if (params.foldLeft(false)((result, param) => result || !scalaTypes.contains(param))) { //Unknown param type
+			} else if (params.foldLeft(false)((result, param) => result || !checkScalaTypes(param))) { //Unknown param type
 				throw new Exception("Unknown parameter type found in parameters: "+params+" for function "+funcName+".")
 			} else {
-				var paramTypes : List[BaseType] = params.map(param => BaseType(param))
+				var paramTypes : List[Type] = params.map(param => param)
 				//Quick fix
 				//map.put(funcName, new FuncType(retType, paramTypes));
-				map.put(funcName, FuncType(BaseType(retType), paramTypes)); 
+				map.put(funcName, FuncType(retType, paramTypes)); 
 				return true;
 			}
 		} else {
 			throw new Exception("The function "+funcName+" is already defined in the current scope.")
 		}
 	}
-	def putAllVars(map : Map[String, Type], varNames: List[String], varType : String): Boolean = {
-		if (!scalaTypes.contains(varType)) { //Unknown type
+	def putAllVars(map : Map[String, Type], varNames: List[String], varType : Type): Boolean = {
+		if (!checkScalaTypes(varType)) { //Unknown type
 			throw new Exception("Unknown type "+varType+" for vars "+prettyPrint(varNames)+".")
 		}
 		return putAllVarsH(map, varNames, varType);
 	}
-	def putAllVarsH(map : Map[String, Type], varNames: List[String], varType : String): Boolean = varNames match {
+	def putAllVarsH(map : Map[String, Type], varNames: List[String], varType : Type): Boolean = varNames match {
 	  	case Nil => return true;
 	 	case x::xs => {
 	 		if (!map.contains(x)) {
-	 			map.put(x, BaseType(varType)); 
+	 			map.put(x, varType); 
 	 			return putAllVars(map, xs, varType);
 	 		} else {
 	 			throw new Exception("The variable "+x+" is already defined in the current scope.")
 	 		}
 	 	}
+	}
+	
+	def checkScalaTypes(varType : Type) : Boolean = {
+		if (varType.isFunc()) {
+			return varType.getArgTypes().foldLeft(checkScalaTypes(varType.getRetType()))((result, argType) => result && checkScalaTypes(argType));
+		} else {
+			return scalaTypes.contains(varType.getType());
+		}
 	}
 	
 	def prettyPrint(l : List[String]) : String = {
