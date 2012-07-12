@@ -142,14 +142,16 @@ object Main {
 	def testCompiler(testName : String, scalaSource : String) {
 		try {
 			val ast = Parser(scalaSource);
+			val typedAst = TypeVerifier(ast);
 			println(ast);
-			TypeVerifier(ast);
+			println(typedAst)
 			val jsSource = CodeGenerator(ast);
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
 			println(testName+".html was successfully created.");
 		} catch {
 			case e: Exception => {println("Error while compiling "+testName+". "+e);}
 		}
+		println();
     }
   
 	def writeToFile(fileName : String, contents : String){
