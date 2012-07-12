@@ -96,7 +96,7 @@ object Parser extends RegexParsers with PackratParsers {
 	)
 	
 	//Called type in the grammar (which is a reserved word, so I used typeG)
-    lazy val typeG: P[String] =
+    lazy val typeG: P[Type] =
     ( functionArgTypes ~ "=>" ~ typeG ^^
         {case _ => null}
     | infixType
@@ -117,18 +117,19 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null} 
     )
     
-    lazy val infixType: P[String] =
+    lazy val infixType: P[Type] =
     ( simpleType ~ id ~ infixType ^^
     	{case _ => null}
     | simpleType 
     )
     
-    lazy val simpleType: P[String] =
+    lazy val simpleType: P[Type] =
     ( simpleType ~ typeArgs ^^
         {case _ => null}
     | simpleType ~ "#" ~ id ^^
         {case _ => null}
-    | qualId
+    | qualId ^^
+    	{case qualId => BaseType(qualId)}
     | "(" ~ types ~ ")" ^^
     	{case _ => null}
     )
@@ -145,7 +146,7 @@ object Parser extends RegexParsers with PackratParsers {
     	{case _ => null}
     )
     
-    lazy val typePat : P[String] =
+    lazy val typePat : P[Type] =
     ( typeG
     )
   
@@ -615,7 +616,7 @@ object Parser extends RegexParsers with PackratParsers {
         {case id ~ _ ~ paramType => VarDclStmt(List(id), paramType)}     
     )
     
-    lazy val paramType : P[String] = 
+    lazy val paramType : P[Type] = 
     ( typeG
     | "=>" ~ typeG ^^
     	{case _ => null}
