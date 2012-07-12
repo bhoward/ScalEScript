@@ -130,25 +130,25 @@ object TypeVerifier {
 				
 				if (argTypes1.length != argTypes2.length) {
 					//Functions take a different number of arguments - they don't match - super type is Function
-					return new BaseType("Function");
+					return BaseType("Function");
 				} else {
 					if (argTypes1 == argTypes2){
-						return new FuncType(firstCommonSuperType(retType1, retType2), argTypes1);
+						return FuncType(firstCommonSuperType(retType1, retType2), argTypes1);
 					} else {
 						//Left hand sides must be the same types - super type is Function
-						return new BaseType("Function");
+						return BaseType("Function");
 					}
 				}
 			} else {
 				//Attempted to compare a FuncType to a BaseType - find super type using Function
-				return new BaseType(firstCommonSuperTypeS("Function", type2.getType()));
+				return BaseType(firstCommonSuperTypeS("Function", type2.getType()));
 			}
 		} else {
 			if (type2.isFunc()) {
 				//Attempted to compare a FuncType to a BaseType - find super type using Function
-				return new BaseType(firstCommonSuperTypeS(type1.getType(), "Function"));
+				return BaseType(firstCommonSuperTypeS(type1.getType(), "Function"));
 			} else {
-				return new BaseType(firstCommonSuperTypeS(type1.getType(), type2.getType()));
+				return BaseType(firstCommonSuperTypeS(type1.getType(), type2.getType()));
 			}
 		}
 	}
@@ -162,22 +162,10 @@ object TypeVerifier {
 				case FunDefStmt(name, params, retType, body) => {
 					var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
 		    		//add params to the new map (by verifying them)
-		    		var typedParamStats = params.map(param => verifyStmt(param, myMaps))
-		    		var typedParams : List[TypedVarDclStmt] = Nil;
-					
-					//This whole chunk is just for typecasting
-		    		while (typedParamStats.length > 0) {
-		    			var typedParam = typedParamStats.head;
-		    			typedParamStats = typedParamStats.tail;
-		    			typedParam match {
-		    			  	case TypedVarDclStmt(ids, varType, evalType) => typedParams = new TypedVarDclStmt(ids, varType, evalType) :: typedParams
-		    			  	case _ => ; //This should never happen... just needing to use the match for typecasting
-		    			}
-		    		}
-		    		typedParams = typedParams.reverse;
+		    		var typedParams = params.map(param => verifyVarDclStmt(param.ids, param.varType, myMaps))
 		    		
 		    		var typedBody = verifyExpr(body, myMaps);
-			  		if (!checkType(typedBody.evalType(), new BaseType(retType))) {
+			  		if (!checkType(typedBody.evalType(), BaseType(retType))) {
 			  			throw new Exception("Body type "+typedBody.evalType()+" does not match the required return type "+retType+" for function "+name+".")
 			  		}
 			  		result = TypedFunDefStmt(name, typedParams, retType, typedBody, null) :: result
@@ -195,176 +183,196 @@ object TypeVerifier {
 		verifyStack = stmt :: verifyStack;
 	}
 	
-	def verifyStmt(ast : Stmt, maps : List[Map[String, Type]]) : TypedStmt = ast match {
-		case ValDefStmt(listOfValNames, valType, expr) => {
-	  		var exprTyped = verifyExpr(expr, maps);
-	  		if (checkType(exprTyped.evalType(), new BaseType(valType))) {
-	  			putAllVars(maps.head, listOfValNames, valType)
+	/* Specific Verify Functions start here */
+	def verifyValDefStmt(ids : List[String], valType: String, value : Expr, maps : List[Map[String, Type]]) : TypedValDefStmt = {	
+		var exprTyped = verifyExpr(value, maps);
+  		if (checkType(exprTyped.evalType(), BaseType(valType))) {
+  			putAllVars(maps.head, ids, valType)
+  		} else {
+  			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+valType+" for vals "+prettyPrint(ids)+".")
+  		}
+  		return TypedValDefStmt(ids, valType, exprTyped, null);
+	}
+	def verifyVarDefStmt(ids : List[String], varType: String, value : Expr, maps : List[Map[String, Type]]) : TypedVarDefStmt = {
+		var exprTyped = verifyExpr(value, maps);
+  		if (checkType(exprTyped.evalType(), BaseType(varType))) {
+  			putAllVars(maps.head, ids, varType)
+  		} else {
+  			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+varType+" for vars "+prettyPrint(ids)+".")
+  		}
+  		return TypedVarDefStmt(ids, varType, exprTyped, null);
+	}
+	def verifyVarDclStmt(ids : List[String], varType: String, maps : List[Map[String, Type]]) : TypedVarDclStmt = {
+		putAllVars(maps.head, ids, varType)
+		return TypedVarDclStmt(ids, varType, null);
+	}
+	def verifyFunDefStmt(name : String, params : List[VarDclStmt], retType : String, body : Expr, maps : List[Map[String, Type]]) : TypedFunDefStmt = {
+		var paramTypes = params.map(param => param.varType)
+		//add to map
+		putFunc(maps.head, name, paramTypes, retType);
+		
+		//verify body vs return type (with the new map)
+		pushVerifyStack(FunDefStmt(name, params, retType, body));
+		
+		//This should never be used, the real expr should come from the verifyStack
+	    return null
+	}
+	def verifyBlockExpr(listofstatements: List[Stmt], maps : List[Map[String, Type]]) : TypedBlockExpr = {
+		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
+		var stmts = listofstatements;
+  		var typedStmts : List[TypedStmt] = Nil;
+  		while (stmts.length > 0) {
+  			var stmt : Stmt = stmts.head;
+  			stmts = stmts.tail;
+  			stmt match {
+  			  	case FunDefStmt(name, params, retType, body) => {
+  			  		verifyStmt(stmt, myMaps)
+  			  	}
+  			  	case _ => {
+  			  		typedStmts = processVerifyStack(myMaps) ++ typedStmts
+  			  		typedStmts = verifyStmt(stmt, myMaps) :: typedStmts
+  			  	}
+  			}
+  		}
+  		typedStmts = processVerifyStack(maps) ++ typedStmts;
+  		//Flip the list around so they are in order
+  		typedStmts = typedStmts.reverse;
+  		var retType : Type = null;
+  		if (typedStmts.length > 0) {
+	  		var lastStmtType = typedStmts.last.evalType();
+	  		if (lastStmtType == null) {
+	  			retType = BaseType("Unit");
 	  		} else {
-	  			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+valType+" for vals "+prettyPrint(listOfValNames)+".")
+	  			retType = lastStmtType
 	  		}
-	  		return new TypedValDefStmt(listOfValNames, valType, exprTyped, null);
-	  	}
-    	case VarDefStmt(listOfVarNames, varType, expr) => {
-    		var exprTyped = verifyExpr(expr, maps);
-	  		if (checkType(exprTyped.evalType(), new BaseType(varType))) {
-	  			putAllVars(maps.head, listOfVarNames, varType)
-	  		} else {
-	  			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+varType+" for vars "+prettyPrint(listOfVarNames)+".")
-	  		}
-	  		return new TypedVarDefStmt(listOfVarNames, varType, exprTyped, null);
+  		} else {
+  			retType = BaseType("Unit");
+  		}
+  		return TypedBlockExpr(typedStmts, retType);
+	}
+	def verifyBinOpExpr(op: String, l: Expr, r: Expr, maps : List[Map[String, Type]]) : TypedBinOpExpr = {
+		var left = verifyExpr(l, maps);
+  		var right = verifyExpr(r, maps);
+  		var typeL : Type = left.evalType();
+  		var typeR : Type = right.evalType();
+  		
+  		if (typeL != typeR) {
+  			throw new Exception("Binary operator "+op+" cannot be applied to types "+typeL+" and "+typeR+".");
+  		} else {
+  			var retType : Type = null;
+  			op match {
+  			  	case ">=:" | "<=:" | ">:" | "<:" => retType = BaseType("Boolean")
+  			  	case ">=" | "<=" | ">" | "<" => retType = BaseType("Boolean")
+  			  	case "==:" | "!=:" => retType = BaseType("Boolean")
+  			  	case "==" | "!=" => retType = BaseType("Boolean")
+  			  	case _ => retType = typeL;
+  			}
+  			return TypedBinOpExpr(op, left, right, retType);
+  		}
+	}
+	def verifyIfThenExpr(predicate: Expr, expr: Expr, maps : List[Map[String, Type]]) : TypedIfThenExpr = {
+		var predicateTyped = verifyExpr(predicate, maps)
+  		var exprTyped = verifyExpr(expr, maps)
+  		
+  		if (predicateTyped.evalType() != BaseType("Boolean")) {
+  			throw new Exception("If statements require a predicate of type Boolean");
+  		} else {
+  			var commonType : Type = firstCommonSuperType(exprTyped.evalType(), BaseType("Unit"));
+  			return TypedIfThenExpr(predicateTyped, exprTyped, commonType);
+  		}
+	}
+	def verifyIfThenElseExpr(predicate: Expr, trueValue: Expr, falseValue: Expr, maps : List[Map[String, Type]]) : TypedIfThenElseExpr = {
+		var predicateTyped = verifyExpr(predicate, maps)
+  		var trueTyped = verifyExpr(trueValue, maps)
+  		var falseTyped = verifyExpr(falseValue, maps)
+  		if (predicateTyped.evalType() != BaseType("Boolean")) {
+  			throw new Exception("If statements require a predicate of type Boolean");
+  		} else {
+  			var commonType = firstCommonSuperType(trueTyped.evalType(), falseTyped.evalType());
+  			if (commonType == "") {
+  				throw new Exception("No common supertype found for "+trueTyped.evalType()+" and "+falseTyped.evalType()+". (Why not Any?)")
+  			} else {
+  				return TypedIfThenElseExpr(predicateTyped, trueTyped, falseTyped, commonType);
+  			}
+  		}
+	}
+	def verifyWhileExpr(predicate: Expr, body: Expr, maps : List[Map[String, Type]]) : TypedWhileExpr = {
+		var predicateTyped = verifyExpr(predicate, maps)
+    	var bodyTyped = verifyExpr(body, maps)
+    	if (predicateTyped.evalType() != BaseType("Boolean")) {
+  			throw new Exception("While loops require a predicate of type Boolean");
+  		} else {
+  			return TypedWhileExpr(predicateTyped, bodyTyped, BaseType("Unit"));
+  		}
+	}
+	def verifyVarExpr(varName: String, maps : List[Map[String, Type]]) : TypedVarExpr = {
+		return TypedVarExpr(varName, getVarType(maps, varName));
+	}
+	def verifyFunExpr(id: Expr, args : List[Expr], maps: List[Map[String, Type]]) : TypedFunExpr = {
+		var idStr : String = "";
+		var idTyped = verifyExpr(id, maps);
+		idTyped match {
+		  	case TypedVarExpr(str, evalType) => {idStr = str}
+		  	case _ => {throw new Exception("Not yet typechecking non-free functions")} 
+		}
+		var funcType : Type = getFuncType(maps, idStr);
+		var retType : Type = funcType.getRetType();
+		var paramTypes : List[Type] = funcType.getArgTypes();
+		var argsTyped : List[TypedExpr] = args.map(arg => verifyExpr(arg, maps))
+		var argTypes : List[Type] = argsTyped.map(arg => arg.evalType())
+	    while (argTypes.length > 0 && paramTypes.length > 0) {
+	    	if (!checkType(argTypes.head, paramTypes.head)){
+	    		throw new Exception("Arguement type "+argTypes.head+" does not match the required type "+paramTypes.head+" for function "+id+".")
+	    	} else {
+	    		argTypes = argTypes.tail;
+	    		paramTypes = paramTypes.tail;
+	    	}
+	    }
+    	if (argTypes.length > 0) {
+    		throw new Exception("Too many arguements specified for function "+id+".")
+    	} else if (paramTypes.length > 0) {
+    		throw new Exception("Not enough arguements specified for function "+id+".")
     	}
-    	case VarDclStmt(ids, varType) => {
-	  		putAllVars(maps.head, ids, varType)
-	  		return new TypedVarDclStmt(ids, varType, null);
-    	}
-    	case _ => return verifyExpr(ast, maps)
+		return TypedFunExpr(idTyped, argsTyped, retType);
+	}
+	def verifyStringExpr(str : String, maps: List[Map[String, Type]]) : TypedStringExpr = {
+		return TypedStringExpr(str, BaseType("String"))
+	}
+	def verifyNumExpr(num: Numeric, maps: List[Map[String, Type]]) : TypedNumExpr = {
+		var retType : Type = null;
+		num match {
+		  	case NInt(num) => retType = BaseType("Int")
+		  	case NDouble(num) => retType = BaseType("Double")
+		}
+		if (retType == null) {
+			throw new Exception("Unknown numeric subtype: "+num);
+		} else {
+			return TypedNumExpr(num, retType);
+		}
+	}
+	def verifyBoolExpr(bool : Boolean, maps: List[Map[String, Type]]) : TypedBoolExpr = {
+		return TypedBoolExpr(bool, BaseType("Boolean"))
 	}
 	
+	/* Combined Verify Functions start here */
+	def verifyStmt(ast : Stmt, maps : List[Map[String, Type]]) : TypedStmt = ast match {
+		case ValDefStmt(listOfValNames, valType, expr) => verifyValDefStmt(listOfValNames, valType, expr, maps)
+    	case VarDefStmt(listOfVarNames, varType, expr) => verifyVarDefStmt(listOfVarNames, varType, expr, maps)
+    	case VarDclStmt(ids, varType) => verifyVarDclStmt(ids, varType, maps)
+    	case FunDefStmt(name, params, retType, body) => verifyFunDefStmt(name, params, retType, body, maps)
+    	case _ => return verifyExpr(ast, maps)
+	}
 	def verifyExpr(ast : Stmt, maps : List[Map[String, Type]]) : TypedExpr = ast match {
-		case FunDefStmt(name, params, retType, body) => {
-    		var paramTypes = params.map(param => param.varType)
-  			//add to map
-  			putFunc(maps.head, name, paramTypes, retType);
-    		
-    		//verify body vs return type (with the new map)
-    		pushVerifyStack(new FunDefStmt(name, params, retType, body));
-    		
-    		//This should never be used, the real expr should come from the verifyStack
-    	    return null
-    	}
-		case BlockExpr(listofstatements) => {
-			var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
-			var stmts = listofstatements;
-	  		var typedStmts : List[TypedStmt] = Nil;
-	  		while (stmts.length > 0) {
-	  			var stmt : Stmt = stmts.head;
-	  			stmts = stmts.tail;
-	  			stmt match {
-	  			  	case FunDefStmt(name, params, retType, body) => {
-	  			  		verifyStmt(stmt, myMaps)
-	  			  	}
-	  			  	case _ => {
-	  			  		typedStmts = processVerifyStack(myMaps) ++ typedStmts
-	  			  		typedStmts = verifyStmt(stmt, myMaps) :: typedStmts
-	  			  	}
-	  			}
-	  		}
-	  		typedStmts = processVerifyStack(maps) ++ typedStmts;
-	  		//Flip the list around so they are in order
-	  		typedStmts = typedStmts.reverse;
-	  		var retType : Type = null;
-	  		if (typedStmts.length > 0) {
-		  		var lastStmtType = typedStmts.last.evalType();
-		  		if (lastStmtType == null) {
-		  			retType = new BaseType("Unit");
-		  		} else {
-		  			retType = lastStmtType
-		  		}
-	  		} else {
-	  			retType = new BaseType("Unit");
-	  		}
-	  		return new TypedBlockExpr(typedStmts, retType);
-	  	}
-	  	case BinOpExpr(op, l, r) => {
-	  		var left = verifyExpr(l, maps);
-	  		var right = verifyExpr(r, maps);
-	  		var typeL : Type = left.evalType();
-	  		var typeR : Type = right.evalType();
-	  		
-	  		if (typeL != typeR) {
-	  			throw new Exception("Binary operator "+op+" cannot be applied to types "+typeL+" and "+typeR+".");
-	  		} else {
-	  			var retType : Type = null;
-	  			op match {
-	  			  	case ">=:" | "<=:" | ">:" | "<:" => retType = BaseType("Boolean")
-	  			  	case ">=" | "<=" | ">" | "<" => retType = BaseType("Boolean")
-	  			  	case "==:" | "!=:" => retType = BaseType("Boolean")
-	  			  	case "==" | "!=" => retType = BaseType("Boolean")
-	  			  	case _ => retType = typeL;
-	  			}
-	  			return new TypedBinOpExpr(op, left, right, retType);
-	  		}
-	  	}
-	  	case IfThenExpr(predicate, expr) => {
-	  		var predicateTyped = verifyExpr(predicate, maps)
-	  		var exprTyped = verifyExpr(expr, maps)
-	  		
-	  		if (predicateTyped.evalType() != BaseType("Boolean")) {
-	  			throw new Exception("If statements require a predicate of type Boolean");
-	  		} else {
-	  			var commonType : Type = firstCommonSuperType(exprTyped.evalType(), BaseType("Unit"));
-	  			return new TypedIfThenExpr(predicateTyped, exprTyped, commonType);
-	  		}
-	  	}
-  	    case IfThenElseExpr(predicate, trueValue, falseValue) => {
-	  		var predicateTyped = verifyExpr(predicate, maps)
-	  		var trueTyped = verifyExpr(trueValue, maps)
-	  		var falseTyped = verifyExpr(falseValue, maps)
-	  		if (predicateTyped.evalType() != BaseType("Boolean")) {
-	  			throw new Exception("If statements require a predicate of type Boolean");
-	  		} else {
-	  			var commonType = firstCommonSuperType(trueTyped.evalType(), falseTyped.evalType());
-	  			if (commonType == "") {
-	  				throw new Exception("No common supertype found for "+trueTyped.evalType()+" and "+falseTyped.evalType()+". (Why not Any?)")
-	  			} else {
-	  				return new TypedIfThenElseExpr(predicateTyped, trueTyped, falseTyped, commonType);
-	  			}
-	  		}
-	  	}
-  	    case WhileExpr(predicate, body) => {
-  	    	var predicateTyped = verifyExpr(predicate, maps)
-  	    	var bodyTyped = verifyExpr(body, maps)
-  	    	if (predicateTyped.evalType() != BaseType("Boolean")) {
-	  			throw new Exception("While loops require a predicate of type Boolean");
-	  		} else {
-	  			return new TypedWhileExpr(predicateTyped, bodyTyped, BaseType("Unit"));
-	  		}
-  	    }
-	  	case VarExpr(varName) => {
-	  		return new TypedVarExpr(varName, getVarType(maps, varName));
-	  	}
-    	case FunExpr(id, args) => {
-    		var idStr : String = "";
-    		var idTyped = verifyExpr(id, maps);
-    		idTyped match {
-    		  	case TypedVarExpr(str, evalType) => {idStr = str}
-    		  	case _ => {throw new Exception("Not yet typechecking non-free functions")} 
-    		}
-    		var funcType : Type = getFuncType(maps, idStr);
-    		var retType : Type = funcType.getRetType();
-    		var paramTypes : List[Type] = funcType.getArgTypes();
-    		var argsTyped : List[TypedExpr] = args.map(arg => verifyExpr(arg, maps))
-    		var argTypes : List[Type] = argsTyped.map(arg => arg.evalType())
-    	    while (argTypes.length > 0 && paramTypes.length > 0) {
-    	    	if (!checkType(argTypes.head, paramTypes.head)){
-    	    		throw new Exception("Arguement type "+argTypes.head+" does not match the required type "+paramTypes.head+" for function "+id+".")
-    	    	} else {
-    	    		argTypes = argTypes.tail;
-    	    		paramTypes = paramTypes.tail;
-    	    	}
-    	    }
-	    	if (argTypes.length > 0) {
-	    		throw new Exception("Too many arguements specified for function "+id+".")
-	    	} else if (paramTypes.length > 0) {
-	    		throw new Exception("Not enough arguements specified for function "+id+".")
-	    	}
-    		return new TypedFunExpr(idTyped, argsTyped, retType);
-    	}
-    	case StringExpr(value) => TypedStringExpr(value, new BaseType("String"))
-    	case NumExpr(value) => {
-    		var retType : Type = null;
-    		value match {
-    		  	case NInt(num) => retType = new BaseType("Int")
-    		  	case NDouble(num) => retType = new BaseType("Double")
-    		}
-    		if (retType == null) {
-    			throw new Exception("Unknown numeric subtype: "+ast);
-    		} else {
-    			return new TypedNumExpr(value, retType);
-    		}
-    	}
-    	case BoolExpr(value) => new TypedBoolExpr(value, new BaseType("Boolean"))
+		case BlockExpr(listofstatements) => verifyBlockExpr(listofstatements, maps)
+	  	case BinOpExpr(op, l, r) => verifyBinOpExpr(op, l, r, maps)
+	  	case IfThenExpr(predicate, expr) => verifyIfThenExpr(predicate, expr, maps)
+  	    case IfThenElseExpr(predicate, trueValue, falseValue) => verifyIfThenElseExpr(predicate, trueValue, falseValue, maps)
+  	    case WhileExpr(predicate, body) => verifyWhileExpr(predicate, body, maps)
+	  	case VarExpr(varName) => verifyVarExpr(varName, maps)
+    	case FunExpr(id, args) => verifyFunExpr(id, args, maps)
+    	case StringExpr(value) => verifyStringExpr(value, maps)
+    	case NumExpr(value) => verifyNumExpr(value, maps)
+    	case BoolExpr(value) => verifyBoolExpr(value, maps)
 		case _ => throw new Exception("Unknown expr: "+ast)
 	}
 	
@@ -416,10 +424,10 @@ object TypeVerifier {
 			} else if (params.foldLeft(false)((result, param) => result || !scalaTypes.contains(param))) { //Unknown param type
 				throw new Exception("Unknown parameter type found in parameters: "+params+" for function "+funcName+".")
 			} else {
-				var paramTypes : List[BaseType] = params.map(param => new BaseType(param))
+				var paramTypes : List[BaseType] = params.map(param => BaseType(param))
 				//Quick fix
 				//map.put(funcName, new FuncType(retType, paramTypes));
-				map.put(funcName, new FuncType(new BaseType(retType), paramTypes)); 
+				map.put(funcName, FuncType(BaseType(retType), paramTypes)); 
 				return true;
 			}
 		} else {
@@ -436,7 +444,7 @@ object TypeVerifier {
 	  	case Nil => return true;
 	 	case x::xs => {
 	 		if (!map.contains(x)) {
-	 			map.put(x, new BaseType(varType)); 
+	 			map.put(x, BaseType(varType)); 
 	 			return putAllVars(map, xs, varType);
 	 		} else {
 	 			throw new Exception("The variable "+x+" is already defined in the current scope.")
