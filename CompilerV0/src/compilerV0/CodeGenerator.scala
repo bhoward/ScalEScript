@@ -12,25 +12,28 @@ object CodeGenerator {
                                                      " " + varProcessAux(listofvardecs, expr)
     	case VarExpr(varName) => varName
     	case IfThenExpr(predicate, expr) => "ifThen( " + 
-    		"(function() { \n" + "return " + generate(predicate)  + " })" + ", " + 
-    		"(function() { \n" + "return " + generate(expr)  + " })" + " )"
+		thunkify(generate(predicate)) + ", " +
+		thunkify(generate(expr)) + ")"
     	case IfThenElseExpr(predicate, truevalue, falsevalue) => 
-    		"ifThenElse( " + "(function() { \n" + "return " + generate(predicate)  + " })" + ", " + "(function() { \n" + 
-    		"return " + generate(truevalue)  + " })" + ", " +"(function() { \n" + 
-    		"return " + generate(falsevalue)  + " })" + " )"
-    	case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
-			"(function() { \n" + "return " + generate(body)  + " })()" + " )"
+    		"ifThenElse( " +
+		thunkify(generate(predicate)) + ", " +
+    		thunkify(generate(truevalue)) + ", " +
+    		thunkify(generate(falsevalue)) + " )"
+    	case WhileExpr(predicate, body) => "whileLoop( " +
+		thunkify(generate(predicate)) + ", " + 
+		thunkify(generate(body)) + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     	case StringExpr(value) => value
-    	case FunDefStmt(name, args, retType, body) => "function " + name + " ( " + funArgProcess(args) + " ) " + 
-    	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return "
+    	case FunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + funArgProcess(args) + " )\n {" +
+                                                       (if(retType == "Unit") generate(body) + "; return "
     	                                               else "return " + generate(body)) +
     	                                               "; \n }"
-    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)
+    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str) // TODO ???
     	case FunExpr(name, args) => generate(name) + "(" + exprsProcess(args) + ")"
-    	case AnonFuncExpr(args, body) => "( " + "function " + "(" + funArgProcess(args) + " )" + " { " + "return " + generate(body) + " } " + " ) "
-    	case _ => "failure"
+    	case AnonFuncExpr(args, body) => "(function (" + funArgProcess(args) + " ) { return " + generate(body) + " }) "
+    	case _ => "failure" // TODO Throw an exception?
 	}
+	def thunkify(code: String): String = "(function() {\n return " + code + "})";
 	def exprsProcess(loe : List[Expr]):String = loe match {
 	  	case Nil => ""
 	  	case x::Nil => generate(x)
