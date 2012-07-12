@@ -5,38 +5,45 @@ object CodeGenerator {
     	case NumExpr(wrappedval) => wrappedval match{case NInt(value) => value.toString
     	                                             case NDouble(value) => value.toString}
     	case BoolExpr(value) => value.toString
-    	case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + (if(op == "==") "===" else op) + " " + generate(r) + ")"
+    	
+    	case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + (op match {case "==" => "==="
+    	                                                                  case "!=" => "!=="
+    	                                                                  case _ => op}) + " " + generate(r) + ")"
+	    
     	case ValDefStmt(listofvaldecs, valtype, expr) => "var " + varProcess(listofvaldecs, expr) + 
-                                                     " " + varProcessAux(listofvaldecs, expr)
+                                                         " " + varProcessAux(listofvaldecs, expr)
     	case VarDefStmt(listofvardecs, valtype, expr) => "var " + varProcess(listofvardecs, expr) + 
-                                                     " " + varProcessAux(listofvardecs, expr)
+                                                         " " + varProcessAux(listofvardecs, expr)
     	case VarExpr(varName) => varName
     	case IfThenExpr(predicate, expr) => "ifThen( " + 
-    		"(function() { \n" + "return " + generate(predicate)  + " })" + ", " + 
-    		"(function() { \n" + "return " + generate(expr)  + " })" + " )"
+		     thunkify(generate(predicate)) + ", " +
+		     thunkify(generate(expr)) + ")"
     	case IfThenElseExpr(predicate, truevalue, falsevalue) => 
-    		"ifThenElse( " + "(function() { \n" + "return " + generate(predicate)  + " })" + ", " + "(function() { \n" + 
-    		"return " + generate(truevalue)  + " })" + ", " +"(function() { \n" + 
-    		"return " + generate(falsevalue)  + " })" + " )"
-    	case WhileExpr(predicate, body) => "whileLoop( " + "(function() { \n" + "return " + generate(predicate)  + " })()" + ", " + 
-			"(function() { \n" + "return " + generate(body)  + " })()" + " )"
+    		 "ifThenElse( " +
+		     thunkify(generate(predicate)) + ", " +
+    	   	 thunkify(generate(truevalue)) + ", " +
+    		 thunkify(generate(falsevalue)) + " )"
+    	case WhileExpr(predicate, body) => "whileLoop( " +
+		     thunkify(generate(predicate)) + ", " + 
+		     thunkify(generate(body)) + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     	case StringExpr(value) => value
-    	case FunDefStmt(name, args, retType, body) => "function " + name + " ( " + funArgProcess(args) + " ) " + 
-    	                                               "\n {" + (if(retType == "Unit") generate(body) + "; return "
-    	                                               else "return " + generate(body)) +
-    	                                               "; \n }"
-    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str)
-    	case FunExpr(name, args) => generate(name) + "(" + exprsProcess(args) + ")"
-    	case AnonFuncExpr(args, body) => "( " + "function " + "(" + funArgProcess(args) + " )" + " { " + "return " + generate(body) + " } " + " ) "
-    	case _ => "failure"
+    	case FunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
+                                                                                   (if(retType == "Unit") generate(body) + "; return "
+    	                                                                           else "return " + generate(body)) +
+    	                                                                           "; \n }"
+    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str) // TODO ???
+    	case FunExpr(name, args) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
+    	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "                                               
+    	case _ => throw new Exception("No match found for pattern")
 	}
-	def exprsProcess(loe : List[Expr]):String = loe match {
-	  	case Nil => ""
-	  	case x::Nil => generate(x)
-	  	case x::xs => generate(x) + ", " + exprsProcess(xs)
+	def thunkify(code: String): String = "(function() {\n return " + code + "})"
+	def commaSeparatedProcess(lost : List[Stmt]):String = lost match {
+	  	case List() => ""
+	  	case List(x) => generate(x)
+	  	case x::xs => generate(x) + ", " + commaSeparatedProcess(xs)
 	}
-	def blockProcess(loe : List[Stmt]):String = loe match {
+	def blockProcess(lost : List[Stmt]):String = lost match {
     	case List() => "return ;"
     	case List(x) => if (x.isExpr()) "return " + generate(x) + 
     	                                " ;" else throw new Exception("The last line in the block is a Stmt, expected an Expr")
@@ -50,11 +57,6 @@ object CodeGenerator {
 	def varProcessAux(los : List[String], expr : Expr):String = los match{
   		case Nil => generate(expr)
   		case x::xs => x + " = " + varProcessAux(xs, expr)
-	}
-	def funArgProcess(lov : List[VarDclStmt]):String = lov match{
-	  case List() => ""
-	  case List(x) => generate(x)
-	  case x::xs => generate(x) + ", " + funArgProcess(xs)
 	}
 	def apply(source: Expr): String = generate (source)
 }

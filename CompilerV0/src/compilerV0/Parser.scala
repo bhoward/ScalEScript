@@ -904,15 +904,21 @@ object Parser extends RegexParsers with PackratParsers {
 	//Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
 	//These Could be replaced with a foldL or foldR eventually
 	def buildLeft(base : Expr, rest : List[OpPair]) : Expr =
-		rest match {
+      /*rest match {
 			case Nil => base
 			case (opPair : OpPair) :: tail => buildLeft(BinOpExpr(opPair.getOp(), base, opPair.getExpr()), tail)
-    	}
+			}
+      */
+	  rest.foldLeft(base) ((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
+    	
 	def buildRight(base : Expr, rest : List[OpPair]) : Expr = 
-		rest match {
+		/*rest match {
         	case Nil => base
         	case (opPair : OpPair) :: tail => buildRight(BinOpExpr(opPair.getOp(), opPair.getExpr(), base), tail)
-    	}
+        	}
+       */
+	  BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), pair.getExpr(), acc)))
+    	
 	
 	def apply(source: String): Expr = parseAll(top, source) match {
 	    case Success(result, _) => result
