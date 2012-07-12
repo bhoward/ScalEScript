@@ -6,16 +6,26 @@ import java.io.FileWriter;
 object Main {
 	def main(args: Array[String]) {
 		/* Parser testing */
-		/*
+		
 	    //Arithmetic expression
+	    /*
 	    println(Parser("1"))
 	    println(Parser("1   "))
 	    println(Parser("1 + 5"))
 	    println(Parser("2 * 6"))
-	    println(Parser("1 +: 4 +: 3"))
+	    
+	    println(CodeGenerator(Parser("1 +: 4")))
+	    println(CodeGenerator(Parser("1 + 4")))
+	    println(CodeGenerator(Parser("1 +: 4 +: 3")))
+	    println(CodeGenerator(Parser("1 + 4 + 3")))
+	    println(CodeGenerator(Parser("1 +: 4 +: 3 +: 5")))
+	    println(CodeGenerator(Parser("1 + 4 + 3 + 5")))
+	    println(CodeGenerator(Parser("1 +: 4 +: 3 +: 5 +: 6")))
+	    println(CodeGenerator(Parser("1 + 4 + 3 + 5 + 6")))
 	    println(Parser("1 + 3 * 5"))
 	    println(Parser("1 * 3 + 5"))
-	    
+	    */
+	    /*
 	    //If statement
 	    println(Parser("if (true) 6"))
 	    println(Parser("if (5) 5 else 7"))    
@@ -80,13 +90,11 @@ object Main {
 	    println("Parsed Expression: " + Parser("""println("hello world")"""))
 	    println("Code Generated: " + CodeGenerator(Parser("""println("hello world")""")))
 	    
-	    println("Parsed Expression: " + Parser("{var t : Int = 5; }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5;}")))
+	    println("Parsed Expression: " + Parser("{var t : Int = 5; print(t) }"))
+	    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5; print(t)}")))
 	    
-	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; }")))
-	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5;}")))
+	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; print(t1) }"))
+	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; print(t1)}")))
 	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
 	    
@@ -94,17 +102,17 @@ object Main {
 	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}")))
 	    
-	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
+	    println("Parsed Expression: " + Parser("""{def bar (x : Int, y : Int, z : String): Unit = x + y; bar(4, 3, "")}"""))
+	    println("Code Generated: " + CodeGenerator(Parser("""{def bar (x : Int, y : Int, z : String): Unit = x + y; bar(4, 3, "")}""")))
 	    
 		println("Parsed Expression: " + Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}"""))
 	    println("Code Generated: " + CodeGenerator(Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""")))
-	   	*/
-		//println("Parsed Expression: " + Parser("""{var f : function = (x:Int) => (x+1); f(5)}"""))
+	   	
+		println("Parsed Expression: " + Parser("""{var f : function = (x:Int) => (x+1); f(5)}"""))
 		println("Parsed Expression: " + Parser("""((x:Int) => (x+1))(5)"""))
 		println("Code Generated: " +  CodeGenerator(Parser("""((x:Int) => (x+1))(5)""")))
-	    //println("Code Generated: " + CodeGenerator(Parser("""{var f : function = (x:Int) => (x+1); f(5)}""")))
-		
+	    println("Code Generated: " + CodeGenerator(Parser("""{var f : function = (x:Int) => (x+1); f(5)}""")))
+		*/
 	    println();
 	    
 	    /* TypeVerifier testing */
