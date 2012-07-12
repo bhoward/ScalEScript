@@ -65,9 +65,10 @@ object Main {
 	    println("Parsed Expression: " + Parser("if (5 > 3) 5 else 6"))
 	    println("Code Generated: " + CodeGenerator(Parser("if (5 > 3) 5 else 6")))
 	    
+*/
 	    println("Parsed Expression: " + Parser("while (true) 5"))
 	    println("Code Generated: " + CodeGenerator(Parser("while (true) 5")))
-	    
+/*
 	    println("Parsed Expression: " + Parser("{ ; ; ; ;}"))
 	    println("Code Generated: " + CodeGenerator(Parser("{ ; ; ; ; }")))
 	    println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; ; ;}"))
