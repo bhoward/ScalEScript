@@ -5,127 +5,6 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
-		/* Parser testing */
-		/*
-	    //Arithmetic expression
-	    println(Parser("1"))
-	    println(Parser("1   "))
-	    println(Parser("1 + 5"))
-	    println(Parser("2 * 6"))
-	    println(Parser("1 +: 4 +: 3"))
-	    println(Parser("1 + 3 * 5"))
-	    println(Parser("1 * 3 + 5"))
-	    
-	    //If statement
-	    println(Parser("if (true) 6"))
-	    println(Parser("if (5) 5 else 7"))    
-	    println(Parser("if (false && true) 5 else 6"))
-	    println(Parser("if (true == true) 5 else 6"))
-	    println(Parser("if (true != false) 5 else 6"))
-	    println(Parser("if (5 >= 6) 5 else 6"))
-	    println(Parser("if (5 <= 5) 5 else 6"))
-	    println(Parser("if (5 < 5) 5 else 6"))
-	    
-	    //While statement
-	    println(Parser("while (true) 5"))
-	    
-	    //Block statement
-	    println(Parser("{ 1; 2; 3; 4; }"))
-	    println(Parser("{ 1; 2; 3; 4 }"))
-	    println(Parser("{ 1; }"))
-	    println(Parser("{ 1 }"))
-	    println(Parser("{ }"))
-	    println(Parser("{if (5 > 3) 5 else 6; if (5 >= 6) 5 else 6; if (5 <= 5) 5 else 6; if (5 < 5) 5 else 6}"))
-	    println(Parser("{ }"))
-	    
-	    //Print and println statement
-	    println(Parser("print(5)"));
-	    println(Parser("""println("hello world")"""))
-	    
-	    //Vals and Vars
-	    println(Parser("{var t : Int = 5; }"))
-	    println(Parser("{var t2, t1 : Double = 5.0; t2 + t1;}"))
-	    println(Parser("{var t : Int = 5; t}"))  
-	    
-		//Functions
-		println(Parser("foo(5, 6)"))
-	    println(Parser("""{def boots (x : Int, y : Int, z : String): Int = x + y; boots(5, 6, "shoes")}"""))
-		*/
-		println();
-	    
-	    /* CodeGenerator testing */
-	    /*
-	    println(CodeGenerator (Parser("1   ")))
-	    println(CodeGenerator (Parser("1 + 5")))
-	    println(CodeGenerator (Parser("1 * 5")))
-	    println(CodeGenerator (Parser("1.0 + 3 * 5")))
-	    
-	    println("Parsed Expression: " + Parser("if (true || false) 5"))
-	    println("Code Generated: " + CodeGenerator(Parser("if (true || false) 5")))
-	    println("Parsed Expression: " + Parser("if (5 > 3) 5 else 6"))
-	    println("Code Generated: " + CodeGenerator(Parser("if (5 > 3) 5 else 6")))
-	    
-*/
-	    println("Parsed Expression: " + Parser("while (true) 5"))
-	    println("Code Generated: " + CodeGenerator(Parser("while (true) 5")))
-/*
-	    println("Parsed Expression: " + Parser("{ ; ; ; ;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{ ; ; ; ; }")))
-	    println("Parsed Expression: " + Parser("{ 1; 2; 3; 4; ; ;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{ 1; 2; 3; 4; ; ;}")))
-	    
-	    println("Parsed Expression: " + Parser(""""hey""""))
-	    println("Code Generated: " + CodeGenerator(Parser(""""hey"""")))
-	    println("Parsed Expression: " + Parser("print(5)"));
-	    println("Code Generated: " + CodeGenerator(Parser("print(5)")))
-	    println("Parsed Expression: " + Parser("""println("hello world")"""))
-	    println("Code Generated: " + CodeGenerator(Parser("""println("hello world")""")))
-	    
-	    println("Parsed Expression: " + Parser("{var t : Int = 5; }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{var t : Int = 5;}")))
-	    
-	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; }"))
-	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; }")))
-	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5;}")))
-	    println("Parsed Expression: " + Parser("{val t0, t1 : Int = 5; t0 + t1;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{val t0, t1 : Int = 5; t0 + t1;}")))
-	    
-		
-	    println("Parsed Expression: " + Parser("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}")))
-	    
-	    println("Parsed Expression: " + Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}"))
-	    println("Code Generated: " + CodeGenerator(Parser("{def bar (x : Int, y : Int, z : String): Unit = x + y;}")))
-	    
-		println("Parsed Expression: " + Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}"""))
-	    println("Code Generated: " + CodeGenerator(Parser("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""")))
-	   	*/
-		//println("Parsed Expression: " + Parser("""{var f : function = (x:Int) => (x+1); f(5)}"""))
-		println("Parsed Expression: " + Parser("""((x:Int) => (x+1))(5)"""))
-		println("Code Generated: " +  CodeGenerator(Parser("""((x:Int) => (x+1))(5)""")))
-	    //println("Code Generated: " + CodeGenerator(Parser("""{var f : function = (x:Int) => (x+1); f(5)}""")))
-		
-	    println();
-	    
-	    /* TypeVerifier testing */
-	    /*
-		println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; val t1 : Int = 7; println(t1)}; t0 + t1;})""")));
-	    println(TypeVerifier(Parser("""{var x, y, z : Int = if (true) 5.0 else 6.0;}""")));
-	    println(TypeVerifier(Parser("""{var f : Int = 5; def bar (x : Any, y : Int, s : String): AnyVal = f; bar("", 5, "");}""")));
-	    
-	    TypeVerifier.initScalaTypes();
-	    println("Should be true: "+TypeVerifier.checkType(new FuncType(new BaseType("Int"), List(new BaseType("Int"))), new FuncType(new BaseType("Int"), List(new BaseType("Int")))));
-	    println("Should be false: "+TypeVerifier.checkType(new FuncType(new BaseType("Int"), List(new BaseType("Boolean"))), new FuncType(new BaseType("Int"), List(new BaseType("Int")))));
-	    println("Should be false: "+TypeVerifier.checkType(new FuncType(new BaseType("Any"), List(new BaseType("Any"))), new FuncType(new BaseType("AnyVal"), List(new BaseType("AnyVal")))));
-	    println("Should be true: "+TypeVerifier.checkType(new FuncType(new BaseType("Int"), List(new BaseType("Any"))), new FuncType(new BaseType("AnyVal"), List(new BaseType("AnyVal")))));
-	    println(TypeVerifier.firstCommonSuperType(new FuncType(new BaseType("Int"), List(new BaseType("Any"))), new FuncType(new BaseType("AnyVal"), List(new BaseType("Any")))));
-	    println(TypeVerifier.firstCommonSuperType(new FuncType(new BaseType("Int"), List(new BaseType("Any"))), new BaseType("String")));
-	    */
-	    println();
-	    
-	    /* Entire Compiler testing */
-	    
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -137,7 +16,6 @@ object Main {
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
-	    
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
