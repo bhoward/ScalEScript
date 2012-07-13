@@ -96,7 +96,7 @@ object Parser extends RegexParsers with PackratParsers {
 	)
 	
 	//Called type in the grammar (which is a reserved word, so I used typeG)
-    lazy val typeG: P[String] =
+    lazy val typeG: P[Type] =
     ( functionArgTypes ~ "=>" ~ typeG ^^
         {case _ => null}
     | infixType
@@ -117,18 +117,19 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null} 
     )
     
-    lazy val infixType: P[String] =
+    lazy val infixType: P[Type] =
     ( simpleType ~ id ~ infixType ^^
     	{case _ => null}
     | simpleType 
     )
     
-    lazy val simpleType: P[String] =
+    lazy val simpleType: P[Type] =
     ( simpleType ~ typeArgs ^^
         {case _ => null}
     | simpleType ~ "#" ~ id ^^
         {case _ => null}
-    | qualId
+    | qualId ^^
+    	{case qualId => BaseType(qualId)}
     | "(" ~ types ~ ")" ^^
     	{case _ => null}
     )
@@ -145,7 +146,7 @@ object Parser extends RegexParsers with PackratParsers {
     	{case _ => null}
     )
     
-    lazy val typePat : P[String] =
+    lazy val typePat : P[Type] =
     ( typeG
     )
   
@@ -615,7 +616,7 @@ object Parser extends RegexParsers with PackratParsers {
         {case id ~ _ ~ paramType => VarDclStmt(List(id), paramType)}     
     )
     
-    lazy val paramType : P[String] = 
+    lazy val paramType : P[Type] = 
     ( typeG
     | "=>" ~ typeG ^^
     	{case _ => null}
@@ -904,15 +905,21 @@ object Parser extends RegexParsers with PackratParsers {
 	//Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
 	//These Could be replaced with a foldL or foldR eventually
 	def buildLeft(base : Expr, rest : List[OpPair]) : Expr =
-		rest match {
+      /*rest match {
 			case Nil => base
 			case (opPair : OpPair) :: tail => buildLeft(BinOpExpr(opPair.getOp(), base, opPair.getExpr()), tail)
-    	}
+			}
+      */
+	  rest.foldLeft(base) ((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
+    	
 	def buildRight(base : Expr, rest : List[OpPair]) : Expr = 
-		rest match {
+		/*rest match {
         	case Nil => base
         	case (opPair : OpPair) :: tail => buildRight(BinOpExpr(opPair.getOp(), opPair.getExpr(), base), tail)
-    	}
+        	}
+       */
+	  BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), pair.getExpr(), acc)))
+    	
 	
 	def apply(source: String): Expr = parseAll(top, source) match {
 	    case Success(result, _) => result
