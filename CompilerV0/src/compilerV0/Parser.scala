@@ -98,23 +98,23 @@ object Parser extends RegexParsers with PackratParsers {
 	//Called type in the grammar (which is a reserved word, so I used typeG)
     lazy val typeG: P[Type] =
     ( functionArgTypes ~ "=>" ~ typeG ^^
-        {case _ => null}
+        {case argTypes ~ _ ~ resultType => FuncType(resultType, argTypes)}
     | infixType
     )
     
-    lazy val functionArgTypes: P[List[String]] = 
-    ( infixType ^^
-        {case _ => null}
+    lazy val functionArgTypes: P[List[Type]] = 
+    ( "(" ~ ")" ^^
+    	{case _ ~ _ => Nil}
     | "(" ~ functionArgTypesH ~ ")" ^^
-    	{case _ => null}
-    | "(" ~ ")" ^^
-    	{case _ => null}
+    	{case _ ~ types ~ _ => types}
+    | infixType ^^
+        {case infixType => List(infixType)}
     )
-    lazy val functionArgTypesH: P[List[String]] =
+    lazy val functionArgTypesH: P[List[Type]] =
     ( paramType ~ "," ~ functionArgTypesH ^^
-        {case _ => null}
+        {case paramType ~ _ ~ moreTypes => paramType :: moreTypes}
     | paramType ^^
-        {case _ => null} 
+        {case paramType => List(paramType)} 
     )
     
     lazy val infixType: P[Type] =
