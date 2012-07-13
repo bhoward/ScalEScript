@@ -72,7 +72,7 @@ object Parser extends RegexParsers with PackratParsers {
 	| characterLiteral ^^
 		{case _ => null}
 	| stringLiteral ^^
-		{case strLit => StringExpr(strLit)}
+		{case strLit => StringExpr(deQuotify(strLit))}
 	| "null" ^^
 		{case _ => null}
 	)
@@ -933,7 +933,14 @@ object Parser extends RegexParsers with PackratParsers {
 	
 	/* What follows is as-of-yet unused code left over from simpleParser */
 	def ident: Parser[String] =
-		"""[a-zA-Z_]\w*""".r   
+		"""[a-zA-Z_]\w*""".r
+		
+	def deQuotify(s: String) : String = {
+	    // Strip off the first and last character (") or (')
+	    if (s.length > 1)
+	    	return s.substring(1, s.length()-1);
+	    return ""
+	}
     
     /**
      * Remove surrounding quotes, and replace escaped characters in a string literal.

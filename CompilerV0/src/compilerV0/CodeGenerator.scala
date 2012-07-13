@@ -27,7 +27,7 @@ object CodeGenerator {
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
-    	case StringExpr(value) => value
+    	case StringExpr(value) => "\"" + value + "\""
     	case FunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
