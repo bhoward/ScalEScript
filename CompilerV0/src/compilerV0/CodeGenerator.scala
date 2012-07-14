@@ -27,12 +27,12 @@ object CodeGenerator {
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
-    	case StringExpr(value) => value
+    	case StringExpr(value) => "\"" + value + "\""
     	case FunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
-    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str) // TODO ???
+    	case ParamDclStmt(id, vartype) => id
     	case FunExpr(name, args) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
     	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "                                               
     	case _ => throw new Exception("No match found for pattern")
@@ -43,11 +43,14 @@ object CodeGenerator {
 	  	case List() => ""
 	  	case List(x) => generate(x)
 	  	case x::xs => generate(x) + ", " + commaSeparatedProcess(xs)
+<<<<<<< HEAD
     }
 	def exprsProcess(loe : List[Expr]):String = loe match {
 	  	case Nil => ""
 	  	case x::Nil => generate(x)
 	  	case x::xs => generate(x) + ", " + exprsProcess(xs)
+=======
+>>>>>>> 3442ec05f968175d390e31cad289c51aa0d2d0e9
 	}
 	def blockProcess(lost : List[Stmt]):String = lost match {
     	case List() => "return ;"

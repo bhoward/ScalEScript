@@ -6,7 +6,8 @@ import java.io.Reader
 object Parser extends RegexParsers with PackratParsers {
 	type P[T] = PackratParser[T]
 	
-	def top = expr
+	//Should be templateStat eventually
+	def top = templateStat;
 	
 	/* Start of grammar rules (roughly following the order from the scala spec */
 	
@@ -72,7 +73,7 @@ object Parser extends RegexParsers with PackratParsers {
 	| characterLiteral ^^
 		{case _ => null}
 	| stringLiteral ^^
-		{case strLit => StringExpr(strLit)}
+		{case strLit => StringExpr(deQuotify(strLit))}
 	| "null" ^^
 		{case _ => null}
 	)
@@ -96,39 +97,40 @@ object Parser extends RegexParsers with PackratParsers {
 	)
 	
 	//Called type in the grammar (which is a reserved word, so I used typeG)
-    lazy val typeG: P[String] =
+    lazy val typeG: P[Type] =
     ( functionArgTypes ~ "=>" ~ typeG ^^
-        {case _ => null}
+        {case argTypes ~ _ ~ resultType => FuncType(resultType, argTypes)}
     | infixType
     )
     
-    lazy val functionArgTypes: P[List[String]] = 
-    ( infixType ^^
-        {case _ => null}
+    lazy val functionArgTypes: P[List[Type]] = 
+    ( "(" ~ ")" ^^
+    	{case _ ~ _ => Nil}
     | "(" ~ functionArgTypesH ~ ")" ^^
-    	{case _ => null}
-    | "(" ~ ")" ^^
-    	{case _ => null}
+    	{case _ ~ types ~ _ => types}
+    | infixType ^^
+        {case infixType => List(infixType)}
     )
-    lazy val functionArgTypesH: P[List[String]] =
+    lazy val functionArgTypesH: P[List[Type]] =
     ( paramType ~ "," ~ functionArgTypesH ^^
-        {case _ => null}
+        {case paramType ~ _ ~ moreTypes => paramType :: moreTypes}
     | paramType ^^
-        {case _ => null} 
+        {case paramType => List(paramType)} 
     )
     
-    lazy val infixType: P[String] =
+    lazy val infixType: P[Type] =
     ( simpleType ~ id ~ infixType ^^
     	{case _ => null}
     | simpleType 
     )
     
-    lazy val simpleType: P[String] =
+    lazy val simpleType: P[Type] =
     ( simpleType ~ typeArgs ^^
         {case _ => null}
     | simpleType ~ "#" ~ id ^^
         {case _ => null}
-    | qualId
+    | qualId ^^
+    	{case qualId => BaseType(qualId)}
     | "(" ~ types ~ ")" ^^
     	{case _ => null}
     )
@@ -145,7 +147,7 @@ object Parser extends RegexParsers with PackratParsers {
     	{case _ => null}
     )
     
-    lazy val typePat : P[String] =
+    lazy val typePat : P[Type] =
     ( typeG
     )
   
@@ -590,53 +592,53 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null}
     )
     
-    lazy val paramClauses: P[List[VarDclStmt]] = 
+    lazy val paramClauses: P[List[ParamDclStmt]] = 
     ( paramClause
     | "" ^^ 
     	{case _ => null}
     )
     
-    lazy val paramClause: P[List[VarDclStmt]] =
+    lazy val paramClause: P[List[ParamDclStmt]] =
     ( "(" ~ params ~ ")" ^^ 
         {case _ ~ params ~ _ => params}
     | "(" ~ ")" ^^
     	{case _ ~ _ => Nil}
     )
     
-    lazy val params : P[List[VarDclStmt]] = 
+    lazy val params : P[List[ParamDclStmt]] = 
     ( param ~ "," ~ params ^^ 
         {case param ~ _ ~ params => param :: params}
     | param ^^ 
         {case param => List(param)}
     )
     
-    lazy val param : P[VarDclStmt] =
+    lazy val param : P[ParamDclStmt] =
     ( id ~ ":" ~ paramType ^^
-        {case id ~ _ ~ paramType => VarDclStmt(List(id), paramType)}     
+        {case id ~ _ ~ paramType => ParamDclStmt(id, paramType)}     
     )
     
-    lazy val paramType : P[String] = 
+    lazy val paramType : P[Type] = 
     ( typeG
     | "=>" ~ typeG ^^
     	{case _ => null}
     )
     
-    lazy val bindings: P[List[VarDclStmt]] = 
+    lazy val bindings: P[List[ParamDclStmt]] = 
     ( "(" ~ binding ~ bindingsH ~ ")" ^^
     	{case _ ~ arg ~ args ~ _  => arg :: args}
     | "(" ~ binding ~ ")" ^^
     	{case _ ~ arg ~ _ => List(arg)}    
     )
-    lazy val bindingsH: P[List[VarDclStmt]] =
+    lazy val bindingsH: P[List[ParamDclStmt]] =
     ( "," ~ binding ~ bindingsH ^^
     	{case _ ~ arg ~ args  => arg :: args}
     | "," ~ binding ^^
     	{case _ ~ arg => List(arg)}    
     )
     
-    lazy val binding: P[VarDclStmt] =
+    lazy val binding: P[ParamDclStmt] =
     ( id ~ ":" ~ typeG ^^
-    	{case arg ~ _ ~ typeG => VarDclStmt(List(arg), typeG)}
+    	{case arg ~ _ ~ typeG => ParamDclStmt(arg, typeG)}
     | "_" ~ ":" ~ typeG ^^
     	{case _ => null}
     | "_" ^^
@@ -694,8 +696,7 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null}
     | dcl ^^
         {case _ => null}
-    | expr ^^
-        {case _ => null}
+    | expr
     | "" ^^
         {case _ => null}
     )
@@ -741,7 +742,7 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null}
     )
     
-    lazy val funSig: P[(String, List[VarDclStmt])] = 
+    lazy val funSig: P[(String, List[ParamDclStmt])] = 
     ( id ~ paramClauses ^^
         {case id ~ paramClauses => (id, paramClauses)}
     )
@@ -932,7 +933,14 @@ object Parser extends RegexParsers with PackratParsers {
 	
 	/* What follows is as-of-yet unused code left over from simpleParser */
 	def ident: Parser[String] =
-		"""[a-zA-Z_]\w*""".r   
+		"""[a-zA-Z_]\w*""".r
+		
+	def deQuotify(s: String) : String = {
+	    // Strip off the first and last character (") or (')
+	    if (s.length > 1)
+	    	return s.substring(1, s.length()-1);
+	    return ""
+	}
     
     /**
      * Remove surrounding quotes, and replace escaped characters in a string literal.
