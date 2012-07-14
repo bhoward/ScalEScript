@@ -11,8 +11,8 @@ function ifThenElse(test, trueClause, falseClause) {
     }
 }
 function whileLoop(test, body) {
-    while (test) {
-        body;
+    while (test()) {
+        body();
     }
 }
 

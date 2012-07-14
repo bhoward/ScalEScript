@@ -917,7 +917,7 @@ object Parser extends RegexParsers with PackratParsers {
         	case (opPair : OpPair) :: tail => buildRight(BinOpExpr(opPair.getOp(), opPair.getExpr(), base), tail)
         	}
        */
-	  BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), pair.getExpr(), acc)))
+	  //BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), acc, pair.getExpr())))
     	
 	
 	def apply(source: String): Expr = parseAll(top, source) match {
