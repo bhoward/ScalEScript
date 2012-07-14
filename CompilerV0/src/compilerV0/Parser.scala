@@ -6,7 +6,8 @@ import java.io.Reader
 object Parser extends RegexParsers with PackratParsers {
 	type P[T] = PackratParser[T]
 	
-	def top = expr
+	//Should be templateStat eventually
+	def top = templateStat;
 	
 	/* Start of grammar rules (roughly following the order from the scala spec */
 	
@@ -695,8 +696,7 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null}
     | dcl ^^
         {case _ => null}
-    | expr ^^
-        {case _ => null}
+    | expr
     | "" ^^
         {case _ => null}
     )
