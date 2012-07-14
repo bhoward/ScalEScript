@@ -6,8 +6,8 @@ sealed trait Stmt {
 }
 case class VarDefStmt(ids : List[String], varType: Type, value : Expr) extends Stmt
 case class ValDefStmt(ids : List[String], valType: Type, value : Expr) extends Stmt
-case class FunDefStmt(name : String, params : List[VarDclStmt], retType : Type, body : Expr) extends Stmt
-case class VarDclStmt(ids : List[String], varType: Type) extends Stmt
+case class FunDefStmt(name : String, params : List[ParamDclStmt], retType : Type, body : Expr) extends Stmt
+case class ParamDclStmt(id : String, varType: Type) extends Stmt
 
 sealed trait Expr extends Stmt {
 	override def isExpr() : Boolean = {true}
@@ -23,7 +23,7 @@ case class UnOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class WhileExpr(test: Expr, body: Expr) extends Expr
-case class AnonFuncExpr(args: List[VarDclStmt] , body: Expr) extends Expr
+case class AnonFuncExpr(args: List[ParamDclStmt] , body: Expr) extends Expr
 
 //Typed AST
 sealed trait TypedStmt {
@@ -32,8 +32,8 @@ sealed trait TypedStmt {
 }
 case class TypedVarDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
 case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
-case class TypedFunDefStmt(name : String, params : List[TypedVarDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
-case class TypedVarDclStmt(ids : List[String], varType: Type, evalType : Type) extends TypedStmt
+case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
+case class TypedParamDclStmt(id : String, varType: Type, evalType : Type) extends TypedStmt
 
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}
@@ -56,7 +56,7 @@ case class NInt(num : Int) extends Numeric
 case class NDouble(Num : Double) extends Numeric
 
 case class DefWrapper(ids : List[String], varType: Type, value : Expr)
-case class FunWrapper(name : String, args : List[VarDclStmt], retType : Type,  body : Expr)
+case class FunWrapper(name : String, args : List[ParamDclStmt], retType : Type,  body : Expr)
 
 sealed trait OpPair {
 	def isLeft() : Boolean;

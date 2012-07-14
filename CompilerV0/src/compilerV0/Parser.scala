@@ -591,29 +591,29 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null}
     )
     
-    lazy val paramClauses: P[List[VarDclStmt]] = 
+    lazy val paramClauses: P[List[ParamDclStmt]] = 
     ( paramClause
     | "" ^^ 
     	{case _ => null}
     )
     
-    lazy val paramClause: P[List[VarDclStmt]] =
+    lazy val paramClause: P[List[ParamDclStmt]] =
     ( "(" ~ params ~ ")" ^^ 
         {case _ ~ params ~ _ => params}
     | "(" ~ ")" ^^
     	{case _ ~ _ => Nil}
     )
     
-    lazy val params : P[List[VarDclStmt]] = 
+    lazy val params : P[List[ParamDclStmt]] = 
     ( param ~ "," ~ params ^^ 
         {case param ~ _ ~ params => param :: params}
     | param ^^ 
         {case param => List(param)}
     )
     
-    lazy val param : P[VarDclStmt] =
+    lazy val param : P[ParamDclStmt] =
     ( id ~ ":" ~ paramType ^^
-        {case id ~ _ ~ paramType => VarDclStmt(List(id), paramType)}     
+        {case id ~ _ ~ paramType => ParamDclStmt(id, paramType)}     
     )
     
     lazy val paramType : P[Type] = 
@@ -622,22 +622,22 @@ object Parser extends RegexParsers with PackratParsers {
     	{case _ => null}
     )
     
-    lazy val bindings: P[List[VarDclStmt]] = 
+    lazy val bindings: P[List[ParamDclStmt]] = 
     ( "(" ~ binding ~ bindingsH ~ ")" ^^
     	{case _ ~ arg ~ args ~ _  => arg :: args}
     | "(" ~ binding ~ ")" ^^
     	{case _ ~ arg ~ _ => List(arg)}    
     )
-    lazy val bindingsH: P[List[VarDclStmt]] =
+    lazy val bindingsH: P[List[ParamDclStmt]] =
     ( "," ~ binding ~ bindingsH ^^
     	{case _ ~ arg ~ args  => arg :: args}
     | "," ~ binding ^^
     	{case _ ~ arg => List(arg)}    
     )
     
-    lazy val binding: P[VarDclStmt] =
+    lazy val binding: P[ParamDclStmt] =
     ( id ~ ":" ~ typeG ^^
-    	{case arg ~ _ ~ typeG => VarDclStmt(List(arg), typeG)}
+    	{case arg ~ _ ~ typeG => ParamDclStmt(arg, typeG)}
     | "_" ~ ":" ~ typeG ^^
     	{case _ => null}
     | "_" ^^
@@ -742,7 +742,7 @@ object Parser extends RegexParsers with PackratParsers {
         {case _ => null}
     )
     
-    lazy val funSig: P[(String, List[VarDclStmt])] = 
+    lazy val funSig: P[(String, List[ParamDclStmt])] = 
     ( id ~ paramClauses ^^
         {case id ~ paramClauses => (id, paramClauses)}
     )

@@ -64,9 +64,9 @@ object ParserTest {
     //Functions
     checkParse("foo(5, 6)", FunExpr(VarExpr("foo"),List(NumExpr(NInt(5)), NumExpr(NInt(6)))))
     checkParse("""{def boots (x : Int, y : Int, z : String): Int = x + y; boots(5, 6, "shoes")}""",
-      BlockExpr(List(FunDefStmt("boots",List(VarDclStmt(List("x"),BaseType("Int")), VarDclStmt(List("y"),BaseType("Int")), VarDclStmt(List("z"),BaseType("String"))),BaseType("Int"),BinOpExpr("+",VarExpr("x"),VarExpr("y"))),
+      BlockExpr(List(FunDefStmt("boots",List(ParamDclStmt("x",BaseType("Int")), ParamDclStmt("y",BaseType("Int")), ParamDclStmt("z",BaseType("String"))),BaseType("Int"),BinOpExpr("+",VarExpr("x"),VarExpr("y"))),
                      FunExpr(VarExpr("boots"),List(NumExpr(NInt(5)), NumExpr(NInt(6)), StringExpr("shoes"))))))
-    checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(VarDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(VarDclStmt(List("x"),BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1))))), 
+    checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(VarDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(ParamDclStmt("x",BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1))))), 
     																			 FunExpr(VarExpr("f"),List(NumExpr(NInt(5)))))))
   }
 }

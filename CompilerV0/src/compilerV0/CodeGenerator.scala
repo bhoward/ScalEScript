@@ -32,7 +32,7 @@ object CodeGenerator {
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
-    	case VarDclStmt(listofIdentifier, vartype) => listofIdentifier.foldLeft("")((acc, str) => acc + str) // TODO ???
+    	case ParamDclStmt(id, vartype) => id
     	case FunExpr(name, args) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
     	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "                                               
     	case _ => throw new Exception("No match found for pattern")
