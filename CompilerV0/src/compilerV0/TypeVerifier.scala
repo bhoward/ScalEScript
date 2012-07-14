@@ -45,7 +45,7 @@ object TypeVerifier {
 	}
 	
 	def checkTypeS(exprType : String, paramType : String): Boolean = {
-		if (scalaTypes.contains(paramType)) { //Make sure the exprType is a defined type
+		if (scalaTypes.contains(paramType)) { //Make sure the paramType is a defined type
 			if (exprType == paramType) { //They match
 				return true; 
 			} else { //They don't match, check the parent types
