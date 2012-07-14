@@ -5,7 +5,7 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
-<<<<<<< HEAD
+
 		/* Parser testing */
 		
 	    //Arithmetic expression
@@ -16,15 +16,16 @@ object Main {
 	    println(Parser("2 * 6"))
 	    */
 	    
-	    println(CodeGenerator(Parser("1 +: 4")))
+	    println(Parser("1 +: 4"))
 	    println(CodeGenerator(Parser("1 + 4")))
-	    println(CodeGenerator(Parser("1 +: 4 +: 3")))
-	    println(CodeGenerator(Parser("1 + 4 + 3")))
+	    println(Parser("1 +: 3 +: 4"))
+	    println(CodeGenerator(Parser("1 + 3 + 4")))
+	    /*
 	    println(CodeGenerator(Parser("1 +: 4 +: 3 +: 5")))
 	    println(CodeGenerator(Parser("1 + 4 + 3 + 5")))
 	    println(CodeGenerator(Parser("1 +: 4 +: 3 +: 5 +: 6")))
 	    println(CodeGenerator(Parser("1 + 4 + 3 + 5 + 6")))
-	    /*
+	    
 	    println(Parser("1 + 3 * 5"))
 	    println(Parser("1 * 3 + 5"))
 	    */
@@ -134,8 +135,6 @@ object Main {
 	    
 	    /* Entire Compiler testing */
 	    /*
-=======
->>>>>>> 3442ec05f968175d390e31cad289c51aa0d2d0e9
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -147,10 +146,8 @@ object Main {
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
-<<<<<<< HEAD
+
 	    */
-=======
->>>>>>> 3442ec05f968175d390e31cad289c51aa0d2d0e9
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {

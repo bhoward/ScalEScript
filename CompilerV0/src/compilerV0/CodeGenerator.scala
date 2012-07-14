@@ -43,14 +43,6 @@ object CodeGenerator {
 	  	case List() => ""
 	  	case List(x) => generate(x)
 	  	case x::xs => generate(x) + ", " + commaSeparatedProcess(xs)
-<<<<<<< HEAD
-    }
-	def exprsProcess(loe : List[Expr]):String = loe match {
-	  	case Nil => ""
-	  	case x::Nil => generate(x)
-	  	case x::xs => generate(x) + ", " + exprsProcess(xs)
-=======
->>>>>>> 3442ec05f968175d390e31cad289c51aa0d2d0e9
 	}
 	def blockProcess(lost : List[Stmt]):String = lost match {
     	case List() => "return ;"
