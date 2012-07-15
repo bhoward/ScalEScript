@@ -6,6 +6,9 @@ import java.io.Reader
 object Parser extends RegexParsers with PackratParsers {
 	type P[T] = PackratParser[T]
 	
+	// Treat comments as whitespace
+	override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))*""".r
+	
 	//Should be templateStat eventually
 	def top = templateStat;
 	
@@ -905,21 +908,12 @@ object Parser extends RegexParsers with PackratParsers {
 	//Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
 	//These Could be replaced with a foldL or foldR eventually
 	def buildLeft(base : Expr, rest : List[OpPair]) : Expr =
-      /*rest match {
-			case Nil => base
-			case (opPair : OpPair) :: tail => buildLeft(BinOpExpr(opPair.getOp(), base, opPair.getExpr()), tail)
-			}
-      */
 	  rest.foldLeft(base) ((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
     	
 	def buildRight(base : Expr, rest : List[OpPair]) : Expr = 
-		/*rest match {
-        	case Nil => base
-        	case (opPair : OpPair) :: tail => buildRight(BinOpExpr(opPair.getOp(), opPair.getExpr(), base), tail)
-        	}
-       */
-	  //BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), acc, pair.getExpr())))
-      BinOpExpr(rest.head.getOp(), rest.tail.reverse.foldLeft(rest.head.getExpr())((acc, pair) => BinOpExpr(pair.getOp(), pair.getExpr(), acc)), base)
+	    BinOpExpr(rest.head.getOp(),
+	        rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), acc, pair.getExpr())),
+	        base)
 	
 	def apply(source: String): Expr = parseAll(top, source) match {
 	    case Success(result, _) => result
@@ -971,8 +965,4 @@ object Parser extends RegexParsers with PackratParsers {
 	    }
     buf.toString
     }
-}
-
-trait JavaComments { this: RegexParsers =>
-  	override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))*""".r
 }
