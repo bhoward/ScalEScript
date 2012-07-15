@@ -68,5 +68,9 @@ object ParserTest {
                      FunExpr(VarExpr("boots"),List(NumExpr(NInt(5)), NumExpr(NInt(6)), StringExpr("shoes"))))))
     checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(VarDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(ParamDclStmt("x",BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1))))), 
     																			 FunExpr(VarExpr("f"),List(NumExpr(NInt(5)))))))
+    																			 
+    // Assignment
+    checkParse("""{var x: Int = 0; x = 1}""",
+      BlockExpr(List(VarDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0))), AssignExpr(VarExpr("x"),NumExpr(NInt(1))))))
   }
 }

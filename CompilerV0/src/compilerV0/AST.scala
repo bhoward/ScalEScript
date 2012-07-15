@@ -24,6 +24,7 @@ case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class WhileExpr(test: Expr, body: Expr) extends Expr
 case class AnonFuncExpr(args: List[ParamDclStmt] , body: Expr) extends Expr
+case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 
 //Typed AST
 sealed trait TypedStmt {
@@ -49,6 +50,7 @@ case class TypedUnOpExpr(op: String, expr: TypedExpr, evalType : Type) extends T
 case class TypedIfThenExpr(test: TypedExpr, trueClause: TypedExpr, evalType : Type) extends TypedExpr
 case class TypedIfThenElseExpr(test: TypedExpr, trueClause: TypedExpr, falseClause: TypedExpr, evalType : Type) extends TypedExpr
 case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, evalType : Type) extends TypedExpr
+case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, evalType: Type) extends TypedExpr
 
 //Classes used for compiling
 sealed trait Numeric

@@ -88,5 +88,11 @@ object CodeGeneratorTest {
         | f = (function (x ) { return (x + 1) }) ; 
         |return f(5) ; })()""".stripMargin
     )
+    
+    checkCode("""{var x: Int = 0; x = 1}""",
+      """(function() { 
+        |var x ; 
+        | x = 0; 
+        |return (x = 1) ; })()""".stripMargin)
   }
 }

@@ -190,7 +190,7 @@ object Parser extends RegexParsers with PackratParsers {
 	| simpleExpr1 ~ "." ~ id ~ "=" ~ expr ^^
 		{case _ => null}
 	| id ~ "=" ~ expr ^^
-		{case _ => null}
+		{case id ~ _ ~ e => AssignExpr(VarExpr(id), e)}
 	| simpleExpr1 ~ argumentExprs ~ "=" ~ expr ^^
 		{case _ => null}
 	| postfixExpr

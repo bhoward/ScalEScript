@@ -32,6 +32,7 @@ object Main {
 	          |  println(fibo(35));
 	          |}""".stripMargin
 	        );
+	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
