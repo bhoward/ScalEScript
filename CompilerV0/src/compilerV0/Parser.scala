@@ -910,10 +910,10 @@ object Parser extends RegexParsers with PackratParsers {
 	def buildLeft(base : Expr, rest : List[OpPair]) : Expr =
 	  rest.foldLeft(base) ((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
     	
-	def buildRight(base : Expr, rest : List[OpPair]) : Expr = 
-	    BinOpExpr(rest.head.getOp(),
-	        rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), acc, pair.getExpr())),
-	        base)
+	def buildRight(base : Expr, rest : List[OpPair]) : Expr = rest match {
+	  case Nil => base
+	  case op :: ops => BinOpExpr(op.getOp(), buildRight(op.getExpr(), ops), base)
+	}
 	
 	def apply(source: String): Expr = parseAll(top, source) match {
 	    case Success(result, _) => result
