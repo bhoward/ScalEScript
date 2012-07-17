@@ -5,6 +5,7 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
+	    /* Entire Compiler testing */
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");

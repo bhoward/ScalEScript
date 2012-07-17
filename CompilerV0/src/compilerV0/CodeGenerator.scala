@@ -38,6 +38,7 @@ object CodeGenerator {
     	case _ => throw new Exception("No match found for pattern")
 	}
 	def thunkify(code: String): String = "(function() {\n return " + code + "})"
+	
 	def commaSeparatedProcess(lost : List[Stmt]):String = lost match {
 	  	case List() => ""
 	  	case List(x) => generate(x)

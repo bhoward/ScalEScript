@@ -918,8 +918,8 @@ object Parser extends RegexParsers with PackratParsers {
         	case (opPair : OpPair) :: tail => buildRight(BinOpExpr(opPair.getOp(), opPair.getExpr(), base), tail)
         	}
        */
-	  BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), pair.getExpr(), acc)))
-    	
+	  //BinOpExpr(rest.head.getOp(), base, rest.init.foldRight(rest.last.getExpr())((pair, acc) => BinOpExpr(pair.getOp(), acc, pair.getExpr())))
+      BinOpExpr(rest.head.getOp(), rest.tail.reverse.foldLeft(rest.head.getExpr())((acc, pair) => BinOpExpr(pair.getOp(), pair.getExpr(), acc)), base)
 	
 	def apply(source: String): Expr = parseAll(top, source) match {
 	    case Success(result, _) => result
