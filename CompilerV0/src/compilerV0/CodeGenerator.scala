@@ -2,6 +2,8 @@ package compilerV0
 
 object CodeGenerator {
 	def generate (ast : TypedStmt):String = ast match {
+	    case TypedAnonFuncExpr(args, body, rettype) => "(function (" + commaSeparatedProcess(args) + 
+	                                                   " ) { return " + generate(body) + " }) "
 	    case TypedAssignExpr(lhs, rhs, valtype) => "(" + generate(lhs) + " = " + generate(rhs) + ")"
         case TypedBinOpExpr(op, l, r, rettype) =>  "(" + generate(l) + " " + (op match {case "==" => "==="
     	                                                                  case "!=" => "!=="
@@ -38,13 +40,7 @@ object CodeGenerator {
                                                          " " + varProcessAux(listofvardecs, expr)
                                                          
         case _ => throw new Exception("No match found for pattern")
-    	/*
-    	
-	    
-    	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "
-    	
-    	
-    	*/
+    
 	}
 	def thunkify(code: String): String = "(function() {\n return " + code + "})"
 	
