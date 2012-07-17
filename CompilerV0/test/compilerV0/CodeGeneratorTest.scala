@@ -4,7 +4,7 @@ object CodeGeneratorTest {
   def checkCode(src: String, expect: String) {
     val ast = Parser(src)
     val code = CodeGenerator(ast)
-    if (expect != code) {
+    if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
       System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
     }
   }
