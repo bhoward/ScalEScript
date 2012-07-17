@@ -353,6 +353,16 @@ object TypeVerifier {
 	def verifyBoolExpr(bool : Boolean, maps: List[Map[String, Type]]) : TypedBoolExpr = {
 		return TypedBoolExpr(bool, BaseType("Boolean"))
 	}
+	def verifyAnonFuncExpr(args: List[ParamDclStmt], body: Expr, maps: List[Map[String, Type]]) : TypedAnonFuncExpr = {
+		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
+		var typedParams : List[TypedParamDclStmt] = args.map(param => verifyParamDclStmt(param.id, param.varType, myMaps))
+		var typedBody = verifyExpr(body, myMaps)
+		
+		var bodyType = typedBody.evalType();
+		var paramTypes = typedParams.map(param => param.varType)
+		
+		return TypedAnonFuncExpr(typedParams, typedBody, FuncType(bodyType, paramTypes))
+	}
 	
 	/* Combined Verify Functions start here */
 	def verifyStmt(ast : Stmt, maps : List[Map[String, Type]]) : TypedStmt = ast match {
@@ -373,6 +383,7 @@ object TypeVerifier {
     	case StringExpr(value) => verifyStringExpr(value, maps)
     	case NumExpr(value) => verifyNumExpr(value, maps)
     	case BoolExpr(value) => verifyBoolExpr(value, maps)
+    	case AnonFuncExpr(args, body) => verifyAnonFuncExpr(args, body, maps)
 		case _ => throw new Exception("Unknown expr: "+ast)
 	}
 	
