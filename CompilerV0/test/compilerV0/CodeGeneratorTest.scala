@@ -2,7 +2,7 @@ package compilerV0
 
 object CodeGeneratorTest {
   def checkCode(src: String, expect: String) {
-    val ast = Parser(src)
+    val ast = TypeVerifier(Parser(src))
     val code = CodeGenerator(ast)
     if (expect != code) {
       System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
