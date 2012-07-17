@@ -1,7 +1,0 @@
-<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">println({var f : (Int)=>Int = (x:Int) => x+1; f(5)})</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">FunExpr(VarExpr(println),List(BlockExpr(List(VarDefStmt(List(f),FuncType(BaseType(Int),List(BaseType(Int))),AnonFuncExpr(List(ParamDclStmt(x,BaseType(Int))),BinOpExpr(+,VarExpr(x),NumExpr(NInt(1))))), FunExpr(VarExpr(f),List(NumExpr(NInt(5))))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">println((function() { 
-var f ; 
- f = (function (x ) { return (x + 1) }) ; 
-return f(5) ; })())</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">println((function() { 
-var f ; 
- f = (function (x ) { return (x + 1) }) ; 
-return f(5) ; })())</script></div></body>
