@@ -799,7 +799,7 @@ object Parser extends RegexParsers with PackratParsers {
     )
     
     lazy val classDef: P[Expr] =
-    ( "id" ~ paramClauses ~ classTemplateOpt ^^
+    ( id ~ paramClauses ~ classTemplateOpt ^^
         {case _ => null}        
     )
     
