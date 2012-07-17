@@ -7,7 +7,7 @@ object Parser extends RegexParsers with PackratParsers {
 	type P[T] = PackratParser[T]
 	
 	// Treat comments as whitespace
-	override val whiteSpace = """(\s|(//.*\n)|(/\*(?s:.)*?\*/))*""".r
+	override val whiteSpace = """(\s|(//(?d:.)*\n)|(/\*(?s:.)*?\*/))*""".r
 	
 	//Should be templateStat eventually
 	def top = templateStat;
