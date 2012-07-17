@@ -363,6 +363,15 @@ object TypeVerifier {
 		
 		return TypedAnonFuncExpr(typedParams, typedBody, FuncType(bodyType, paramTypes))
 	}
+	def verifyAssignExpr(lhs: Expr, rhs: Expr, maps: List[Map[String, Type]]): TypedAssignExpr = {
+	    val VarExpr(id) = lhs // TODO generalize to non-variable lhs
+	    val lhsTyped = verifyExpr(lhs, maps);
+	    val rhsTyped = verifyExpr(rhs, maps);
+	    if (!checkType(rhsTyped.evalType(), lhsTyped.evalType())) {
+	      throw new Exception("Illegal assignment of " + rhsTyped.evalType() + " to " + id + " of type " + lhsTyped.evalType());
+	    }
+	    return TypedAssignExpr(lhsTyped, rhsTyped, BaseType("Unit"))
+	}
 	
 	/* Combined Verify Functions start here */
 	def verifyStmt(ast : Stmt, maps : List[Map[String, Type]]) : TypedStmt = ast match {
@@ -384,6 +393,7 @@ object TypeVerifier {
     	case NumExpr(value) => verifyNumExpr(value, maps)
     	case BoolExpr(value) => verifyBoolExpr(value, maps)
     	case AnonFuncExpr(args, body) => verifyAnonFuncExpr(args, body, maps)
+    	case AssignExpr(lhs, rhs) => verifyAssignExpr(lhs, rhs, maps)
 		case _ => throw new Exception("Unknown expr: "+ast)
 	}
 	

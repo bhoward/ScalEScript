@@ -5,7 +5,6 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
-	    /* Entire Compiler testing */
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -18,6 +17,23 @@ object Main {
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
 	    testCompiler("anonFunc", """println({var f : (Int)=>Int = (x:Int) => x+1; f(5)})""");
+	    testCompiler("fibo1",
+	        """{ // Very slow...
+	          |  def fibo(n: Int): Int = if (n < 2) n else fibo(n-1) + fibo(n-2);
+	          |  println(fibo(35));
+	          |}""".stripMargin
+	        );
+	    testCompiler("fibo2",
+	        """{ // This is much faster...
+	          |  def fibo(n: Int): Int = {
+	          |    def aux(n: Int, a: Int, b: Int): Int =
+	          |      if (n == 0) a else aux(n-1, b, a+b);
+	          |    aux(n, 0, 1)
+	          |  };
+	          |  println(fibo(35));
+	          |}""".stripMargin
+	        );
+	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {

@@ -34,7 +34,8 @@ object CodeGenerator {
     	                                                                           "; \n }"
     	case ParamDclStmt(id, vartype) => id
     	case FunExpr(name, args) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
-    	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "                                               
+    	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "
+    	case AssignExpr(lhs, rhs) => "(" + generate(lhs) + " = " + generate(rhs) + ")"
     	case _ => throw new Exception("No match found for pattern")
 	}
 	def thunkify(code: String): String = "(function() {\n return " + code + "})"
