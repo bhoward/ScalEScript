@@ -5,7 +5,7 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
-	    
+	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -36,6 +36,8 @@ object Main {
 	          |}""".stripMargin
 	        );
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
+	    */
+	    println(CodeGenerator(TypeVerifier(Parser ("2 + 3"))))
 	    
 	}
   
