@@ -5,7 +5,6 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
-	    
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -40,21 +39,19 @@ object Main {
 	        "{println(\"\"\"Hello\n" +
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
 	        "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
+	    testCompiler("Curry", """println({def sum(x:Int)(y:Int)(z:Int) : Int = x+y+z; sum(2)(3)(4)})""")
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
 		try {
 			val ast = Parser(scalaSource);
 			val typedAst = TypeVerifier(ast);
-			println(ast);
-			println(typedAst)
 			val jsSource = CodeGenerator(typedAst);
-			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
+			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), typedAst.toString(), jsSource));
 			println(testName+".html was successfully created.");
 		} catch {
 			case e: Exception => {println("Error while compiling "+testName+". "+e);}
 		}
-		println();
     }
   
 	def writeToFile(fileName : String, contents : String){
@@ -63,13 +60,14 @@ object Main {
 	    fw.close();
     }
   
-	def makeHTML(scalaSource : String, ast : String, jsSource : String) : String = {
+	def makeHTML(scalaSource : String, ast : String, typedAst : String, jsSource : String) : String = {
 		val p1 : String = """<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">""";
 	    val p2 : String = """</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">""";
-	    val p3 : String = """</div><h2>Javascript Source:</h2><div id="JSCode" class="code">""";
-	    val p4 : String = """</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">""";
-	    val p5 : String = """</script></div></body>""";
+	    val p3 : String = """</div><h2>Typed Abstract Syntax Tree:</h2><div id="TypedAST" class="code">""";
+	    val p4 : String = """</div><h2>Javascript Source:</h2><div id="JSCode" class="code">""";
+	    val p5 : String = """</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">""";
+	    val p6 : String = """</script></div></body>""";
 	    
-	    return p1 + scalaSource + p2 + ast + p3 + jsSource + p4 + jsSource + p5;
+	    return p1 + scalaSource + p2 + ast + p3 + typedAst + p4 + jsSource + p5 + jsSource + p6;
   	}
 }
