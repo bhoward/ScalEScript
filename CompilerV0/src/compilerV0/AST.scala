@@ -8,6 +8,7 @@ case class VarDefStmt(ids : List[String], varType: Type, value : Expr) extends S
 case class ValDefStmt(ids : List[String], valType: Type, value : Expr) extends Stmt
 case class FunDefStmt(name : String, params : List[ParamDclStmt], retType : Type, body : Expr) extends Stmt
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
+//case class ClassDefStmt(id : String, stmts: List[Stmt], extendId: String, withIds: List[String], caseClass: Boolean) extends Stmt
 
 sealed trait Expr extends Stmt {
 	override def isExpr() : Boolean = {true}
@@ -35,6 +36,7 @@ case class TypedVarDefStmt(ids : List[String], varType: Type, value : TypedExpr,
 case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
 case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
 case class TypedParamDclStmt(id : String, varType: Type, evalType : Type) extends TypedStmt
+//case class TypedClassDefStmt(id : String, stmts: List[Stmt], extendId: String, withIds: List[String], caseClass: Boolean, evalType : Type) extends TypedStmt
 
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}

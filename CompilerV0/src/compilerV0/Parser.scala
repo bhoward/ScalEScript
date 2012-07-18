@@ -596,9 +596,9 @@ object Parser extends RegexParsers with PackratParsers {
     )
     
     lazy val paramClauses: P[List[ParamDclStmt]] = 
-    ( paramClause
+    ( paramClause	//Make this a rep1(paramClause)
     | "" ^^ 
-    	{case _ => null}
+    	{case _ => Nil}
     )
     
     lazy val paramClause: P[List[ParamDclStmt]] =
