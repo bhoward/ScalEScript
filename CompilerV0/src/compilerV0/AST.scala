@@ -4,8 +4,7 @@ package compilerV0
 sealed trait Stmt {
 	def isExpr() : Boolean = {false}
 }
-case class VarDefStmt(ids : List[String], varType: Type, value : Expr) extends Stmt
-case class ValDefStmt(ids : List[String], valType: Type, value : Expr) extends Stmt
+case class ValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeflag : String) extends Stmt
 case class FunDefStmt(name : String, params : List[ParamDclStmt], retType : Type, body : Expr) extends Stmt
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
 //case class ClassDefStmt(id : String, stmts: List[Stmt], extendId: String, withIds: List[String], caseClass: Boolean) extends Stmt
@@ -33,8 +32,7 @@ sealed trait TypedStmt {
 	def isExpr() : Boolean = {false}
 	def evalType() : Type;
 }
-case class TypedVarDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
-case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
+case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, valTypeflag : String, evalType : Type) extends TypedStmt
 case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
 case class TypedParamDclStmt(id : String, varType: Type, evalType : Type) extends TypedStmt
 //case class TypedClassDefStmt(id : String, stmts: List[Stmt], extendId: String, withIds: List[String], caseClass: Boolean, evalType : Type) extends TypedStmt

@@ -35,11 +35,8 @@ object CodeGenerator {
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
     	case TypedParamDclStmt(id, vartype, rettype) => id
-    	case TypedValDefStmt(listofvaldecs, valtype, expr, rettype) => "var " + varProcess(listofvaldecs, expr) + 
+    	case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag, rettype) => "var " + varProcess(listofvaldecs, expr) + 
                                                          " " + varProcessAux(listofvaldecs, expr)
-    	case TypedVarDefStmt(listofvardecs, valtype, expr, rettype) => "var " + varProcess(listofvardecs, expr) + 
-                                                         " " + varProcessAux(listofvardecs, expr)
-                                                         
         case _ => throw new Exception("No match found for pattern")
     
 	}

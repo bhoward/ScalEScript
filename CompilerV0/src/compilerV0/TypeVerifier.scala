@@ -185,23 +185,14 @@ object TypeVerifier {
 	}
 	
 	/* Specific Verify Functions start here */
-	def verifyValDefStmt(ids : List[String], valType: Type, value : Expr, maps : List[Map[String, Type]]) : TypedValDefStmt = {	
+	def verifyValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeFlag : String, maps : List[Map[String, Type]]) : TypedValDefStmt = {	
 		var exprTyped = verifyExpr(value, maps);
   		if (checkType(exprTyped.evalType(), valType)) {
   			putAllVars(maps.head, ids, valType)
   		} else {
   			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+valType+" for vals "+prettyPrint(ids)+".")
   		}
-  		return TypedValDefStmt(ids, valType, exprTyped, null);
-	}
-	def verifyVarDefStmt(ids : List[String], varType: Type, value : Expr, maps : List[Map[String, Type]]) : TypedVarDefStmt = {
-		var exprTyped = verifyExpr(value, maps);
-  		if (checkType(exprTyped.evalType(), varType)) {
-  			putAllVars(maps.head, ids, varType)
-  		} else {
-  			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+varType+" for vars "+prettyPrint(ids)+".")
-  		}
-  		return TypedVarDefStmt(ids, varType, exprTyped, null);
+  		return TypedValDefStmt(ids, valType, exprTyped, valTypeFlag, null);
 	}
 	def verifyParamDclStmt(id : String, varType: Type, maps : List[Map[String, Type]]) : TypedParamDclStmt = {
 		putAllVars(maps.head, List(id), varType)
@@ -379,8 +370,7 @@ object TypeVerifier {
 	
 	/* Combined Verify Functions start here */
 	def verifyStmt(ast : Stmt, maps : List[Map[String, Type]]) : TypedStmt = ast match {
-		case ValDefStmt(listOfValNames, valType, expr) => verifyValDefStmt(listOfValNames, valType, expr, maps)
-    	case VarDefStmt(listOfVarNames, varType, expr) => verifyVarDefStmt(listOfVarNames, varType, expr, maps)
+		case ValDefStmt(listOfValNames, valType, expr, valTypeFlag) => verifyValDefStmt(listOfValNames, valType, expr, valTypeFlag, maps)
     	case ParamDclStmt(id, varType) => verifyParamDclStmt(id, varType, maps)
     	case FunDefStmt(name, params, retType, body) => verifyFunDefStmt(name, params, retType, body, maps)
     	case _ => return verifyExpr(ast, maps)

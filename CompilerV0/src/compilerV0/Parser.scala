@@ -849,9 +849,9 @@ object Parser extends RegexParsers with PackratParsers {
     //Called def in the grammar (which is a reserved word, so I used defG)
     lazy val defG: P[Stmt] =
     ( "val" ~ patDef ^^
-    	{case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr)}
+    	{case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "val")}
     | "var" ~ varDef ^^
-        {case _ ~ DefWrapper(pats, typeG, expr) => VarDefStmt(pats, typeG, expr)}
+        {case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "var")}
     | "def" ~ funDef ^^ 
       	{case  _ ~ FunWrapper(name, args, retType, body)  => FunDefStmt(name, args, retType, body)}
     | tmplDef ^^

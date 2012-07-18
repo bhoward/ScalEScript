@@ -98,20 +98,20 @@ object ParserTest {
     checkParse("""println("hello world")""", FunExpr(VarExpr("println"),List(StringExpr("hello world"))))
 
     //Vals and Vars
-    checkParse("{var t : Int = 5; }", BlockExpr(List(VarDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5))))))
-    checkParse("{var t2, t1 : Double = 5.0; t2 + t1;}", BlockExpr(List(VarDefStmt(List("t2", "t1"),BaseType("Double"),NumExpr(NDouble(5.0))), BinOpExpr("+",VarExpr("t2"),VarExpr("t1")))))
-    checkParse("{var t : Int = 5; t}", BlockExpr(List(VarDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5))), VarExpr("t"))))
+    checkParse("{var t : Int = 5; }", BlockExpr(List(ValDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5)),"var"))))
+    checkParse("{var t2, t1 : Double = 5.0; t2 + t1;}", BlockExpr(List(ValDefStmt(List("t2", "t1"),BaseType("Double"),NumExpr(NDouble(5.0)),"var"), BinOpExpr("+",VarExpr("t2"),VarExpr("t1")))))
+    checkParse("{var t : Int = 5; t}", BlockExpr(List(ValDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5)),"var"), VarExpr("t"))))
 
     //Functions
     checkParse("foo(5, 6)", FunExpr(VarExpr("foo"),List(NumExpr(NInt(5)), NumExpr(NInt(6)))))
     checkParse("""{def boots (x : Int, y : Int, z : String): Int = x + y; boots(5, 6, "shoes")}""",
       BlockExpr(List(FunDefStmt("boots",List(ParamDclStmt("x",BaseType("Int")), ParamDclStmt("y",BaseType("Int")), ParamDclStmt("z",BaseType("String"))),BaseType("Int"),BinOpExpr("+",VarExpr("x"),VarExpr("y"))),
                      FunExpr(VarExpr("boots"),List(NumExpr(NInt(5)), NumExpr(NInt(6)), StringExpr("shoes"))))))
-    checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(VarDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(ParamDclStmt("x",BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1))))), 
+    checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(ValDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(ParamDclStmt("x",BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1)))),"var"), 
     																			 FunExpr(VarExpr("f"),List(NumExpr(NInt(5)))))))
     																			 
     // Assignment
     checkParse("""{var x: Int = 0; x = 1}""",
-      BlockExpr(List(VarDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0))), AssignExpr(VarExpr("x"),NumExpr(NInt(1))))))
+      BlockExpr(List(ValDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0)),"var"), AssignExpr(VarExpr("x"),NumExpr(NInt(1))))))
   }
 }
