@@ -23,7 +23,8 @@ object CodeGenerator {
     	case TypedFunExpr(name, args, rettype) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
     	case TypedNumExpr(wrappedval, valtype) => wrappedval match{case NInt(value) => value.toString
     	                                                           case NDouble(value) => value.toString}
-    	case TypedStringExpr(value, valtype) => "\"" + value + "\""
+    	case TypedStringExpr(value, valtype) => "\"" + (value.map(escapify).mkString) + "\""
+    	case TypedCharExpr(value, valtype) => "\"" + escapify(value) + "\""
     	case TypedVarExpr(varName, valtype) => varName
     	case TypedWhileExpr(predicate, body, valtype) => "whileLoop( " +
 		     thunkify(generate(predicate)) + ", " + 
@@ -34,15 +35,23 @@ object CodeGenerator {
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
     	case TypedParamDclStmt(id, vartype, rettype) => id
-    	case TypedValDefStmt(listofvaldecs, valtype, expr, rettype) => "var " + varProcess(listofvaldecs, expr) + 
+    	case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag, rettype) => "var " + varProcess(listofvaldecs, expr) + 
                                                          " " + varProcessAux(listofvaldecs, expr)
-    	case TypedVarDefStmt(listofvardecs, valtype, expr, rettype) => "var " + varProcess(listofvardecs, expr) + 
-                                                         " " + varProcessAux(listofvardecs, expr)
-                                                         
         case _ => throw new Exception("No match found for pattern")
     
 	}
 	def thunkify(code: String): String = "(function() {\n return " + code + "})"
+	
+	def escapify(ch: Char): String = ch match {
+	    case '\b' => "\\b"
+	    case '\f' => "\\f"
+	    case '\n' => "\\n"
+	    case '\r' => "\\r"
+	    case '\t' => "\\t"
+	    case '"' => "\\\""
+	    case '\\' => "\\\\"
+	    case _ => ch.toString
+	}
 	
 	def commaSeparatedProcess(lost : List[TypedStmt]):String = lost match {
 	  	case List() => ""

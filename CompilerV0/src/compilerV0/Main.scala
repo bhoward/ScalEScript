@@ -35,10 +35,18 @@ object Main {
 	          |  println(fibo(35));
 	          |}""".stripMargin
 	        );
+<<<<<<< HEAD
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
 	    */
 	    println(CodeGenerator(TypeVerifier(Parser ("2 + 3"))))
 	    
+
+	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}""");
+	    testCompiler("strings",
+	        "{println(\"\"\"Hello\n" +
+	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
+	        "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
+
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {

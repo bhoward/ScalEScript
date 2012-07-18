@@ -4,17 +4,23 @@ package compilerV0
 sealed trait Stmt {
 	def isExpr() : Boolean = {false}
 }
-case class VarDefStmt(ids : List[String], varType: Type, value : Expr) extends Stmt
-case class ValDefStmt(ids : List[String], valType: Type, value : Expr) extends Stmt
+case class ValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeflag : String) extends Stmt
 case class FunDefStmt(name : String, params : List[ParamDclStmt], retType : Type, body : Expr) extends Stmt
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
-
+case class ClassDefStmt(caseFlag: Boolean,
+                        className : String,
+                        paramClauses: List[List[ParamDclStmt]],
+                        extendClass: ClassInstance,
+                        withIds: List[String],
+                        body: List[Stmt]) extends Stmt
+                        
 sealed trait Expr extends Stmt {
 	override def isExpr() : Boolean = {true}
 }
 case class BoolExpr(bool : Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str : String) extends Expr
+case class CharExpr(ch : Char) extends Expr
 case class VarExpr(id: String) extends Expr
 case class FunExpr(id: Expr, args : List[Expr]) extends Expr
 case class BlockExpr(body: List[Stmt]) extends Expr
@@ -31,17 +37,24 @@ sealed trait TypedStmt {
 	def isExpr() : Boolean = {false}
 	def evalType() : Type;
 }
-case class TypedVarDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
-case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, evalType : Type) extends TypedStmt
+case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, valTypeflag : String, evalType : Type) extends TypedStmt
 case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
 case class TypedParamDclStmt(id : String, varType: Type, evalType : Type) extends TypedStmt
-
+case class TypedClassDefStmt(caseFlag: Boolean,
+                        className : String,
+                        paramClauses: List[List[ParamDclStmt]],
+                        extendClass: ClassInstance,
+                        withIds: List[String],
+                        body: List[Stmt],
+                        evalType : Type) extends Stmt
+                        
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}
 }
 case class TypedBoolExpr(bool : Boolean, evalType : Type) extends TypedExpr
 case class TypedNumExpr(num: Numeric, evalType : Type) extends TypedExpr
 case class TypedStringExpr(str : String, evalType : Type) extends TypedExpr
+case class TypedCharExpr(ch : Char, evalType : Type) extends TypedExpr
 case class TypedVarExpr(id: String, evalType : Type) extends TypedExpr
 case class TypedFunExpr(id: TypedExpr, args : List[TypedExpr], evalType : Type) extends TypedExpr
 case class TypedBlockExpr(body: List[TypedStmt], evalType : Type) extends TypedExpr
@@ -60,6 +73,7 @@ case class NDouble(Num : Double) extends Numeric
 
 case class DefWrapper(ids : List[String], varType: Type, value : Expr)
 case class FunWrapper(name : String, args : List[ParamDclStmt], retType : Type,  body : Expr)
+case class ClassInstance(id: String, argClauses: List[List[Expr]])
 
 sealed trait OpPair {
 	def isLeft() : Boolean;

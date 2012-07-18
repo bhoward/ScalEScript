@@ -2,11 +2,15 @@ package compilerV0
 
 object CodeGeneratorTest {
   def checkCode(src: String, expect: String) {
-    val ast = TypeVerifier(Parser(src))
-    val code = CodeGenerator(ast)
-    if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
-      System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
-    }
+    try {
+    	val ast = TypeVerifier(Parser(src))
+	    val code = CodeGenerator(ast)
+	    if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
+	    	System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
+	    }
+    } catch {
+		case e: Exception => {System.err.println("Error while code generating "+src+".\n"+e+"\n");}
+	}
   }
   
   def run() {
@@ -50,6 +54,8 @@ object CodeGeneratorTest {
     checkCode(""""hey"""", """"hey"""")
     checkCode("print(5)", """print(5)""")
     checkCode("""println("hello world")""", """println("hello world")""")
+    
+    checkCode("println(\"\"\"This\nis\na\nmultiline\nstring\n\"\"\")", "println(\"This\\nis\\na\\nmultiline\\nstring\\n\")")
 
     // TODO: these throw an exception
     // checkCode("{var t : Int = 5;}", "")

@@ -2,14 +2,23 @@ package compilerV0
 
 object ParserTest {
   def checkParse(src: String, expect: Expr) {
-    val actual = Parser(src)
-    if (actual != expect) {
-      System.err.println("Expected: " + expect + "\n  Actual: " + actual);
-    }
+	try {
+	  val actual = Parser(src)
+	    if (actual != expect) {
+	      System.err.println("Expected: " + expect + "\n  Actual: " + actual);
+	    }
+	} catch {
+		case e: Exception => {System.err.println("Error while parsing "+src+".\n"+e+"\n");}
+	}
   }
   
   def run() {
     println("Parser Tests")
+    
+    // Literals
+    checkParse("'''", CharExpr('''))
+    checkParse("1+-*&^%#@!2", BinOpExpr("+-*&^%#@!", NumExpr(NInt(1)), NumExpr(NInt(2))))
+    checkParse("\"\"\"This\nis\na\nmultiline\nstring\"\"\"", StringExpr("This\nis\na\nmultiline\nstring"))
     
     //Arithmetic expression
     checkParse("1", NumExpr(NInt(1)))
@@ -26,6 +35,42 @@ object ParserTest {
 	checkParse("1 + 4 + 3 + 5 + 6", BinOpExpr("+",BinOpExpr("+",BinOpExpr("+",BinOpExpr("+",NumExpr(NInt(1)),NumExpr(NInt(4))),NumExpr(NInt(3))),NumExpr(NInt(5))),NumExpr(NInt(6))))
     checkParse("1 + 3 * 5", BinOpExpr("+",NumExpr(NInt(1)),BinOpExpr("*",NumExpr(NInt(3)),NumExpr(NInt(5)))))
     checkParse("1 * 3 + 5", BinOpExpr("+",BinOpExpr("*",NumExpr(NInt(1)),NumExpr(NInt(3))),NumExpr(NInt(5))))
+    checkParse("a!b@:c%d#:e^f&:g*h-:i==j+:k\\l|:m<n?:o>p/:q~r",
+        BinOpExpr("|:",
+            BinOpExpr(">",
+                BinOpExpr("<",
+                    VarExpr("m"),
+                    BinOpExpr("?:",
+                        VarExpr("o"),
+                        VarExpr("n"))),
+                BinOpExpr("/:",
+                    BinOpExpr("~",
+                        VarExpr("q"),
+                        VarExpr("r")),
+                    VarExpr("p"))),
+            BinOpExpr("^",
+                BinOpExpr("!",
+                    VarExpr("a"),
+                    BinOpExpr("%",
+                        BinOpExpr("@:",
+                            VarExpr("c"),
+                            VarExpr("b")),
+                        BinOpExpr("#:",
+                            VarExpr("e"),
+                            VarExpr("d")))),
+                BinOpExpr("&:",
+                    BinOpExpr("==",
+                        BinOpExpr("-:",
+                            VarExpr("i"),
+                            BinOpExpr("*",
+                                VarExpr("g"),
+                                VarExpr("h"))),
+                        BinOpExpr("+:",
+                            BinOpExpr("\\",
+                                VarExpr("k"),
+                                VarExpr("l")),
+                            VarExpr("j"))),
+                    VarExpr("f")))))
 
     //If statement
     checkParse("if (true) 6", IfThenExpr(BoolExpr(true),NumExpr(NInt(6))))
@@ -57,20 +102,20 @@ object ParserTest {
     checkParse("""println("hello world")""", FunExpr(VarExpr("println"),List(StringExpr("hello world"))))
 
     //Vals and Vars
-    checkParse("{var t : Int = 5; }", BlockExpr(List(VarDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5))))))
-    checkParse("{var t2, t1 : Double = 5.0; t2 + t1;}", BlockExpr(List(VarDefStmt(List("t2", "t1"),BaseType("Double"),NumExpr(NDouble(5.0))), BinOpExpr("+",VarExpr("t2"),VarExpr("t1")))))
-    checkParse("{var t : Int = 5; t}", BlockExpr(List(VarDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5))), VarExpr("t"))))
+    checkParse("{var t : Int = 5; }", BlockExpr(List(ValDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5)),"var"))))
+    checkParse("{var t2, t1 : Double = 5.0; t2 + t1;}", BlockExpr(List(ValDefStmt(List("t2", "t1"),BaseType("Double"),NumExpr(NDouble(5.0)),"var"), BinOpExpr("+",VarExpr("t2"),VarExpr("t1")))))
+    checkParse("{var t : Int = 5; t}", BlockExpr(List(ValDefStmt(List("t"),BaseType("Int"),NumExpr(NInt(5)),"var"), VarExpr("t"))))
 
     //Functions
     checkParse("foo(5, 6)", FunExpr(VarExpr("foo"),List(NumExpr(NInt(5)), NumExpr(NInt(6)))))
     checkParse("""{def boots (x : Int, y : Int, z : String): Int = x + y; boots(5, 6, "shoes")}""",
       BlockExpr(List(FunDefStmt("boots",List(ParamDclStmt("x",BaseType("Int")), ParamDclStmt("y",BaseType("Int")), ParamDclStmt("z",BaseType("String"))),BaseType("Int"),BinOpExpr("+",VarExpr("x"),VarExpr("y"))),
                      FunExpr(VarExpr("boots"),List(NumExpr(NInt(5)), NumExpr(NInt(6)), StringExpr("shoes"))))))
-    checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(VarDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(ParamDclStmt("x",BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1))))), 
+    checkParse("""{var f : (Int)=>Int = (x:Int) => x+1; f(5)}""", BlockExpr(List(ValDefStmt(List("f"),FuncType(BaseType("Int"),List(BaseType("Int"))),AnonFuncExpr(List(ParamDclStmt("x",BaseType("Int"))),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1)))),"var"), 
     																			 FunExpr(VarExpr("f"),List(NumExpr(NInt(5)))))))
     																			 
     // Assignment
     checkParse("""{var x: Int = 0; x = 1}""",
-      BlockExpr(List(VarDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0))), AssignExpr(VarExpr("x"),NumExpr(NInt(1))))))
+      BlockExpr(List(ValDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0)),"var"), AssignExpr(VarExpr("x"),NumExpr(NInt(1))))))
   }
 }
