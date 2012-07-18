@@ -623,8 +623,8 @@ object Parser extends RegexParsers with PackratParsers {
       | pattern ^^
       { case _ => null })
 
-  lazy val paramClauses: P[List[ParamDclStmt]] =
-    (paramClause //Make this a rep1(paramClause)
+  lazy val paramClauses: P[List[List[ParamDclStmt]]] =
+    (rep1(paramClause)
       | "" ^^
       { case _ => Nil })
 
@@ -752,7 +752,7 @@ object Parser extends RegexParsers with PackratParsers {
     (funSig ~ ":" ~ typeG ^^
       { case _ => null })
 
-  lazy val funSig: P[(String, List[ParamDclStmt])] =
+  lazy val funSig: P[(String, List[List[ParamDclStmt]])] =
     (id ~ paramClauses ^^
       { case id ~ paramClauses => (id, paramClauses) })
 
@@ -763,7 +763,7 @@ object Parser extends RegexParsers with PackratParsers {
       | "var" ~ varDef ^^
       { case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "var") }
       | "def" ~ funDef ^^
-      { case _ ~ FunWrapper(name, args, retType, body) => FunDefStmt(name, args, retType, body) }
+      { case _ ~ FunWrapper(name, paramClauses, retType, body) => FunDefStmt(name, paramClauses, retType, body) }
       | tmplDef ^^
       { case tmplDef => tmplDef })
 
@@ -784,7 +784,7 @@ object Parser extends RegexParsers with PackratParsers {
 
   lazy val funDef: P[FunWrapper] =
     (funSig ~ ":" ~ typeG ~ "=" ~ expr ^^
-      { case (name, args) ~ _ ~ retType ~ _ ~ body => FunWrapper(name, args, retType, body) })
+      { case (name, paramClauses) ~ _ ~ retType ~ _ ~ body => FunWrapper(name, paramClauses, retType, body) })
 
   lazy val tmplDef: P[Stmt] =
     //Assemble the classDefStmt Here
@@ -800,7 +800,7 @@ object Parser extends RegexParsers with PackratParsers {
       | "trait" ~ traitDef ^^
       { case _ => null })
 
-  lazy val classDef: P[(String, List[ParamDclStmt], List[Stmt])] =
+  lazy val classDef: P[(String, List[List[ParamDclStmt]], List[Stmt])] =
     //Pass back everything but the caseFlag
     (id ~ paramClauses ~ classTemplateOpt ^^
       { case name ~ paramClauses ~ stms  => (name, paramClauses, stms) })

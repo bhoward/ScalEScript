@@ -160,16 +160,34 @@ object TypeVerifier {
 			var stmt : Stmt = verifyStack.head;
 			verifyStack = verifyStack.tail;
 			stmt match {
-				case FunDefStmt(name, params, retType, body) => {
+				case FunDefStmt(name, paramClauses, retType, body) => {
+					var typedStmt : TypedFunDefStmt = null;
 					var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
 		    		//add params to the new map (by verifying them)
-		    		var typedParams = params.map(param => verifyParamDclStmt(param.id, param.varType, myMaps))
+		    		var typedParamClauses = paramClauses.map(params => params.map(param => verifyParamDclStmt(param.id, param.varType, myMaps)))
 		    		
 		    		var typedBody = verifyExpr(body, myMaps);
 			  		if (!checkType(typedBody.evalType(), retType)) {
 			  			throw new Exception("Body type "+typedBody.evalType()+" does not match the required return type "+retType+" for function "+name+".")
 			  		}
-			  		result = TypedFunDefStmt(name, typedParams, retType, typedBody, null) :: result
+			  		
+			  		if (typedParamClauses.length > 1) {
+			  			//Curry the function here
+			  			var paramClause = typedParamClauses.head;
+			  			var restParamClause = typedParamClauses.tail
+			  			var newBody = curryFunc(typedBody, retType, restParamClause.reverse)
+			  			var newType = FuncType(newBody.evalType(), paramClause.map(param => param.varType))
+			  			typedStmt = TypedFunDefStmt(name, paramClause, newType, newBody, null)
+			  		} else if (typedParamClauses.length == 1) {
+			  			//Normal old function
+			  			var paramClause = typedParamClauses.head;
+			  			typedStmt = TypedFunDefStmt(name, paramClause, retType, typedBody, null)
+			  		} else {
+			  			//No paramClauses
+			  			typedStmt = TypedFunDefStmt(name, Nil, retType, typedBody, null)
+			  		}
+			  		
+			  		result = typedStmt :: result
 				}
 				case _ => {
 					throw new Exception("Unknown statement type on the verify stack.")
@@ -198,13 +216,20 @@ object TypeVerifier {
 		putAllVars(maps.head, List(id), varType)
 		return TypedParamDclStmt(id, varType, null);
 	}
-	def verifyFunDefStmt(name : String, params : List[ParamDclStmt], retType : Type, body : Expr, maps : List[Map[String, Type]]) : TypedFunDefStmt = {
-		var paramTypes = params.map(param => param.varType)
-		//add to map
-		putFunc(maps.head, name, paramTypes, retType);
+	def verifyFunDefStmt(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type, body : Expr, maps : List[Map[String, Type]]) : TypedFunDefStmt = {
+		if (paramClauses.length > 0) {
+			var paramClauseTypes = paramClauses.map(params => params.map(param => param.varType))
+			var paramTypes = paramClauseTypes.head;
+			
+			//add to map
+			putFunc(maps.head, name, paramTypes, curryFuncType(retType, paramClauseTypes.tail));
+		} else {
+			//add to map
+			putFunc(maps.head, name, Nil, retType);
+		}
 		
 		//verify body vs return type (with the new map)
-		pushVerifyStack(FunDefStmt(name, params, retType, body));
+		pushVerifyStack(FunDefStmt(name, paramClauses, retType, body));
 		
 		//This should never be used, the real expr should come from the verifyStack
 	    return null
@@ -303,11 +328,12 @@ object TypeVerifier {
 	def verifyFunExpr(id: Expr, args : List[Expr], maps: List[Map[String, Type]]) : TypedFunExpr = {
 		var idStr : String = "";
 		var idTyped = verifyExpr(id, maps);
-		idTyped match {
-		  	case TypedVarExpr(str, evalType) => {idStr = str}
-		  	case _ => {throw new Exception("Not yet typechecking non-free functions")} 
+		var funcType : Type = idTyped match {
+		  	case TypedVarExpr(str, evalType) => getFuncType(maps, str)
+		  	case TypedAnonFuncExpr(args, body, evalType) => evalType
+		  	case TypedFunExpr(id, args, evalType) => evalType
+		  	case _ => {throw new Exception("Not yet typechecking this: "+idTyped)} 
 		}
-		var funcType : Type = getFuncType(maps, idStr);
 		var retType : Type = funcType.getRetType();
 		var paramTypes : List[Type] = funcType.getArgTypes();
 		var argsTyped : List[TypedExpr] = args.map(arg => verifyExpr(arg, maps))
@@ -474,6 +500,30 @@ object TypeVerifier {
 		} else {
 			return scalaTypes.contains(varType.getType());
 		}
+	}
+	
+	def curryFuncType(retType : Type, paramClauses: List[List[Type]]) : Type = {
+		if (paramClauses.length == 0) {
+			return retType
+		} else {
+			return curryFuncType(new FuncType(retType, paramClauses.head), paramClauses.tail)
+		}
+	}
+	def curryFunc(body: TypedExpr, retType : Type, paramClauses: List[List[TypedParamDclStmt]]) : TypedExpr = {
+		if (paramClauses.length == 0) {
+			return body;
+		} else {
+			var newType = new FuncType(retType, paramClauses.head.map(param => param.varType))
+			return curryFunc(TypedAnonFuncExpr(paramClauses.head, body, newType), newType, paramClauses.tail)
+		}
+	}
+	
+	def testCurry() : Unit = {
+		println(curryFunc(TypedBoolExpr(true, BaseType("Boolean")), 
+						  BaseType("Boolean"), 
+						  List(List(TypedParamDclStmt("x", BaseType("Int"), null)), 
+							   List(TypedParamDclStmt("y", BaseType("Char"), null)),
+							   List(TypedParamDclStmt("z", BaseType("Double"), null)))))
 	}
 	
 	def prettyPrint(l : List[String]) : String = {
