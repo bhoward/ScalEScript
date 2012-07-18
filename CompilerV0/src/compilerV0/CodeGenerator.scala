@@ -1,43 +1,47 @@
 package compilerV0
 
 object CodeGenerator {
-	def generate (ast : Stmt):String = ast match {
-    	case NumExpr(wrappedval) => wrappedval match{case NInt(value) => value.toString
-    	                                             case NDouble(value) => value.toString}
-    	case BoolExpr(value) => value.toString
-    	
-    	case BinOpExpr(op, l, r) =>  "(" + generate(l) + " " + (op match {case "==" => "==="
+	def generate (ast : TypedStmt):String = ast match {
+	    case TypedAnonFuncExpr(args, body, rettype) => "(function (" + commaSeparatedProcess(args) + 
+	                                                   " ) { return " + generate(body) + " }) "
+	    case TypedAssignExpr(lhs, rhs, valtype) => "(" + generate(lhs) + " = " + generate(rhs) + ")"
+        case TypedBinOpExpr(op, l, r, rettype) =>  "(" + generate(l) + " " + (op match {case "==" => "==="
     	                                                                  case "!=" => "!=="
     	                                                                  case _ => op}) + " " + generate(r) + ")"
-	    
-    	case ValDefStmt(listofvaldecs, valtype, expr) => "var " + varProcess(listofvaldecs, expr) + 
-                                                         " " + varProcessAux(listofvaldecs, expr)
-    	case VarDefStmt(listofvardecs, valtype, expr) => "var " + varProcess(listofvardecs, expr) + 
-                                                         " " + varProcessAux(listofvardecs, expr)
-    	case VarExpr(varName) => varName
-    	case IfThenExpr(predicate, expr) => "ifThen( " + 
+    	
+    	
+    	case TypedBlockExpr(listofstatements, rettype) => "(function() { \n" + blockProcess(listofstatements) + " })()"
+    	case TypedBoolExpr(value, valtype) => value.toString
+    	case TypedIfThenExpr(predicate, expr, valtype) => "ifThen( " + 
 		     thunkify(generate(predicate)) + ", " +
 		     thunkify(generate(expr)) + ")"
-    	case IfThenElseExpr(predicate, truevalue, falsevalue) => 
+		case TypedIfThenElseExpr(predicate, truevalue, falsevalue, valtype) => 
     		 "ifThenElse( " +
 		     thunkify(generate(predicate)) + ", " +
     	   	 thunkify(generate(truevalue)) + ", " +
-    		 thunkify(generate(falsevalue)) + " )"
-    	case WhileExpr(predicate, body) => "whileLoop( " +
+    		 thunkify(generate(falsevalue)) + " )"     
+    	case TypedFunExpr(name, args, rettype) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
+    	case TypedNumExpr(wrappedval, valtype) => wrappedval match{case NInt(value) => value.toString
+    	                                                           case NDouble(value) => value.toString}
+    	case TypedStringExpr(value, valtype) => "\"" + (value.map(escapify).mkString) + "\""
+    	case TypedCharExpr(value, valtype) => "\"" + escapify(value) + "\""
+    	case TypedVarExpr(varName, valtype) => varName
+    	case TypedWhileExpr(predicate, body, valtype) => "whileLoop( " +
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
-    	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
-    	case StringExpr(value) => "\"" + (value.map(escapify).mkString) + "\""
-    	case CharExpr(value) => "\"" + escapify(value) + "\""
-    	case FunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
+    	
+    	case TypedFunDefStmt(name, args, retType, body, valtype) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
-    	case ParamDclStmt(id, vartype) => id
-    	case FunExpr(name, args) => generate(name) + "(" + commaSeparatedProcess(args) + ")"
-    	case AnonFuncExpr(args, body) => "(function (" + commaSeparatedProcess(args) + " ) { return " + generate(body) + " }) "
-    	case AssignExpr(lhs, rhs) => "(" + generate(lhs) + " = " + generate(rhs) + ")"
-    	case _ => throw new Exception("No match found for pattern")
+    	case TypedParamDclStmt(id, vartype, rettype) => id
+    	case TypedValDefStmt(listofvaldecs, valtype, expr, rettype) => "var " + varProcess(listofvaldecs, expr) + 
+                                                         " " + varProcessAux(listofvaldecs, expr)
+    	case TypedVarDefStmt(listofvardecs, valtype, expr, rettype) => "var " + varProcess(listofvardecs, expr) + 
+                                                         " " + varProcessAux(listofvardecs, expr)
+                                                         
+        case _ => throw new Exception("No match found for pattern")
+    
 	}
 	def thunkify(code: String): String = "(function() {\n return " + code + "})"
 	
@@ -52,25 +56,31 @@ object CodeGenerator {
 	    case _ => ch.toString
 	}
 	
-	def commaSeparatedProcess(lost : List[Stmt]):String = lost match {
+	def commaSeparatedProcess(lost : List[TypedStmt]):String = lost match {
 	  	case List() => ""
 	  	case List(x) => generate(x)
 	  	case x::xs => generate(x) + ", " + commaSeparatedProcess(xs)
 	}
-	def blockProcess(lost : List[Stmt]):String = lost match {
+	def blockProcess(lost : List[TypedStmt]):String = lost match {
     	case List() => "return ;"
     	case List(x) => if (x.isExpr()) "return " + generate(x) + 
     	                                " ;" else throw new Exception("The last line in the block is a Stmt, expected an Expr")
     	case x::xs => generate(x) + "; \n" + blockProcess(xs)
 	}
-	def varProcess(los : List[String], expr : Expr):String = los match{
+	def varProcess(los : List[String], expr : TypedExpr):String = los match{
     	case Nil => ""
     	case x::Nil => x + " ; \n"
     	case x::xs => x + " , " + varProcess(xs, expr)
 	} 
-	def varProcessAux(los : List[String], expr : Expr):String = los match{
+	
+	def varProcessAux(los : List[String], expr : TypedExpr):String = los match{
   		case Nil => generate(expr)
   		case x::xs => x + " = " + varProcessAux(xs, expr)
 	}
-	def apply(source: Expr): String = generate (source)
+	
+	def lookupOp(op : String, table : Map[String, String]):String = table.get(op) match{
+	   case Some(operator) => operator
+	   case None => op
+	}
+	def apply(source: TypedStmt): String = generate (source)
 }

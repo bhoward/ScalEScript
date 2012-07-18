@@ -5,6 +5,7 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
+	    
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -15,7 +16,9 @@ object Main {
 	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); println(5);}""");
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
+	    
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
+	    testCompiler("anonFunc", """println({var f : (Int)=>Int = (x:Int) => x+1; f(5)})""");
 	    testCompiler("fibo1",
 	        """{ // Very slow...
 	          |  def fibo(n: Int): Int = if (n < 2) n else fibo(n-1) + fibo(n-2);
@@ -45,7 +48,7 @@ object Main {
 			val typedAst = TypeVerifier(ast);
 			println(ast);
 			println(typedAst)
-			val jsSource = CodeGenerator(ast);
+			val jsSource = CodeGenerator(typedAst);
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), jsSource));
 			println(testName+".html was successfully created.");
 		} catch {

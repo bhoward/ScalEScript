@@ -357,6 +357,16 @@ object TypeVerifier {
 	def verifyBoolExpr(bool : Boolean, maps: List[Map[String, Type]]) : TypedBoolExpr = {
 		return TypedBoolExpr(bool, BaseType("Boolean"))
 	}
+	def verifyAnonFuncExpr(args: List[ParamDclStmt], body: Expr, maps: List[Map[String, Type]]) : TypedAnonFuncExpr = {
+		var myMaps : List[Map[String, Type]] = scala.collection.mutable.Map[String, Type]()::maps
+		var typedParams : List[TypedParamDclStmt] = args.map(param => verifyParamDclStmt(param.id, param.varType, myMaps))
+		var typedBody = verifyExpr(body, myMaps)
+		
+		var bodyType = typedBody.evalType();
+		var paramTypes = typedParams.map(param => param.varType)
+		
+		return TypedAnonFuncExpr(typedParams, typedBody, FuncType(bodyType, paramTypes))
+	}
 	def verifyAssignExpr(lhs: Expr, rhs: Expr, maps: List[Map[String, Type]]): TypedAssignExpr = {
 	    val VarExpr(id) = lhs // TODO generalize to non-variable lhs
 	    val lhsTyped = verifyExpr(lhs, maps);
@@ -387,6 +397,7 @@ object TypeVerifier {
     	case CharExpr(value) => verifyCharExpr(value, maps)
     	case NumExpr(value) => verifyNumExpr(value, maps)
     	case BoolExpr(value) => verifyBoolExpr(value, maps)
+    	case AnonFuncExpr(args, body) => verifyAnonFuncExpr(args, body, maps)
     	case AssignExpr(lhs, rhs) => verifyAssignExpr(lhs, rhs, maps)
 		case _ => throw new Exception("Unknown expr: "+ast)
 	}
