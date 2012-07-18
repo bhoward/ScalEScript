@@ -688,27 +688,26 @@ object Parser extends RegexParsers with PackratParsers {
     ("private" ^^
       { case _ => null })
 
-  lazy val templateBody: P[Expr] =
+  lazy val templateBody: P[List[Stmt]] =
     ("{" ~ selfType ~ templateStats ~ "}" ^^
       { case _ => null }
       | "{" ~ templateStats ~ "}" ^^
       { case _ => null }
     )
 
-  lazy val templateStats : P[List[Expr]] = 
+  lazy val templateStats : P[List[Stmt]] = 
     ( templateStat ~ ";" ~ templateStats ^^
         {case stat ~ _ ~ stats => stat :: stats}
     | templateStat ^^
         {case stat => List(stat)}
     )
-    
-  lazy val templateStat: P[Expr] =
+  lazy val templateStat: P[Stmt] =
     (importG ^^
       { case _ => null }
       | modifier ~ defG ^^
       { case _ => null }
       | defG ^^
-      { case _ => null }
+      { case defG => defG }
       | modifier ~ dcl ^^
       { case _ => null }
       | dcl ^^
@@ -764,7 +763,7 @@ object Parser extends RegexParsers with PackratParsers {
       | "def" ~ funDef ^^
       { case _ ~ FunWrapper(name, paramClauses, retType, body) => FunDefStmt(name, paramClauses, retType, body) }
       | tmplDef ^^
-      { case _ => null })
+      { case tmplDef => tmplDef })
 
   lazy val patDef: P[DefWrapper] =
     (pattern2 ~ patDefH ~ ":" ~ typeG ~ "=" ~ expr ^^
@@ -785,12 +784,13 @@ object Parser extends RegexParsers with PackratParsers {
     (funSig ~ ":" ~ typeG ~ "=" ~ expr ^^
       { case (name, paramClauses) ~ _ ~ retType ~ _ ~ body => FunWrapper(name, paramClauses, retType, body) })
 
-  lazy val tmplDef: P[Expr] =
+  lazy val tmplDef: P[Stmt] =
     //Assemble the classDefStmt Here
     ("case" ~ "class" ~ classDef ^^
       { case _ => null }
       | "class" ~ classDef ^^
-      { case _ => null }
+      { case _ ~ classDef
+             => ClassDefStmt(false, classDef._1, Nil, null, Nil, classDef._3) }
       | "case" ~ "object" ~ objectDef ^^
       { case _ => null }
       | "object" ~ objectDef ^^
@@ -798,10 +798,10 @@ object Parser extends RegexParsers with PackratParsers {
       | "trait" ~ traitDef ^^
       { case _ => null })
 
-  lazy val classDef: P[Expr] =
+  lazy val classDef: P[(String, List[List[ParamDclStmt]], List[Stmt])] =
     //Pass back everything but the caseFlag
     (id ~ paramClauses ~ classTemplateOpt ^^
-      { case _ => null })
+      { case name ~ paramClauses ~ stms  => (name, paramClauses, stms) })
 
   lazy val traitDef: P[Expr] =
     (id ~ traitTemplateOpt ^^
@@ -811,11 +811,11 @@ object Parser extends RegexParsers with PackratParsers {
     (id ~ classTemplateOpt ^^
       { case _ => null })
 
-  lazy val classTemplateOpt: P[Expr] =
+  lazy val classTemplateOpt: P[List[Stmt]] =
     ("extends" ~ classTemplate ^^
       { case _ => null }
       | templateBody ^^
-      { case _ => null })
+      { case stmts => stmts })
 
   lazy val traitTemplateOpt: P[Expr] =
     ("extends" ~ traitTemplate ^^
@@ -899,15 +899,11 @@ object Parser extends RegexParsers with PackratParsers {
     case op :: ops => BinOpExpr(op.getOp(), buildRight(op.getExpr(), ops), base)
   }
 
-  def apply(source: String): Expr = parseAll(top, source) match {
+  def apply(source: String): Stmt = parseAll(top, source) match {
     case Success(result, _) => result
     case ns: NoSuccess => throw new Exception(ns.msg)
   }
 
-  def apply(source: Reader): Expr = parseAll(top, source) match {
-    case Success(result, _) => result
-    case ns: NoSuccess => throw new Exception(ns.msg)
-  }
 
   // Expects first and last characters to be either " or '
   def deQuotify(s: String): String = {

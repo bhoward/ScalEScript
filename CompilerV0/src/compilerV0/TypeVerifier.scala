@@ -530,8 +530,8 @@ object TypeVerifier {
 		l.tail.fold(l.head)((result, element) => result + ", " + element)
 	}
 	
-	def apply(source: Expr): TypedStmt = {
+	def apply(source: Stmt): TypedStmt = {
 		initScalaTypes;
-		verifyExpr(source, initSymbolTable()::Nil)
+		verifyStmt(source, initSymbolTable()::Nil)
 	}
 }
