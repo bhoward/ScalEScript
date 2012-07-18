@@ -7,8 +7,13 @@ sealed trait Stmt {
 case class ValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeflag : String) extends Stmt
 case class FunDefStmt(name : String, params : List[ParamDclStmt], retType : Type, body : Expr) extends Stmt
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
-//case class ClassDefStmt(id : String, stmts: List[Stmt], extendId: String, withIds: List[String], caseClass: Boolean) extends Stmt
-
+case class ClassDefStmt(caseFlag: Boolean,
+                        className : String,
+                        paramClauses: List[List[ParamDclStmt]],
+                        extendClass: ClassInstance,
+                        withIds: List[String],
+                        body: List[Stmt]) extends Stmt
+                        
 sealed trait Expr extends Stmt {
 	override def isExpr() : Boolean = {true}
 }
@@ -35,8 +40,14 @@ sealed trait TypedStmt {
 case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, valTypeflag : String, evalType : Type) extends TypedStmt
 case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
 case class TypedParamDclStmt(id : String, varType: Type, evalType : Type) extends TypedStmt
-//case class TypedClassDefStmt(id : String, stmts: List[Stmt], extendId: String, withIds: List[String], caseClass: Boolean, evalType : Type) extends TypedStmt
-
+case class TypedClassDefStmt(caseFlag: Boolean,
+                        className : String,
+                        paramClauses: List[List[ParamDclStmt]],
+                        extendClass: ClassInstance,
+                        withIds: List[String],
+                        body: List[Stmt],
+                        evalType : Type) extends Stmt
+                        
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}
 }
@@ -62,6 +73,7 @@ case class NDouble(Num : Double) extends Numeric
 
 case class DefWrapper(ids : List[String], varType: Type, value : Expr)
 case class FunWrapper(name : String, args : List[ParamDclStmt], retType : Type,  body : Expr)
+case class ClassInstance(id: String, argClauses: List[List[Expr]])
 
 sealed trait OpPair {
 	def isLeft() : Boolean;
