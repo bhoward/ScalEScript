@@ -1,0 +1,8 @@
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{println("""Hello
+This is a test:\tone\ttwo\tthree"""); /* should not be tabbed */
+println("This is a test:\tone\ttwo\tthree") /* should be tabbed */}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(FunExpr(VarExpr(println),List(StringExpr(Hello
+This is a test:\tone\ttwo\tthree))), FunExpr(VarExpr(println),List(StringExpr(This is a test:	one	two	three)))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
+println("Hello\nThis is a test:\\tone\\ttwo\\tthree"); 
+return println("This is a test:\tone\ttwo\tthree") ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
+println("Hello\nThis is a test:\\tone\\ttwo\\tthree"); 
+return println("This is a test:\tone\ttwo\tthree") ; })()</script></div></body>
