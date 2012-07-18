@@ -2,11 +2,15 @@ package compilerV0
 
 object CodeGeneratorTest {
   def checkCode(src: String, expect: String) {
-    val ast = TypeVerifier(Parser(src))
-    val code = CodeGenerator(ast)
-    if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
-      System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
-    }
+    try {
+    	val ast = TypeVerifier(Parser(src))
+	    val code = CodeGenerator(ast)
+	    if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
+	    	System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
+	    }
+    } catch {
+		case e: Exception => {System.err.println("Error while code generating "+src+".\n"+e+"\n");}
+	}
   }
   
   def run() {

@@ -2,10 +2,14 @@ package compilerV0
 
 object ParserTest {
   def checkParse(src: String, expect: Expr) {
-    val actual = Parser(src)
-    if (actual != expect) {
-      System.err.println("Expected: " + expect + "\n  Actual: " + actual);
-    }
+	try {
+	  val actual = Parser(src)
+	    if (actual != expect) {
+	      System.err.println("Expected: " + expect + "\n  Actual: " + actual);
+	    }
+	} catch {
+		case e: Exception => {System.err.println("Error while parsing "+src+".\n"+e+"\n");}
+	}
   }
   
   def run() {
