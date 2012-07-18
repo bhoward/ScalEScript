@@ -46,7 +46,7 @@ case class TypedClassDefStmt(caseFlag: Boolean,
                         extendClass: ClassInstance,
                         withIds: List[String],
                         body: List[Stmt],
-                        evalType : Type) extends Stmt
+                        evalType : Type) extends TypedStmt
                         
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}
