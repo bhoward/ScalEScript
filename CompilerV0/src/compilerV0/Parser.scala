@@ -689,20 +689,19 @@ object Parser extends RegexParsers with PackratParsers {
       { case _ => null })
 
   lazy val templateBody: P[Expr] =
-    ("{" ~ selfType ~ templateStat ~ templateBodyH ~ "}" ^^
+    ("{" ~ selfType ~ templateStats ~ "}" ^^
       { case _ => null }
-      | "{" ~ selfType ~ templateStat ~ "}" ^^
+      | "{" ~ templateStats ~ "}" ^^
       { case _ => null }
-      | "{" ~ templateStat ~ templateBodyH ~ "}" ^^
-      { case _ => null }
-      | "{" ~ templateStat ~ "}" ^^
-      { case _ => null })
-  lazy val templateBodyH: P[List[Expr]] =
-    (";" ~ templateStat ~ templateBodyH ^^
-      { case _ => null }
-      | ";" ~ templateStat ^^
-      { case _ => null })
+    )
 
+  lazy val templateStats : P[List[Expr]] = 
+    ( templateStat ~ ";" ~ templateStats ^^
+        {case stat ~ _ ~ stats => stat :: stats}
+    | templateStat ^^
+        {case stat => List(stat)}
+    )
+    
   lazy val templateStat: P[Expr] =
     (importG ^^
       { case _ => null }
