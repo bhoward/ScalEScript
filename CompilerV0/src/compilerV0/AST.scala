@@ -15,6 +15,7 @@ sealed trait Expr extends Stmt {
 case class BoolExpr(bool : Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str : String) extends Expr
+case class CharExpr(ch : Char) extends Expr
 case class VarExpr(id: String) extends Expr
 case class FunExpr(id: Expr, args : List[Expr]) extends Expr
 case class BlockExpr(body: List[Stmt]) extends Expr
@@ -42,6 +43,7 @@ sealed trait TypedExpr extends TypedStmt {
 case class TypedBoolExpr(bool : Boolean, evalType : Type) extends TypedExpr
 case class TypedNumExpr(num: Numeric, evalType : Type) extends TypedExpr
 case class TypedStringExpr(str : String, evalType : Type) extends TypedExpr
+case class TypedCharExpr(ch : Char, evalType : Type) extends TypedExpr
 case class TypedVarExpr(id: String, evalType : Type) extends TypedExpr
 case class TypedFunExpr(id: TypedExpr, args : List[TypedExpr], evalType : Type) extends TypedExpr
 case class TypedBlockExpr(body: List[TypedStmt], evalType : Type) extends TypedExpr

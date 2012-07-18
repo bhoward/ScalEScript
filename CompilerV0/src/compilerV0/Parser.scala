@@ -14,36 +14,49 @@ object Parser extends RegexParsers with PackratParsers {
 	
 	/* Start of grammar rules (roughly following the order from the scala spec */
 	
-	lazy val op1: P[String] = "||" | "||"
-	lazy val op1R: P[String] = "||:" | "||:"
+	lazy val op1: Parser[String] = """\|[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|\|""".r
+	lazy val op1R: Parser[String] = """\|[!#%&*+\-/:<=>?@\\^|~]*:""".r
 	
-	lazy val op3: P[String] = "&&" | "&&"
-	lazy val op3R: P[String] = "&&:" | "&&:"
+	lazy val op2: Parser[String] = """\^[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|\^""".r
+	lazy val op2R: Parser[String] = """\^[!#%&*+\-/:<=>?@\\^|~]*:""".r
 	
-	lazy val op4: P[String] = "==" | "!="
-	lazy val op4R: P[String] = "==:" | "!=:"
+	lazy val op3: Parser[String] = """&[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|&""".r
+	lazy val op3R: Parser[String] = """&[!#%&*+\-/:<=>?@\\^|~]*:""".r
 	
-	lazy val op5: P[String] = ">=" | "<=" | ">" | "<"
-	lazy val op5R: P[String] = ">=:" | "<=:" | ">:" | "<:"
+	lazy val op4: Parser[String] = """=[!#%&*+\-/:<=>?@\\^|~]+>|=[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<=?@\\^|~]|![!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|!=|!""".r
+	lazy val op4R: Parser[String] = """[=!][!#%&*+\-/:<=>?@\\^|~]*:""".r
 	
-	lazy val op7: P[String] = "+" | "-"
-	lazy val op7R: P[String] = "+:" | "-:"
+	lazy val op5: Parser[String] = """<[!#%&*+\-/:<=>?@\\^|~]+[%\-]|<[!#%&*+\-/:<=>?@\\^|~]*[!#&*+/<>?@\\^|~]|>[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|<=|>=|<|>""".r
+	lazy val op5R: Parser[String] = """[<>][!#%&*+\-/:<=>?@\\^|~]+:""".r
+	
+	lazy val op6: Parser[String] = """:[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]""".r
+	lazy val op6R: Parser[String] = """:[!#%&*+\-/:<=>?@\\^|~]*:""".r
+	
+	lazy val op7: Parser[String] = """[+\-][!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|\+|-""".r
+	lazy val op7R: Parser[String] = """[+\-][!#%&*+\-/:<=>?@\\^|~]*:""".r
   
-	lazy val op8: P[String] = "*" | "/" | "%"
-	lazy val op8R: P[String] = "*:" | "/:" | "%:"
+	lazy val op8: Parser[String] = """[*\/%][!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|\*|/|%""".r
+	lazy val op8R: Parser[String] = """[*\/%][!#%&*+\-/:<=>?@\\^|~]*:""".r
 	
-	def varid: Parser[String] = ("""[a-z][A-Za-z0-9]*""").r
+	lazy val op9: Parser[String] = """[#?@\\~][!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/<>?@\\^|~]|\?|\\|~""".r
+	lazy val op9R: Parser[String] = """[#?@\\~][!#%&*+\-/:<=>?@\\^|~]*:""".r
+	
+	// TODO need to remember to turn a op= b into a = a op b
+	lazy val assignop: Parser[String] = """[#%&*+\-/:?@\\^|~][!#%&*+\-/:<=>?@\\^|~]*=|[!<>][!#%&*+\-/:<=>?@\\^|~]+=|=""".r
+	
+	def varid: Parser[String] = ("""[a-z][A-Za-z0-9$_]*""").r
 	
 	//This differs a bit from the scala grammar. I combined upper and idrest to make upperid
 	lazy val plainid: P[String] =
     ( upperid
     | varid
-    // op
+    // op // TODO
     )
-    //Doesn't handle the _ op at this moment
-    def upperid: Parser[String] = ("""[A-Z][A-Za-z0-9]*""").r
+    //Doesn't handle the _ op at this moment // TODO
+    
+    def upperid: Parser[String] = """[A-Z$][A-Za-z0-9$_]*|_[A-Za-z0-9$_]+""".r
 	
-	lazy val id: P[String] =
+	lazy val id: Parser[String] =
     ( plainid    
     )
     
@@ -57,10 +70,13 @@ object Parser extends RegexParsers with PackratParsers {
     	"""(true|false)""".r
 	
     def characterLiteral: Parser[String] =
-    	("\'" + """([^"\p{Cntrl}\\]|\\[\\"bfnrt])""" + "\'").r	
+    	("\'" + """([^\p{Cntrl}\\]|\\[\\"'bfnrt])""" + "\'").r
     	
     def stringLiteral: Parser[String] =
-    	("\"" + """([^"\p{Cntrl}\\]|\\[\\"bfnrt])*""" + "\"").r	
+    	("\"" + """([^"\p{Cntrl}\\]|\\[\\"'bfnrt])*""" + "\"").r
+    
+    def multilineStringLiteral: Parser[String] =
+        ("\"\"\"" + """("?"?[^"])*"*""" + "\"\"\"").r
     	
 	lazy val literal: P[Expr] =
 	( "-" ~ floatingPointLiteral ^^
@@ -74,7 +90,9 @@ object Parser extends RegexParsers with PackratParsers {
 	| booleanLiteral ^^
 	    {case boolLit => BoolExpr(boolLit.toBoolean)}
 	| characterLiteral ^^
-		{case _ => null}
+		{case charLit => CharExpr(deQuotify(charLit).charAt(0))}
+	| multilineStringLiteral ^^
+	    {case strLit => StringExpr(deTriquotify(strLit))}
 	| stringLiteral ^^
 		{case strLit => StringExpr(deQuotify(strLit))}
 	| "null" ^^
@@ -250,7 +268,33 @@ object Parser extends RegexParsers with PackratParsers {
 	)
 	
 	lazy val iE2: P[Expr] =
-	( iE3
+	( iE3 ~ iE2Rest ^^
+	    {case base ~ rest => 
+	      	if (rest.size == 0) {
+	      		base;
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
+	      	} else {
+	      		buildRight(base, rest)
+	      	}
+	    }
+	)
+	lazy val iE2Rest: P[List[OpPair]] = 
+	( op2R ~ iE3 ~ iE2R ^^
+	    {case op ~ left ~ right => RightOpPair(op, left) :: right}
+	| op2 ~ iE3 ~ iE2L ^^
+		{case op ~ left ~ right => LeftOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[OpPair]()}
+	)
+	lazy val iE2R: P[List[RightOpPair]] =
+	( op2R ~ iE3 ~ iE2R ^^
+	    {case op ~ left ~ right => RightOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[RightOpPair]()}
+	)
+	lazy val iE2L: P[List[LeftOpPair]] =
+	( op2 ~ iE3 ~ iE2L ^^
+	    {case op ~ left ~ right => LeftOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[LeftOpPair]()}
 	)
 	
 	lazy val iE3: P[Expr] =
@@ -344,7 +388,33 @@ object Parser extends RegexParsers with PackratParsers {
 	)
 	
 	lazy val iE6: P[Expr] =
-	( iE7
+	( iE7 ~ iE6Rest ^^
+	    {case base ~ rest => 
+	      	if (rest.size == 0) {
+	      		base;
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
+	      	} else {
+	      		buildRight(base, rest)
+	      	}
+	    }
+	)
+	lazy val iE6Rest: P[List[OpPair]] = 
+	( op6R ~ iE7 ~ iE6R ^^
+	    {case op ~ left ~ right => RightOpPair(op, left) :: right}
+	| op6 ~ iE7 ~ iE6L ^^
+		{case op ~ left ~ right => LeftOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[OpPair]()}
+	)
+	lazy val iE6R: P[List[RightOpPair]] =
+	( op6R ~ iE7 ~ iE6R ^^
+	    {case op ~ left ~ right => RightOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[RightOpPair]()}
+	)
+	lazy val iE6L: P[List[LeftOpPair]] =
+	( op6 ~ iE7 ~ iE6L ^^
+	    {case op ~ left ~ right => LeftOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[LeftOpPair]()}
 	)
 	
 	lazy val iE7: P[Expr] =
@@ -408,7 +478,33 @@ object Parser extends RegexParsers with PackratParsers {
 	)
 	
 	lazy val iE9: P[Expr] =
-	( prefixExpr
+	( prefixExpr ~ iE9Rest ^^
+	    {case base ~ rest => 
+	      	if (rest.size == 0) {
+	      		base;
+	      	} else if (rest.head.isLeft()) {
+	      		buildLeft(base, rest)
+	      	} else {
+	      		buildRight(base, rest)
+	      	}
+	    }
+	)
+	lazy val iE9Rest: P[List[OpPair]] = 
+	( op9R ~ prefixExpr ~ iE9R ^^
+	    {case op ~ left ~ right => RightOpPair(op, left) :: right}
+	| op9 ~ prefixExpr ~ iE9L ^^
+		{case op ~ left ~ right => LeftOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[OpPair]()}
+	)
+	lazy val iE9R: P[List[RightOpPair]] =
+	( op9R ~ prefixExpr ~ iE9R ^^
+	    {case op ~ left ~ right => RightOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[RightOpPair]()}
+	)
+	lazy val iE9L: P[List[LeftOpPair]] =
+	( op9 ~ prefixExpr ~ iE9L ^^
+	    {case op ~ left ~ right => LeftOpPair(op, left) :: right}
+	| "" ^^ {case _ => List[LeftOpPair]()}
 	)
 	//End of infix expression precedence groups
 	
@@ -925,44 +1021,30 @@ object Parser extends RegexParsers with PackratParsers {
 	    case ns: NoSuccess => throw new Exception(ns.msg)
 	}
 	
-	/* What follows is as-of-yet unused code left over from simpleParser */
-	def ident: Parser[String] =
-		"""[a-zA-Z_]\w*""".r
-		
+	// Expects first and last characters to be either " or '
 	def deQuotify(s: String) : String = {
-	    // Strip off the first and last character (") or (')
-	    if (s.length > 1)
-	    	return s.substring(1, s.length()-1);
-	    return ""
-	}
-    
-    /**
-     * Remove surrounding quotes, and replace escaped characters in a string literal.
-     * Does no error checking.
-     * TODO support octal and hex character codes
-     * 
-     * @param s
-     */
-    def unquote(s: String): String = {
 	    val buf = new StringBuilder
-	    var i = 1
+	    var i = 1 // Skip first character
 	    while (i < s.length - 1) {
 	    	s.charAt(i) match {
 	    		case '\\' => s.charAt(i+1) match {
-	    			case '\\' => buf.append('\\'); i += 1
-	    			case '"' => buf.append('"'); i += 1
 	    			case 'b' => buf.append('\b'); i += 1
 	    			case 'f' => buf.append('\f'); i += 1
 	    			case 'n' => buf.append('\n'); i += 1
 	    			case 'r' => buf.append('\r'); i += 1
 	    			case 't' => buf.append('\t'); i += 1
-	    			case c => buf.append(c); i += 1
+	    			case c => buf.append(c); i += 1 // Includes \ " and ', plus any other
 	    		}
         
 	    		case c => buf.append(c)
     		}
 	    	i += 1
 	    }
-    buf.toString
-    }
+	    buf.toString
+	}
+	
+	// Expects first and last _three_ characters to be "
+	def deTriquotify(s: String) : String = {
+	    s.substring(3, s.length - 3)
+	}
 }

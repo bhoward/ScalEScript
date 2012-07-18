@@ -27,7 +27,8 @@ object CodeGenerator {
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
     	case BlockExpr(listofstatements) => "(function() { \n" + blockProcess(listofstatements) + " })()"
-    	case StringExpr(value) => "\"" + value + "\""
+    	case StringExpr(value) => "\"" + (value.map(escapify).mkString) + "\""
+    	case CharExpr(value) => "\"" + escapify(value) + "\""
     	case FunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
@@ -39,6 +40,17 @@ object CodeGenerator {
     	case _ => throw new Exception("No match found for pattern")
 	}
 	def thunkify(code: String): String = "(function() {\n return " + code + "})"
+	
+	def escapify(ch: Char): String = ch match {
+	    case '\b' => "\\b"
+	    case '\f' => "\\f"
+	    case '\n' => "\\n"
+	    case '\r' => "\\r"
+	    case '\t' => "\\t"
+	    case '"' => "\\\""
+	    case '\\' => "\\\\"
+	    case _ => ch.toString
+	}
 	
 	def commaSeparatedProcess(lost : List[Stmt]):String = lost match {
 	  	case List() => ""

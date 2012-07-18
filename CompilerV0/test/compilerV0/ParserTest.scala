@@ -11,6 +11,11 @@ object ParserTest {
   def run() {
     println("Parser Tests")
     
+    // Literals
+    checkParse("'''", CharExpr('''))
+    checkParse("1+-*&^%#@!2", BinOpExpr("+-*&^%#@!", NumExpr(NInt(1)), NumExpr(NInt(2))))
+    checkParse("\"\"\"This\nis\na\nmultiline\nstring\"\"\"", StringExpr("This\nis\na\nmultiline\nstring"))
+    
     //Arithmetic expression
     checkParse("1", NumExpr(NInt(1)))
     checkParse("1   ", NumExpr(NInt(1)))
@@ -26,6 +31,42 @@ object ParserTest {
 	checkParse("1 + 4 + 3 + 5 + 6", BinOpExpr("+",BinOpExpr("+",BinOpExpr("+",BinOpExpr("+",NumExpr(NInt(1)),NumExpr(NInt(4))),NumExpr(NInt(3))),NumExpr(NInt(5))),NumExpr(NInt(6))))
     checkParse("1 + 3 * 5", BinOpExpr("+",NumExpr(NInt(1)),BinOpExpr("*",NumExpr(NInt(3)),NumExpr(NInt(5)))))
     checkParse("1 * 3 + 5", BinOpExpr("+",BinOpExpr("*",NumExpr(NInt(1)),NumExpr(NInt(3))),NumExpr(NInt(5))))
+    checkParse("a!b@:c%d#:e^f&:g*h-:i==j+:k\\l|:m<n?:o>p/:q~r",
+        BinOpExpr("|:",
+            BinOpExpr(">",
+                BinOpExpr("<",
+                    VarExpr("m"),
+                    BinOpExpr("?:",
+                        VarExpr("o"),
+                        VarExpr("n"))),
+                BinOpExpr("/:",
+                    BinOpExpr("~",
+                        VarExpr("q"),
+                        VarExpr("r")),
+                    VarExpr("p"))),
+            BinOpExpr("^",
+                BinOpExpr("!",
+                    VarExpr("a"),
+                    BinOpExpr("%",
+                        BinOpExpr("@:",
+                            VarExpr("c"),
+                            VarExpr("b")),
+                        BinOpExpr("#:",
+                            VarExpr("e"),
+                            VarExpr("d")))),
+                BinOpExpr("&:",
+                    BinOpExpr("==",
+                        BinOpExpr("-:",
+                            VarExpr("i"),
+                            BinOpExpr("*",
+                                VarExpr("g"),
+                                VarExpr("h"))),
+                        BinOpExpr("+:",
+                            BinOpExpr("\\",
+                                VarExpr("k"),
+                                VarExpr("l")),
+                            VarExpr("j"))),
+                    VarExpr("f")))))
 
     //If statement
     checkParse("if (true) 6", IfThenExpr(BoolExpr(true),NumExpr(NInt(6))))
