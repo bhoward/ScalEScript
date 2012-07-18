@@ -518,14 +518,6 @@ object TypeVerifier {
 		}
 	}
 	
-	def testCurry() : Unit = {
-		println(curryFunc(TypedBoolExpr(true, BaseType("Boolean")), 
-						  BaseType("Boolean"), 
-						  List(List(TypedParamDclStmt("x", BaseType("Int"), null)), 
-							   List(TypedParamDclStmt("y", BaseType("Char"), null)),
-							   List(TypedParamDclStmt("z", BaseType("Double"), null)))))
-	}
-	
 	def prettyPrint(l : List[String]) : String = {
 		l.tail.fold(l.head)((result, element) => result + ", " + element)
 	}
