@@ -5,7 +5,7 @@ sealed trait Stmt {
 	def isExpr() : Boolean = {false}
 }
 case class ValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeflag : String) extends Stmt
-case class FunDefStmt(name : String, params : List[List[ParamDclStmt]], retType : Type, body : Expr) extends Stmt
+case class FunDefStmt(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type, body : Expr) extends Stmt
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
 case class ClassDefStmt(caseFlag: Boolean,
                         className : String,
