@@ -1,0 +1,15 @@
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">FunExpr(VarExpr(println),List(BlockExpr(List(FunDefStmt(fact,List(ParamDclStmt(x,BaseType(Int))),BaseType(Int),IfThenElseExpr(BinOpExpr(==,VarExpr(x),NumExpr(NInt(0))),NumExpr(NInt(1)),BinOpExpr(*,VarExpr(x),FunExpr(VarExpr(fact),List(BinOpExpr(-,VarExpr(x),NumExpr(NInt(1)))))))), FunExpr(VarExpr(fact),List(NumExpr(NInt(5))))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">println((function() { 
+var fact = function ( x )
+ {return ifThenElse( (function() {
+ return (x === 0)}), (function() {
+ return 1}), (function() {
+ return (x * fact((x - 1)))}) ); 
+ }; 
+return fact(5) ; })())</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">println((function() { 
+var fact = function ( x )
+ {return ifThenElse( (function() {
+ return (x === 0)}), (function() {
+ return 1}), (function() {
+ return (x * fact((x - 1)))}) ); 
+ }; 
+return fact(5) ; })())</script></div></body>

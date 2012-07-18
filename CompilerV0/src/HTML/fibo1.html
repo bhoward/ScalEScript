@@ -1,0 +1,18 @@
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{ // Very slow...
+  def fibo(n: Int): Int = if (n < 2) n else fibo(n-1) + fibo(n-2);
+  println(fibo(35));
+}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(FunDefStmt(fibo,List(ParamDclStmt(n,BaseType(Int))),BaseType(Int),IfThenElseExpr(BinOpExpr(<,VarExpr(n),NumExpr(NInt(2))),VarExpr(n),BinOpExpr(+,FunExpr(VarExpr(fibo),List(BinOpExpr(-,VarExpr(n),NumExpr(NInt(1))))),FunExpr(VarExpr(fibo),List(BinOpExpr(-,VarExpr(n),NumExpr(NInt(2)))))))), FunExpr(VarExpr(println),List(FunExpr(VarExpr(fibo),List(NumExpr(NInt(35))))))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
+var fibo = function ( n )
+ {return ifThenElse( (function() {
+ return (n < 2)}), (function() {
+ return n}), (function() {
+ return (fibo((n - 1)) + fibo((n - 2)))}) ); 
+ }; 
+return println(fibo(35)) ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
+var fibo = function ( n )
+ {return ifThenElse( (function() {
+ return (n < 2)}), (function() {
+ return n}), (function() {
+ return (fibo((n - 1)) + fibo((n - 2)))}) ); 
+ }; 
+return println(fibo(35)) ; })()</script></div></body>

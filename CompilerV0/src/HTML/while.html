@@ -1,0 +1,17 @@
+<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">BlockExpr(List(VarDefStmt(List(n),BaseType(Int),NumExpr(NInt(0))), WhileExpr(BinOpExpr(<,VarExpr(n),NumExpr(NInt(10))),BlockExpr(List(AssignExpr(VarExpr(n),BinOpExpr(+,VarExpr(n),NumExpr(NInt(1)))), FunExpr(VarExpr(print),List(VarExpr(n)))))), FunExpr(VarExpr(println),List(StringExpr(Done)))))</div><h2>Javascript Source:</h2><div id="JSCode" class="code">(function() { 
+var n ; 
+ n = 0; 
+whileLoop( (function() {
+ return (n < 10)}), (function() {
+ return (function() { 
+(n = (n + 1)); 
+return print(n) ; })()}) ); 
+return println("Done") ; })()</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">(function() { 
+var n ; 
+ n = 0; 
+whileLoop( (function() {
+ return (n < 10)}), (function() {
+ return (function() { 
+(n = (n + 1)); 
+return print(n) ; })()}) ); 
+return println("Done") ; })()</script></div></body>
