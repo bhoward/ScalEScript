@@ -15,6 +15,7 @@ object TypeVerifier {
 		  	addType("Double", "AnyVal");
 		  	addType("Int", "AnyVal");
 		  	addType("Boolean", "AnyVal");
+		  	addType("Char", "AnyVal");
 		  	addType("Unit", "AnyVal");
 		  	addType("AnyRef", "Any");
 		  	addType("String", "AnyRef");
@@ -338,6 +339,9 @@ object TypeVerifier {
 	def verifyStringExpr(str : String, maps: List[Map[String, Type]]) : TypedStringExpr = {
 		return TypedStringExpr(str, BaseType("String"))
 	}
+	def verifyCharExpr(ch : Char, maps: List[Map[String, Type]]) : TypedCharExpr = {
+		return TypedCharExpr(ch, BaseType("Char"))
+	}
 	def verifyNumExpr(num: Numeric, maps: List[Map[String, Type]]) : TypedNumExpr = {
 		var retType : Type = null;
 		num match {
@@ -390,6 +394,7 @@ object TypeVerifier {
 	  	case VarExpr(varName) => verifyVarExpr(varName, maps)
     	case FunExpr(id, args) => verifyFunExpr(id, args, maps)
     	case StringExpr(value) => verifyStringExpr(value, maps)
+    	case CharExpr(value) => verifyCharExpr(value, maps)
     	case NumExpr(value) => verifyNumExpr(value, maps)
     	case BoolExpr(value) => verifyBoolExpr(value, maps)
     	case AnonFuncExpr(args, body) => verifyAnonFuncExpr(args, body, maps)

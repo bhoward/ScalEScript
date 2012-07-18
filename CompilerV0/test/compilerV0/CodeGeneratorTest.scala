@@ -50,6 +50,8 @@ object CodeGeneratorTest {
     checkCode(""""hey"""", """"hey"""")
     checkCode("print(5)", """print(5)""")
     checkCode("""println("hello world")""", """println("hello world")""")
+    
+    checkCode("println(\"\"\"This\nis\na\nmultiline\nstring\n\"\"\")", "println(\"This\\nis\\na\\nmultiline\\nstring\\n\")")
 
     // TODO: these throw an exception
     // checkCode("{var t : Int = 5;}", "")
