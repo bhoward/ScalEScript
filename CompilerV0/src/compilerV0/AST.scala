@@ -73,7 +73,7 @@ case class NDouble(Num : Double) extends Numeric
 
 case class DefWrapper(ids : List[String], varType: Type, value : Expr)
 case class FunWrapper(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type,  body : Expr)
-case class ClassInstance(id: String, argClauses: List[List[Expr]])
+case class ClassInstance(id: Type, argClauses: List[List[Expr]])
 
 sealed trait OpPair {
 	def isLeft() : Boolean;
@@ -108,4 +108,10 @@ case class FuncType(retType : Type, argTypes : List[Type]) extends Type {
 	def getType() : String = "";
 	def getRetType() : Type = retType;
 	def getArgTypes() : List[Type] = argTypes;
+}
+case class ObjType(varType: String) extends Type{
+    def isFunc() : Boolean = false;
+	def getType() : String = varType;
+	def getArgTypes() : List[Type] = Nil;
+	def getRetType() : Type = null;
 }

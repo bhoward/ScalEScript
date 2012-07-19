@@ -5,6 +5,9 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
+	    println(Parser("class Foo(x:Int, y:Int) {5; 6}"))
+	    println(Parser("class Foo(x:Int, y:int) extends Bar"))
+	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -40,6 +43,7 @@ object Main {
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
 	        "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
 	    testCompiler("Curry", """println({def sum(x:Int)(y:Int)(z:Int) : Int = x+y+z; sum(2)(3)(4)})""")
+	    */
 
 	}
   

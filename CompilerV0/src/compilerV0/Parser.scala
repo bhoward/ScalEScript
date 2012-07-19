@@ -692,7 +692,7 @@ object Parser extends RegexParsers with PackratParsers {
     ("{" ~ selfType ~ templateStats ~ "}" ^^
       { case _ => null }
       | "{" ~ templateStats ~ "}" ^^
-      { case _ => null }
+      { case _ ~ stmts ~ _ => stmts }
     )
 
   lazy val templateStats : P[List[Stmt]] = 
@@ -789,8 +789,8 @@ object Parser extends RegexParsers with PackratParsers {
     ("case" ~ "class" ~ classDef ^^
       { case _ => null }
       | "class" ~ classDef ^^
-      { case _ ~ classDef
-             => ClassDefStmt(false, classDef._1, Nil, null, Nil, classDef._3) }
+      { case _ ~ Tuple3(name, args, Tuple2(whatExtends, body))
+             => ClassDefStmt(false, name, args, whatExtends, Nil, body ) }
       | "case" ~ "object" ~ objectDef ^^
       { case _ => null }
       | "object" ~ objectDef ^^
@@ -798,10 +798,10 @@ object Parser extends RegexParsers with PackratParsers {
       | "trait" ~ traitDef ^^
       { case _ => null })
 
-  lazy val classDef: P[(String, List[List[ParamDclStmt]], List[Stmt])] =
+  lazy val classDef: P[(String, List[List[ParamDclStmt]], (ClassInstance, List[Stmt]))] =
     //Pass back everything but the caseFlag
     (id ~ paramClauses ~ classTemplateOpt ^^
-      { case name ~ paramClauses ~ stms  => (name, paramClauses, stms) })
+      { case name ~ params ~ stms  => (name, params, stms) })
 
   lazy val traitDef: P[Expr] =
     (id ~ traitTemplateOpt ^^
@@ -811,11 +811,11 @@ object Parser extends RegexParsers with PackratParsers {
     (id ~ classTemplateOpt ^^
       { case _ => null })
 
-  lazy val classTemplateOpt: P[List[Stmt]] =
+  lazy val classTemplateOpt: P[(ClassInstance, List[Stmt])] =
     ("extends" ~ classTemplate ^^
-      { case _ => null }
+      { case _ ~ template => template  }
       | templateBody ^^
-      { case stmts => stmts })
+      { case stmts => (ClassInstance(BaseType("AnyRef"), Nil), stmts) })
 
   lazy val traitTemplateOpt: P[Expr] =
     ("extends" ~ traitTemplate ^^
@@ -823,11 +823,11 @@ object Parser extends RegexParsers with PackratParsers {
       | templateBody ^^
       { case _ => null })
 
-  lazy val classTemplate: P[Expr] =
+  lazy val classTemplate: P[(ClassInstance, List[Expr])] =
     (classParents ~ templateBody ^^
       { case _ => null }
       | classParents ^^
-      { case _ => null })
+      { case classParents => (classParents, Nil) })
 
   lazy val traitTemplate: P[Expr] =
     (traitParents ~ templateBody ^^
@@ -835,11 +835,12 @@ object Parser extends RegexParsers with PackratParsers {
       | traitParents ^^
       { case _ => null })
 
-  lazy val classParents: P[Expr] =
+  lazy val classParents: P[ClassInstance] =
     (constr ~ classParentsH ^^
       { case _ => null }
       | constr ^^
-      { case _ => null })
+      { case (name, args) => ClassInstance(name, args) })
+  
   lazy val classParentsH: P[List[Expr]] =
     ("with" ~ simpleType ~ classParentsH ^^
       { case _ => null }
@@ -857,11 +858,11 @@ object Parser extends RegexParsers with PackratParsers {
       | "with" ~ simpleType ^^
       { case _ => null })
 
-  lazy val constr: P[Expr] =
+  lazy val constr: P[(Type, List[List[Expr]])] =
     (simpleType ~ rep1(argumentExprs) ^^
       { case _ => null }
       | simpleType ^^
-      { case _ => null })
+      { case simpleType => (simpleType, Nil) })
 
   lazy val topStatSeq: P[Expr] =
     (topStat ~ topStatSeqH ^^
