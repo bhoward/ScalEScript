@@ -30,12 +30,12 @@ object CodeGenerator {
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
     	
-    	case TypedFunDefStmt(name, args, retType, body, valtype) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
+    	case TypedFunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
-    	case TypedParamDclStmt(id, vartype, rettype) => id
-    	case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag, rettype) => "var " + varProcess(listofvaldecs, expr) + 
+    	case TypedParamDclStmt(id, vartype) => id
+    	case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => "var " + varProcess(listofvaldecs, expr) + 
                                                          " " + varProcessAux(listofvaldecs, expr)
         case _ => throw new Exception("No match found for pattern")
     

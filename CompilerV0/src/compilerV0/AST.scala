@@ -35,36 +35,36 @@ case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 //Typed AST
 sealed trait TypedStmt {
 	def isExpr() : Boolean = {false}
-	def evalType() : Type;
+	def evalType() : Type = null;
 }
-case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, valTypeflag : String, evalType : Type) extends TypedStmt
-case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr, evalType : Type) extends TypedStmt
-case class TypedParamDclStmt(id : String, varType: Type, evalType : Type) extends TypedStmt
+case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, valTypeflag : String) extends TypedStmt
+case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr) extends TypedStmt
+case class TypedParamDclStmt(id : String, varType: Type) extends TypedStmt
 case class TypedClassDefStmt(caseFlag: Boolean,
                         className : String,
                         paramClauses: List[List[ParamDclStmt]],
                         extendClass: ClassInstance,
                         withIds: List[String],
-                        body: List[Stmt],
-                        evalType : Type) extends TypedStmt
+                        body: List[Stmt]) extends TypedStmt
                         
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}
+	override def evalType() : Type;
 }
-case class TypedBoolExpr(bool : Boolean, evalType : Type) extends TypedExpr
-case class TypedNumExpr(num: Numeric, evalType : Type) extends TypedExpr
-case class TypedStringExpr(str : String, evalType : Type) extends TypedExpr
-case class TypedCharExpr(ch : Char, evalType : Type) extends TypedExpr
-case class TypedVarExpr(id: String, evalType : Type) extends TypedExpr
-case class TypedFunExpr(id: TypedExpr, args : List[TypedExpr], evalType : Type) extends TypedExpr
-case class TypedBlockExpr(body: List[TypedStmt], evalType : Type) extends TypedExpr
-case class TypedBinOpExpr(op: String, left: TypedExpr, right: TypedExpr, evalType : Type) extends TypedExpr
-case class TypedUnOpExpr(op: String, expr: TypedExpr, evalType : Type) extends TypedExpr
-case class TypedIfThenExpr(test: TypedExpr, trueClause: TypedExpr, evalType : Type) extends TypedExpr
-case class TypedIfThenElseExpr(test: TypedExpr, trueClause: TypedExpr, falseClause: TypedExpr, evalType : Type) extends TypedExpr
-case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, evalType : Type) extends TypedExpr
-case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, evalType : Type) extends TypedExpr
-case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, evalType: Type) extends TypedExpr
+case class TypedBoolExpr(bool : Boolean, override val evalType : Type) extends TypedExpr
+case class TypedNumExpr(num: Numeric, override val evalType : Type) extends TypedExpr
+case class TypedStringExpr(str : String, override val evalType : Type) extends TypedExpr
+case class TypedCharExpr(ch : Char, override val evalType : Type) extends TypedExpr
+case class TypedVarExpr(id: String, override val evalType : Type) extends TypedExpr
+case class TypedFunExpr(id: TypedExpr, args : List[TypedExpr], override val evalType : Type) extends TypedExpr
+case class TypedBlockExpr(body: List[TypedStmt], override val evalType : Type) extends TypedExpr
+case class TypedBinOpExpr(op: String, left: TypedExpr, right: TypedExpr, override val evalType : Type) extends TypedExpr
+case class TypedUnOpExpr(op: String, expr: TypedExpr, override val evalType : Type) extends TypedExpr
+case class TypedIfThenExpr(test: TypedExpr, trueClause: TypedExpr, override val evalType : Type) extends TypedExpr
+case class TypedIfThenElseExpr(test: TypedExpr, trueClause: TypedExpr, falseClause: TypedExpr, override val evalType : Type) extends TypedExpr
+case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, override val evalType : Type) extends TypedExpr
+case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, override val evalType : Type) extends TypedExpr
+case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr
 
 //Classes used for compiling
 sealed trait Numeric

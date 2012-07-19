@@ -9,7 +9,7 @@ object Main {
 	    println(Parser("class Foo(x:Int, y:int) extends Bar"))
 	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
-	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
+	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
 	    testCompiler("ifThen", """{println(if (true) 6); println(if (false) 6)}""");
 	    testCompiler("ifThenElseComp", """println(if (5 >= 6) 5 else 6)""");
@@ -37,7 +37,7 @@ object Main {
 	          |}""".stripMargin
 	        );
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
-	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}""");
+	    testCompiler("while2", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}"""); // TODO this should work as well
 	    testCompiler("strings",
 	        "{println(\"\"\"Hello\n" +
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
@@ -55,9 +55,21 @@ object Main {
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), typedAst.toString(), jsSource));
 			println(testName+".html was successfully created.");
 		} catch {
-			case e: Exception => {println("Error while compiling "+testName+". "+e);}
+			case e: Exception => {System.err.println("Error while compiling "+testName+". "+e);}
 		}
     }
+	
+	def testCompilerThrows(scalaSource: String, expect: String) {
+	  try {
+	    CodeGenerator(TypeVerifier(Parser(scalaSource)))
+	    System.err.println("Expected exception \"" + expect + "\" not thrown")
+	  } catch {
+        case e: Exception =>
+          if (e.getMessage != expect) {
+            System.err.println("Exception:\n" + e + "\ndoes not match \"" + expect + "\"")
+          }
+      }
+	}
   
 	def writeToFile(fileName : String, contents : String){
 		val fw = new FileWriter(fileName); 

@@ -7,30 +7,28 @@ object TypeVerifier {
 	var scalaTypes : Map[String, List[String]] = Map[String, List[String]]()
 	var scalaViews : Map[String, List[String]] = Map[String, List[String]]()
 	var verifyStack : List[Stmt] = Nil;
-	
-	def initScalaTypes(): Unit = {
-		//Only init if they don't already exist
-		if(scalaTypes.isEmpty){
-		  	addType("Any", "");
-		  	addType("AnyVal", "Any");
-		  	addType("Double", "AnyVal");
-		  	addType("Int", "AnyVal");
-		  	addType("Boolean", "AnyVal");
-		  	addType("Char", "AnyVal");
-		  	addType("Unit", "AnyVal");
-		  	addType("AnyRef", "Any");
-		  	addType("String", "AnyRef");
-		  	addType("Function", "AnyRef");
-		  	
-		  	addView("Double", "");
-			addView("Float", "Double");
-			addView("Long", "Float");
-			addView("Int", "Long");
-			addView("Char", "Int");
-			addView("Short", "Int");
-			addView("Byte", "Short");
-		}
-	}
+
+    // Initialize the basic Scala types when this object is constructed
+    if (scalaTypes.isEmpty) {
+      addType("Any", "");
+      addType("AnyVal", "Any");
+      addType("Double", "AnyVal");
+      addType("Int", "AnyVal");
+      addType("Boolean", "AnyVal");
+      addType("Char", "AnyVal");
+      addType("Unit", "AnyVal");
+      addType("AnyRef", "Any");
+      addType("String", "AnyRef");
+      addType("Function", "AnyRef");
+
+      addView("Double", "");
+      addView("Float", "Double");
+      addView("Long", "Float");
+      addView("Int", "Long");
+      addView("Char", "Int");
+      addView("Short", "Int");
+      addView("Byte", "Short");
+    }
 	
 	def addView(name : String, convertType : String) : Unit = {
 		if (!scalaViews.contains(name)) {
@@ -201,14 +199,14 @@ object TypeVerifier {
 			  			var restParamClause = typedParamClauses.tail
 			  			var newBody = curryFunc(typedBody, retType, restParamClause.reverse)
 			  			var newType = FuncType(newBody.evalType(), paramClause.map(param => param.varType))
-			  			typedStmt = TypedFunDefStmt(name, paramClause, newType, newBody, null)
+			  			typedStmt = TypedFunDefStmt(name, paramClause, newType, newBody)
 			  		} else if (typedParamClauses.length == 1) {
 			  			//Normal old function
 			  			var paramClause = typedParamClauses.head;
-			  			typedStmt = TypedFunDefStmt(name, paramClause, retType, typedBody, null)
+			  			typedStmt = TypedFunDefStmt(name, paramClause, retType, typedBody)
 			  		} else {
 			  			//No paramClauses
-			  			typedStmt = TypedFunDefStmt(name, Nil, retType, typedBody, null)
+			  			typedStmt = TypedFunDefStmt(name, Nil, retType, typedBody)
 			  		}
 			  		
 			  		result = typedStmt :: result
@@ -234,11 +232,11 @@ object TypeVerifier {
   		} else {
   			throw new Exception("Type "+exprTyped.evalType()+" does not match the required type "+valType+" for vals "+prettyPrint(ids)+".")
   		}
-  		return TypedValDefStmt(ids, valType, exprTyped, valTypeFlag, null);
+  		return TypedValDefStmt(ids, valType, exprTyped, valTypeFlag);
 	}
 	def verifyParamDclStmt(id : String, varType: Type, maps : List[Map[String, Type]]) : TypedParamDclStmt = {
 		putAllVars(maps.head, List(id), varType)
-		return TypedParamDclStmt(id, varType, null);
+		return TypedParamDclStmt(id, varType);
 	}
 	def verifyFunDefStmt(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type, body : Expr, maps : List[Map[String, Type]]) : TypedFunDefStmt = {
 		if (paramClauses.length > 0) {
@@ -560,7 +558,6 @@ object TypeVerifier {
 	}
 	
 	def apply(source: Stmt): TypedStmt = {
-		initScalaTypes;
 		verifyStmt(source, initSymbolTable()::Nil)
 	}
 }
