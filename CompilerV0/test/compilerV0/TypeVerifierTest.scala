@@ -1,22 +1,73 @@
 package compilerV0
 
-object TypeVerifierTest {
+object TypeVerifierTest extends Test {
+  def checkSrcType(src: String, expect: TypedStmt) {
+    try {
+      val actual = TypeVerifier(Parser(src))
+      if (actual != expect) {
+        System.err.println("Checking type of " + src + "\nExpected: " + expect + "\n  Actual: " + actual);
+      }
+    } catch {
+      case e: Exception => System.err.println("Error while type verifying " + src + ".\n" + e + "\n")
+    }
+  }
+  
+  def checkSrcTypeThrows(src: String, expect: String) {
+    shouldThrow(expect) {
+      TypeVerifier(Parser(src))
+    }
+  }
+  
+  def checkSubType(first: Type, second: Type, expect: Boolean) {
+    try {
+      val actual = TypeVerifier.checkType(first, second)
+      if (actual != expect) {
+        System.err.println("Checking subtype " + first + " of " + second + "\nExpected: " + expect + "\n  Actual: " + actual);
+      }
+    } catch {
+      case e: Exception => System.err.println("Error while type comparing " + first + " with " + second + ".\n" + e + "\n")
+    }
+  }
+  
+  def checkJoinType(first: Type, second: Type, expect: Type) {
+    try {
+      val actual = TypeVerifier.firstCommonSuperType(first, second)
+      if (actual != expect) {
+        System.err.println("Checking join type of " + first + " and " + second + "\nExpected: " + expect + "\n  Actual: " + actual);
+      }
+    } catch {
+      case e: Exception => System.err.println("Error while type joining " + first + " with " + second + ".\n" + e + "\n")
+    }
+  }
+
   def run() {
     println("Type Verifier Tests")
+
+    checkSrcTypeThrows("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; val t1 : Int = 7; println(t1)}; t0 + t1;})""",
+        "The variable t1 is already defined in the current scope.");
+	checkSrcTypeThrows("""{var x, y, z : Int = if (true) 5.0 else 6.0;}""",
+	    "Type BaseType(Double) does not match the required type BaseType(Int) for vals x, y, z.");
+	checkSrcType("""{var f : Int = 5; def bar (x : Any, y : Int, s : String): AnyVal = f; bar("", 5, "");}""",
+	    TypedBlockExpr(List(TypedValDefStmt(List("f"),BaseType("Int"),TypedNumExpr(NInt(5),BaseType("Int")),"var",null),
+	                        TypedFunDefStmt("bar",
+	                                        List(TypedParamDclStmt("x",BaseType("Any"),null),
+	                                             TypedParamDclStmt("y",BaseType("Int"),null),
+	                                             TypedParamDclStmt("s",BaseType("String"),null)),BaseType("AnyVal"),
+	                                        TypedVarExpr("f",BaseType("Int")),null),
+	                        TypedFunExpr(TypedVarExpr("bar",FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String")))),
+	                                     List(TypedStringExpr("",BaseType("String")),
+	                                          TypedNumExpr(NInt(5),BaseType("Int")),
+	                                          TypedStringExpr("",BaseType("String"))),
+	                                     BaseType("AnyVal"))),
+	                   BaseType("AnyVal")));
     
-    // TODO turn these into actual tests...
-    /*
-        println(TypeVerifier(Parser("""println({val t0, t1 : Double = 5.5; {val t1 : Int = 6; val t1 : Int = 7; println(t1)}; t0 + t1;})""")));
-	    println(TypeVerifier(Parser("""{var x, y, z : Int = if (true) 5.0 else 6.0;}""")));
-	    println(TypeVerifier(Parser("""{var f : Int = 5; def bar (x : Any, y : Int, s : String): AnyVal = f; bar("", 5, "");}""")));
-	    
-	    TypeVerifier.initScalaTypes();
-	    println("Should be true: "+TypeVerifier.checkType(new FuncType(new BaseType("Int"), List(new BaseType("Int"))), new FuncType(new BaseType("Int"), List(new BaseType("Int")))));
-	    println("Should be false: "+TypeVerifier.checkType(new FuncType(new BaseType("Int"), List(new BaseType("Boolean"))), new FuncType(new BaseType("Int"), List(new BaseType("Int")))));
-	    println("Should be false: "+TypeVerifier.checkType(new FuncType(new BaseType("Any"), List(new BaseType("Any"))), new FuncType(new BaseType("AnyVal"), List(new BaseType("AnyVal")))));
-	    println("Should be true: "+TypeVerifier.checkType(new FuncType(new BaseType("Int"), List(new BaseType("Any"))), new FuncType(new BaseType("AnyVal"), List(new BaseType("AnyVal")))));
-	    println(TypeVerifier.firstCommonSuperType(new FuncType(new BaseType("Int"), List(new BaseType("Any"))), new FuncType(new BaseType("AnyVal"), List(new BaseType("Any")))));
-	    println(TypeVerifier.firstCommonSuperType(new FuncType(new BaseType("Int"), List(new BaseType("Any"))), new BaseType("String")));
-	*/
+    checkSubType(FuncType(BaseType("Int"), List(BaseType("Int"))), FuncType(BaseType("Int"), List(BaseType("Int"))), true);
+	checkSubType(FuncType(BaseType("Int"), List(BaseType("Boolean"))), FuncType(BaseType("Int"), List(BaseType("Int"))), false);
+	checkSubType(FuncType(BaseType("Any"), List(BaseType("Any"))), FuncType(BaseType("AnyVal"), List(BaseType("AnyVal"))), false);
+	checkSubType(FuncType(BaseType("Int"), List(BaseType("Any"))), FuncType(BaseType("AnyVal"), List(BaseType("AnyVal"))), true);
+	
+    checkJoinType(FuncType(BaseType("Int"), List(BaseType("Any"))), FuncType(BaseType("AnyVal"), List(BaseType("Any"))),
+        FuncType(BaseType("AnyVal"),List(BaseType("Any"))));
+    checkJoinType(FuncType(BaseType("Int"), List(BaseType("Any"))), BaseType("String"), BaseType("AnyRef"));
   }
 }

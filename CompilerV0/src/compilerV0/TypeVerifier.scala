@@ -7,30 +7,28 @@ object TypeVerifier {
 	var scalaTypes : Map[String, List[String]] = Map[String, List[String]]()
 	var scalaViews : Map[String, List[String]] = Map[String, List[String]]()
 	var verifyStack : List[Stmt] = Nil;
-	
-	def initScalaTypes(): Unit = {
-		//Only init if they don't already exist
-		if(scalaTypes.isEmpty){
-		  	addType("Any", "");
-		  	addType("AnyVal", "Any");
-		  	addType("Double", "AnyVal");
-		  	addType("Int", "AnyVal");
-		  	addType("Boolean", "AnyVal");
-		  	addType("Char", "AnyVal");
-		  	addType("Unit", "AnyVal");
-		  	addType("AnyRef", "Any");
-		  	addType("String", "AnyRef");
-		  	addType("Function", "AnyRef");
-		  	
-		  	addView("Double", "");
-			addView("Float", "Double");
-			addView("Long", "Float");
-			addView("Int", "Long");
-			addView("Char", "Int");
-			addView("Short", "Int");
-			addView("Byte", "Short");
-		}
-	}
+
+    // Initialize the basic Scala types when this object is constructed
+    if (scalaTypes.isEmpty) {
+      addType("Any", "");
+      addType("AnyVal", "Any");
+      addType("Double", "AnyVal");
+      addType("Int", "AnyVal");
+      addType("Boolean", "AnyVal");
+      addType("Char", "AnyVal");
+      addType("Unit", "AnyVal");
+      addType("AnyRef", "Any");
+      addType("String", "AnyRef");
+      addType("Function", "AnyRef");
+
+      addView("Double", "");
+      addView("Float", "Double");
+      addView("Long", "Float");
+      addView("Int", "Long");
+      addView("Char", "Int");
+      addView("Short", "Int");
+      addView("Byte", "Short");
+    }
 	
 	def addView(name : String, convertType : String) : Unit = {
 		if (!scalaViews.contains(name)) {
@@ -560,7 +558,6 @@ object TypeVerifier {
 	}
 	
 	def apply(source: Stmt): TypedStmt = {
-		initScalaTypes;
 		verifyStmt(source, initSymbolTable()::Nil)
 	}
 }

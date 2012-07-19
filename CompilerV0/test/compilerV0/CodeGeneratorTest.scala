@@ -1,16 +1,26 @@
 package compilerV0
 
-object CodeGeneratorTest {
+object CodeGeneratorTest extends Test {
+  def checkCodeBase(src: String): (TypedStmt, String) = {
+    val ast = TypeVerifier(Parser(src))
+	(ast, CodeGenerator(ast))
+  }
+
   def checkCode(src: String, expect: String) {
     try {
-    	val ast = TypeVerifier(Parser(src))
-	    val code = CodeGenerator(ast)
-	    if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
-	    	System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
-	    }
+      val (ast, code) = checkCodeBase(src)
+	  if (expect.replaceAll("\r", "") != code.replaceAll("\r", "")) {
+	    System.err.println("Expected: " + expect + "\n  Actual: " + code + "\n  AST: " + ast);
+	  }
     } catch {
 		case e: Exception => {System.err.println("Error while code generating "+src+".\n"+e+"\n");}
 	}
+  }
+  
+  def checkCodeThrows(src: String, expect: String) {
+    shouldThrow(expect) {
+      checkCodeBase(src)
+    }
   }
   
   def run() {
@@ -57,11 +67,9 @@ object CodeGeneratorTest {
     
     checkCode("println(\"\"\"This\nis\na\nmultiline\nstring\n\"\"\")", "println(\"This\\nis\\na\\nmultiline\\nstring\\n\")")
 
-    // TODO: these throw an exception
-    // checkCode("{var t : Int = 5;}", "")
+    checkCodeThrows("{var t : Int = 5;}", "The last line in the block is a Stmt, expected an Expr")
+    checkCodeThrows("{val t0, t1 : Int = 5; }", "The last line in the block is a Stmt, expected an Expr")
 
-    // checkCode("{val t0, t1 : Int = 5; }", "")
-    // checkCode("{val t0, t1 : Int = 5;}", "")
     checkCode("{val t0, t1 : Int = 5; t0 + t1;}",
       """(function() { 
         |var t0 , t1 ; 
@@ -69,15 +77,9 @@ object CodeGeneratorTest {
         |return (t0 + t1) ; })()""".stripMargin
     )
 
-    checkCode("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}",
-      """(function() { 
-        |var foo = function ( x, y, z )
-        | {return (x + y); 
-        | }; 
-        |return foo(5) ; })()""".stripMargin
-    )
+    checkCodeThrows("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}", "Not enough arguements specified for function VarExpr(foo).")
 
-    // checkCode("{def bar (x : Int, y : Int, z : String): Unit = x + y;}", "")
+    checkCodeThrows("{def bar (x : Int, y : Int, z : String): Unit = x + y;}", "Body type BaseType(Int) does not match the required return type BaseType(Unit) for function bar.")
 
     checkCode("""{def bar (x : Int, y : Int, z : String): Int = x + y; println(bar(5, 6, ""));}""",
       """(function() { 
