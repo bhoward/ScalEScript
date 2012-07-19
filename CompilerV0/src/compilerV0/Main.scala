@@ -5,9 +5,6 @@ import java.io.FileWriter;
 
 object Main {
 	def main(args: Array[String]) {
-
-	    /*
-
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompiler("Blocks2", """println({{}; {var x : Int = 5; ; ; ;}})""");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -18,7 +15,6 @@ object Main {
 	    testCompiler("functions", """{def bar (x : Int, y : Int, z : String): Int = bar(5, 6, ""); println(5);}""");
 	    testCompiler("functions2", """{def bar (): Int = 5; println(bar());}""")
 	    testCompiler("recurfun1", """println({def fact(x: Int):Int = if (x == 0) 1 else x * fact(x-1);fact(5);})""");
-	    
 	    testCompiler("mutualRecur1", """{def even(n: Int):Boolean = if (n == 0) true else odd(n-1); def odd(n: Int):Boolean = if (n == 0) false else even(n-1); println(even(8)); println(even(51));}""");
 	    testCompiler("anonFunc", """println({var f : (Int)=>Int = (x:Int) => x+1; f(5)})""");
 	    testCompiler("fibo1",
@@ -37,18 +33,12 @@ object Main {
 	          |  println(fibo(35));
 	          |}""".stripMargin
 	        );
-
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
-	    */
-	    println(Parser ("class Foo() { 5 }"))
-	    
-	    /*
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}""");
 	    testCompiler("strings",
 	        "{println(\"\"\"Hello\n" +
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
 	        "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
-        */
 	    testCompiler("Curry", """println({def sum(x:Int)(y:Int)(z:Int) : Int = x+y+z; sum(2)(3)(4)})""")
 
 	}
