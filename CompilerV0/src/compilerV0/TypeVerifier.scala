@@ -5,8 +5,9 @@ import scala.collection.mutable.Map;
 object TypeVerifier {
 	//ScalaTypes maps a string which is a type name to the list of its parent types (including itself), starting from Any
 	var scalaTypes : Map[String, List[String]] = Map[String, List[String]]()
+	var scalaViews : Map[String, List[String]] = Map[String, List[String]]()
 	var verifyStack : List[Stmt] = Nil;
-  
+	
 	def initScalaTypes(): Unit = {
 		//Only init if they don't already exist
 		if(scalaTypes.isEmpty){
@@ -20,9 +21,32 @@ object TypeVerifier {
 		  	addType("AnyRef", "Any");
 		  	addType("String", "AnyRef");
 		  	addType("Function", "AnyRef");
+		  	
+		  	addView("Double", "");
+			addView("Float", "Double");
+			addView("Long", "Float");
+			addView("Int", "Long");
+			addView("Char", "Int");
+			addView("Short", "Int");
+			addView("Byte", "Short");
 		}
 	}
 	
+	def addView(name : String, convertType : String) : Unit = {
+		if (!scalaViews.contains(name)) {
+			if (convertType == "") {
+				scalaViews.put(name, Nil);
+			} else {
+				if (scalaViews.contains(convertType)){
+					scalaViews.put(name, convertType::scalaViews.get(convertType).get)
+				} else {
+					throw new Exception("The views for type "+convertType+" are not defined.");
+				}
+			}
+		} else {
+			throw new Exception("The views for "+name+" are already defined.");
+		}
+	}
 	def addType(name : String, superType : String) : Unit = {
 		if (!scalaTypes.contains(name)) {
 			if (superType == "") {
@@ -31,7 +55,7 @@ object TypeVerifier {
 				if (scalaTypes.contains(superType)){
 					scalaTypes.put(name, scalaTypes.get(superType).get++List(name))
 				} else {
-					throw new Exception("The super type "+name+" for type "+name+" is not defined.");
+					throw new Exception("The super type "+superType+" for type "+name+" is not defined.");
 				}
 			}
 		} else {
@@ -273,10 +297,20 @@ object TypeVerifier {
   		var typeL : Type = left.evalType();
   		var typeR : Type = right.evalType();
   		
+  		var retType : Type = null;
+		
   		if (typeL != typeR) {
-  			throw new Exception("Binary operator "+op+" cannot be applied to types "+typeL+" and "+typeR+".");
+  			if ((op == "+") && (typeL == BaseType("String") || typeR == BaseType("String"))) {
+				retType = BaseType("String")
+			} else if (!typeL.isFunc() && !typeR.isFunc()) {
+				//Check the views
+				if (scalaViews.contains(typeL.getType()) && scalaViews.get(typeL.getType()).get.contains(typeR.getType())) {
+					retType = typeR;
+				} else if (scalaViews.contains(typeR.getType()) && scalaViews.get(typeR.getType()).get.contains(typeL.getType())) {
+					retType = typeL;
+				}
+			}
   		} else {
-  			var retType : Type = null;
   			op match {
   			  	case ">=:" | "<=:" | ">:" | "<:" => retType = BaseType("Boolean")
   			  	case ">=" | "<=" | ">" | "<" => retType = BaseType("Boolean")
@@ -284,8 +318,11 @@ object TypeVerifier {
   			  	case "==" | "!=" => retType = BaseType("Boolean")
   			  	case _ => retType = typeL;
   			}
-  			return TypedBinOpExpr(op, left, right, retType);
   		}
+  		if (retType == null) {
+  			throw new Exception("Binary operator "+op+" cannot be applied to types "+typeL+" and "+typeR+".");
+  		}
+  		return TypedBinOpExpr(op, left, right, retType);
 	}
 	def verifyIfThenExpr(predicate: Expr, expr: Expr, maps : List[Map[String, Type]]) : TypedIfThenExpr = {
 		var predicateTyped = verifyExpr(predicate, maps)
