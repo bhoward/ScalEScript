@@ -90,7 +90,7 @@ object CodeGeneratorTest extends Test {
     )
 
     checkCode("""((x:Int) => (x+1))(5)""", "(function (x ) { return (x + 1) }) (5)")
-    checkCode("""{var f : Int=>Int = (x:Int) => (x+1); f(5)}""", // TODO replace "function" with an actual function type "Int => Int"
+    checkCode("""{var f : Int=>Int = (x:Int) => (x+1); f(5)}""",
       """(function() { 
         |var f ; 
         | f = (function (x ) { return (x + 1) }) ; 
