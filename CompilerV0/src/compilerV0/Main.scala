@@ -34,7 +34,7 @@ object Main {
 	          |}""".stripMargin
 	        );
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
-	    // testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}"""); // TODO this should work as well
+	    testCompiler("while2", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}"""); // TODO this should work as well
 	    testCompiler("strings",
 	        "{println(\"\"\"Hello\n" +
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
