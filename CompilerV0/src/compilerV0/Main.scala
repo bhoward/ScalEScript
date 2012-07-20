@@ -6,7 +6,7 @@ import java.io.FileWriter;
 object Main {
 	def main(args: Array[String]) {
 	    println(Parser("class Foo(x:Int, y:Int) {5; 6}"))
-	    println(Parser("class Foo(x:Int, y:int) extends Bar"))
+	    println(Parser("class Foo(x:Int, y:int) extends Bar(5) with Fee {5}"))
 	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");

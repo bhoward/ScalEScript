@@ -11,7 +11,7 @@ case class ClassDefStmt(caseFlag: Boolean,
                         className : String,
                         paramClauses: List[List[ParamDclStmt]],
                         extendClass: ClassInstance,
-                        withIds: List[String],
+                        withIds: List[Type],
                         body: List[Stmt]) extends Stmt
                         
 sealed trait Expr extends Stmt {
