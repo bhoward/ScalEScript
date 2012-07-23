@@ -9,7 +9,7 @@ case class FunDefStmt(name : String, paramClauses : List[List[ParamDclStmt]], re
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
 case class ClassDefStmt(caseFlag: Boolean,
                         className : String,
-                        paramClauses: List[List[ParamDclStmt]],
+                        paramClauses: List[ParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[Type],
                         body: List[Stmt]) extends Stmt
@@ -73,7 +73,7 @@ case class NDouble(Num : Double) extends Numeric
 
 case class DefWrapper(ids : List[String], varType: Type, value : Expr)
 case class FunWrapper(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type,  body : Expr)
-case class ClassInstance(id: Type, argClauses: List[List[Expr]])
+case class ClassInstance(id: Type, argClauses: List[Expr])
 
 sealed trait OpPair {
 	def isLeft() : Boolean;

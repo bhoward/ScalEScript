@@ -501,14 +501,15 @@ object Parser extends RegexParsers with PackratParsers {
       { case expr ~ _ ~ exprs => expr :: exprs }
       | expr ^^
       { case expr => List(expr) })
-
+      
+  //class body being parsed as blockExpr?
   lazy val argumentExprs: P[List[Expr]] =
     ("(" ~ exprs ~ ")" ^^
       { case _ ~ exprs ~ _ => exprs }
       | "(" ~ ")" ^^
       { case _ ~ _ => Nil }
       | blockExpr ^^
-      { case _ => null })
+      { case blockExpr => null})
 
   lazy val blockExpr: P[Expr] =
     ("{" ~ caseClauses ~ "}" ^^
@@ -798,10 +799,12 @@ object Parser extends RegexParsers with PackratParsers {
       | "trait" ~ traitDef ^^
       { case _ => null })
 
-  lazy val classDef: P[(String, List[List[ParamDclStmt]], (ClassInstance, List[Type], List[Stmt]))] =
+  lazy val classDef: P[(String, List[ParamDclStmt], (ClassInstance, List[Type], List[Stmt]))] =
     //Pass back everything but the caseFlag
-    (id ~ paramClauses ~ classTemplateOpt ^^
-      { case name ~ params ~ extra  => (name, params, extra) })
+    (id ~ paramClause ~ classTemplateOpt ^^
+      { case name ~ params ~ extra  => (name, params, extra) }
+      |id ~ classTemplateOpt ^^
+      { case name ~ extra => (name, Nil, extra)})
 
   lazy val traitDef: P[Expr] =
     (id ~ traitTemplateOpt ^^
@@ -843,7 +846,7 @@ object Parser extends RegexParsers with PackratParsers {
   
   lazy val classParentsH: P[List[Type]] =
     ("with" ~ simpleType ~ classParentsH ^^
-      { case _ => null }
+      { case _ ~ name ~ names => name::names }
       | "with" ~ simpleType ^^
       { case _ ~ name  => List(name) })
 
@@ -858,10 +861,12 @@ object Parser extends RegexParsers with PackratParsers {
       | "with" ~ simpleType ^^
       { case _ => null })
 
-  lazy val constr: P[(Type, List[List[Expr]])] =
-    (simpleType ~ rep1(argumentExprs) ^^
-      { case simpleType ~ args => (simpleType, args) }
-      | simpleType ^^
+  lazy val constr: P[(Type, List[Expr])] =
+    (simpleType ~ "(" ~ exprs ~ ")" ^^
+      { case simpleType  ~ _ ~ args ~ _  => (simpleType, args) }
+      | simpleType ~ "(" ~ ")" ^^ 
+      { case simpleType ~ _ ~ _ => (simpleType, Nil)}
+      | simpleType  ^^
       { case simpleType => (simpleType, Nil) })
 
   lazy val topStatSeq: P[Expr] =
