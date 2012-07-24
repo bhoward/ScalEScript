@@ -106,7 +106,7 @@ object ASTConverter {
 		return AnnotVarExpr(varName);
 	}
 	def convertFunExpr(id: Expr, args: List[Expr], scopes: List[Scope]): AnnotFunExpr = {
-		//TODO check if var is defined? -- But not all the time?
+		//TODO check if function is defined? -- But not all the time?
 		var annotId: AnnotExpr = convertExpr(id, scopes);
 		var annotArgs: List[AnnotExpr] = args.map(arg => convertExpr(arg, scopes));
 		return AnnotFunExpr(annotId, annotArgs);
