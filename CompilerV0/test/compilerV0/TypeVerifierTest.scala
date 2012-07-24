@@ -54,13 +54,26 @@ object TypeVerifierTest extends Test {
 	                                             TypedParamDclStmt("y",BaseType("Int")),
 	                                             TypedParamDclStmt("s",BaseType("String"))),BaseType("AnyVal"),
 	                                        TypedVarExpr("f",BaseType("Int")),
-	                                        null),
+	                                        { var scope: Scope = Scope(); 
+	                                        	scope.types = scala.collection.mutable.Map[String,Scope]();
+	                                        	scope.objects = scala.collection.mutable.Map[String,Type]();
+	                                        	scope.objects.put("x", BaseType("Any"));
+	                                        	scope.objects.put("y", BaseType("Int"));
+                                        	    scope.objects.put("s", BaseType("String"));
+                                        	    scope;
+                                        	}),
 	                        TypedFunExpr(TypedVarExpr("bar",FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String")))),
 	                                     List(TypedStringExpr("",BaseType("String")),
 	                                          TypedNumExpr(NInt(5),BaseType("Int")),
 	                                          TypedStringExpr("",BaseType("String"))),
 	                                     BaseType("AnyVal"))),
-                       null,
+                       {	var scope: Scope = Scope(); 
+                    		scope.types = scala.collection.mutable.Map[String,Scope]();
+                        	scope.objects = scala.collection.mutable.Map[String,Type]();
+                        	scope.objects.put("bar", FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String"))));
+                        	scope.objects.put("f", BaseType("Int"));
+                    	    scope;
+                	   },
 	                   BaseType("AnyVal")));
     
     checkSubType(FuncType(BaseType("Int"), List(BaseType("Int"))), FuncType(BaseType("Int"), List(BaseType("Int"))), true);
