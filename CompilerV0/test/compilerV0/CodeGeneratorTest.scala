@@ -2,7 +2,7 @@ package compilerV0
 
 object CodeGeneratorTest extends Test {
   def checkCodeBase(src: String): (TypedStmt, String) = {
-    val ast = TypeVerifier(Parser(src))
+    val ast = TypeVerifier(ASTConverter(Parser(src)))
 	(ast, CodeGenerator(ast))
   }
 
@@ -77,7 +77,7 @@ object CodeGeneratorTest extends Test {
         |return (t0 + t1) ; })()""".stripMargin
     )
 
-    checkCodeThrows("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}", "Not enough arguements specified for function VarExpr(foo).")
+    checkCodeThrows("{def foo (x : Int, y : Int, z : String): Int = x + y; foo(5)}", "Not enough arguements specified for function AnnotVarExpr(foo).")
 
     checkCodeThrows("{def bar (x : Int, y : Int, z : String): Unit = x + y;}", "Body type BaseType(Int) does not match the required return type BaseType(Unit) for function bar.")
 

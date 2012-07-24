@@ -3,7 +3,7 @@ package compilerV0
 object TypeVerifierTest extends Test {
   def checkSrcType(src: String, expect: TypedStmt) {
     try {
-      val actual = TypeVerifier(Parser(src))
+      val actual = TypeVerifier(ASTConverter(Parser(src)))
       if (actual != expect) {
         System.err.println("Checking type of " + src + "\nExpected: " + expect + "\n  Actual: " + actual);
       }
@@ -14,13 +14,13 @@ object TypeVerifierTest extends Test {
   
   def checkSrcTypeThrows(src: String, expect: String) {
     shouldThrow(expect) {
-      TypeVerifier(Parser(src))
+      TypeVerifier(ASTConverter(Parser(src)))
     }
   }
   
   def checkSubType(first: Type, second: Type, expect: Boolean) {
     try {
-      val actual = TypeVerifier.checkType(first, second)
+      val actual = TypeVerifier.checkType(first, second, ScalaBase.getScope()::Nil)
       if (actual != expect) {
         System.err.println("Checking subtype " + first + " of " + second + "\nExpected: " + expect + "\n  Actual: " + actual);
       }
@@ -31,7 +31,7 @@ object TypeVerifierTest extends Test {
   
   def checkJoinType(first: Type, second: Type, expect: Type) {
     try {
-      val actual = TypeVerifier.firstCommonSuperType(first, second)
+      val actual = TypeVerifier.firstCommonSuperType(first, second, ScalaBase.getScope()::Nil)
       if (actual != expect) {
         System.err.println("Checking join type of " + first + " and " + second + "\nExpected: " + expect + "\n  Actual: " + actual);
       }
@@ -53,12 +53,14 @@ object TypeVerifierTest extends Test {
 	                                        List(TypedParamDclStmt("x",BaseType("Any")),
 	                                             TypedParamDclStmt("y",BaseType("Int")),
 	                                             TypedParamDclStmt("s",BaseType("String"))),BaseType("AnyVal"),
-	                                        TypedVarExpr("f",BaseType("Int"))),
+	                                        TypedVarExpr("f",BaseType("Int")),
+	                                        null),
 	                        TypedFunExpr(TypedVarExpr("bar",FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String")))),
 	                                     List(TypedStringExpr("",BaseType("String")),
 	                                          TypedNumExpr(NInt(5),BaseType("Int")),
 	                                          TypedStringExpr("",BaseType("String"))),
 	                                     BaseType("AnyVal"))),
+                       null,
 	                   BaseType("AnyVal")));
     
     checkSubType(FuncType(BaseType("Int"), List(BaseType("Int"))), FuncType(BaseType("Int"), List(BaseType("Int"))), true);
