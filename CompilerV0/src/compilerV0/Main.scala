@@ -10,6 +10,13 @@ object Main {
 	    println(Parser("class Foo(x:Int, y:Int) {5; 6}"))
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5) {5; 6}"))
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5, 6) with Fee with Foh {5}"))
+	    println(Parser("trait Fee {4}"))
+	    println(Parser("trait Baz extends Fee {5}"))
+	    println(Parser("trait Boo extends Fee with Baz {7}"))
+	    println(Parser("object Car {6}"))
+	    println(Parser("object Truck extends Vehicle {17}"))
+	    println(Parser("object Truck extends VEhicle with Car {25}"))
+	    println(Parser("new Car(5,6)"))
 	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");

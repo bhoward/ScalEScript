@@ -31,6 +31,7 @@ case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) exten
 case class WhileExpr(test: Expr, body: Expr) extends Expr
 case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
+case class ClassExpr(name: Type, args : List[Expr]) extends Expr
 
 //Typed AST
 sealed trait TypedStmt {
@@ -65,6 +66,7 @@ case class TypedIfThenElseExpr(test: TypedExpr, trueClause: TypedExpr, falseClau
 case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, override val evalType : Type) extends TypedExpr
 case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, override val evalType : Type) extends TypedExpr
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr
+case class TypedClassExpr(name: Type, args : List[Expr]) extends TypedExpr
 
 //Classes used for compiling
 sealed trait Numeric
@@ -74,6 +76,7 @@ case class NDouble(Num : Double) extends Numeric
 case class DefWrapper(ids : List[String], varType: Type, value : Expr)
 case class FunWrapper(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type,  body : Expr)
 case class ClassInstance(id: Type, argClauses: List[Expr])
+case class TraitInstance(id: Type)
 
 sealed trait OpPair {
 	def isLeft() : Boolean;
