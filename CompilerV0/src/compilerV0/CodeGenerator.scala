@@ -8,8 +8,6 @@ object CodeGenerator {
         case TypedBinOpExpr(op, l, r, rettype) =>  "(" + generate(l) + " " + (op match {case "==" => "==="
     	                                                                  case "!=" => "!=="
     	                                                                  case _ => op}) + " " + generate(r) + ")"
-    	
-    	
     	case TypedBlockExpr(listofstatements, rettype) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     	case TypedBoolExpr(value, valtype) => value.toString
     	case TypedIfThenExpr(predicate, expr, valtype) => "ifThen( " + 
@@ -26,6 +24,8 @@ object CodeGenerator {
     	case TypedStringExpr(value, valtype) => "\"" + (value.map(escapify).mkString) + "\""
     	case TypedCharExpr(value, valtype) => "\"" + escapify(value) + "\""
     	case TypedVarExpr(varName, valtype) => varName
+    	//case TypedFieldSelectionExpr(selection) => 
+    	
     	case TypedWhileExpr(predicate, body, valtype) => "whileLoop( " +
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
@@ -79,5 +79,7 @@ object CodeGenerator {
 	   case Some(operator) => operator
 	   case None => op
 	}
-	def apply(source: TypedStmt): String = generate (source)
+	
+	//def classGen(name : Type, )
+	def apply(source: TypedStmt, currentObj: String): String = generate (source)
 }

@@ -7,7 +7,7 @@ sealed trait Stmt {
 case class ValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeflag : String) extends Stmt
 case class FunDefStmt(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type, body : Expr) extends Stmt
 case class ParamDclStmt(id : String, varType: Type) extends Stmt
-case class ClassDefStmt(caseFlag: Boolean,
+case class ClassDefStmt(typeFlag: String,
                         className : String,
                         paramClauses: List[ParamDclStmt],
                         extendClass: ClassInstance,
@@ -32,6 +32,7 @@ case class WhileExpr(test: Expr, body: Expr) extends Expr
 case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 case class ClassExpr(name: Type, args : List[Expr]) extends Expr
+case class FieldSelectionExpr(selection: String) extends Expr
 
 //Typed AST
 sealed trait TypedStmt {
@@ -41,12 +42,12 @@ sealed trait TypedStmt {
 case class TypedValDefStmt(ids : List[String], varType: Type, value : TypedExpr, valTypeflag : String) extends TypedStmt
 case class TypedFunDefStmt(name : String, params : List[TypedParamDclStmt], retType : Type, body : TypedExpr) extends TypedStmt
 case class TypedParamDclStmt(id : String, varType: Type) extends TypedStmt
-case class TypedClassDefStmt(caseFlag: Boolean,
-                        className : String,
-                        paramClauses: List[List[ParamDclStmt]],
-                        extendClass: ClassInstance,
-                        withIds: List[String],
-                        body: List[Stmt]) extends TypedStmt
+case class TypedClassDefStmt(typeFlag: String,
+						     className : String,
+						     paramClauses: List[List[ParamDclStmt]],
+						     extendClass: ClassInstance,
+						     withIds: List[String],
+						     body: List[Stmt]) extends TypedStmt
                         
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr() : Boolean = {true}
@@ -67,6 +68,7 @@ case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, override val evalTyp
 case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, override val evalType : Type) extends TypedExpr
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr
 case class TypedClassExpr(name: Type, args : List[Expr]) extends TypedExpr
+case class TypedFieldSelectionExpr(selection: String) extends TypedExpr
 
 //Classes used for compiling
 sealed trait Numeric

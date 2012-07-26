@@ -15,8 +15,11 @@ object Main {
 	    println(Parser("trait Boo extends Fee with Baz {7}"))
 	    println(Parser("object Car {6}"))
 	    println(Parser("object Truck extends Vehicle {17}"))
-	    println(Parser("object Truck extends VEhicle with Car {25}"))
+	    println(Parser("object Truck extends Vehicle with Car {25}"))
 	    println(Parser("new Car(5,6)"))
+	    println(Parser("this.first"))
+	    println(Parser("this.first=(4)"))
+	    
 	    /*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
@@ -61,7 +64,7 @@ object Main {
 		try {
 			val ast = Parser(scalaSource);
 			val typedAst = TypeVerifier(ast);
-			val jsSource = CodeGenerator(typedAst);
+			val jsSource = CodeGenerator(typedAst, "top");
 			writeToFile("""src/HTML/"""+testName+".html", makeHTML(scalaSource, ast.toString(), typedAst.toString(), jsSource));
 			println(testName+".html was successfully created.");
 		} catch {
@@ -71,7 +74,7 @@ object Main {
 	
 	def testCompilerThrows(scalaSource: String, expect: String) {
 	  try {
-	    CodeGenerator(TypeVerifier(Parser(scalaSource)))
+	    CodeGenerator(TypeVerifier(Parser(scalaSource)), "top")
 	    System.err.println("Expected exception \"" + expect + "\" not thrown")
 	  } catch {
         case e: Exception =>
