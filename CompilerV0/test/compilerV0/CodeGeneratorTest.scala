@@ -2,8 +2,10 @@ package compilerV0
 
 object CodeGeneratorTest extends Test {
   def checkCodeBase(src: String): (TypedStmt, String) = {
+
     val ast = TypeVerifier(ASTConverter(Parser(src)))
-	(ast, CodeGenerator(ast))
+	(ast, CodeGenerator(ast, "top"))
+
   }
 
   def checkCode(src: String, expect: String) {

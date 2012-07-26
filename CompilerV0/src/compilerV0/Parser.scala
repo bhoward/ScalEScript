@@ -97,9 +97,8 @@ object Parser extends RegexParsers with PackratParsers {
       { case _ => null })
 
   lazy val qualId: P[String] =
-    //Field Selection for classes?
     (id ~ "." ~ qualId ^^
-      { case _ => null }
+      { case id ~ "." ~ qual => id+"."+qual }
       | id)
 
   lazy val ids: P[List[String]] =
@@ -191,10 +190,19 @@ object Parser extends RegexParsers with PackratParsers {
       { case _ => null }
       | "return" ^^
       { case _ => null }
+     
+      //These following lines were commented out in order to allow expressions such as 'this.first = 5'.
+      //When the parser is refactored to remove Packrat Parsers, this should be refactored too.
+      /*
       | simpleExpr1 ~ "." ~ id ~ "=" ~ expr ^^
       { case _ => null }
       | id ~ "=" ~ expr ^^
       { case id ~ _ ~ e => AssignExpr(VarExpr(id), e) }
+      */
+      //Workaround to allow expressions such as 'this.first = 5'
+      | simpleExpr1 ~ "=" ~ expr ^^
+      { case p ~ _ ~ e => AssignExpr(p, e)}
+      
       | simpleExpr1 ~ argumentExprs ~ "=" ~ expr ^^
       { case _ => null }
       | postfixExpr
@@ -487,9 +495,9 @@ object Parser extends RegexParsers with PackratParsers {
       | simpleExpr1 ~ argumentExprs ^^
       { case funcName ~ args => FunExpr(funcName, args) }
       | path ^^
-      { case varId => VarExpr(varId) }
+      { case str => {if (str.contains('.')) FieldSelectionExpr(str) else VarExpr(str)} }
       | "(" ~ exprs ~ ")" ^^
-      { case _ ~ exprs ~ _ => { if (exprs.length == 1) exprs.head else null } }
+      { case _ ~ exprs ~ _ => {if (exprs.length == 1) exprs.head else null } }
       | "(" ~ ")" ^^
       { case _ => null }
       | simpleExpr ~ "." ~ id ^^
@@ -790,22 +798,20 @@ object Parser extends RegexParsers with PackratParsers {
     //Assemble the classDefStmt Here
     ("case" ~ "class" ~ classDef ^^
       { case _ ~ _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) 
-             => ClassDefStmt(true, name, args, whatExtends, extendsWith, body ) }
+             => ClassDefStmt("case class", name, args, whatExtends, extendsWith, body ) }
       | "class" ~ classDef ^^
       { case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body))
-             => ClassDefStmt(false, name, args, whatExtends, extendsWith, body ) }
+             => ClassDefStmt("class", name, args, whatExtends, extendsWith, body ) }
       | "case" ~ "object" ~ objectDef ^^
       { case _ => null }
       | "object" ~ objectDef ^^
       { case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) 
-             => ClassDefStmt(false, name, args, whatExtends, extendsWith, body ) }
+             => ClassDefStmt("object", name, args, whatExtends, extendsWith, body ) }
       | "trait" ~ traitDef ^^
       { case _ ~ Tuple2(name, Tuple3(whatExtends, extendsWith, body)) 
-                //can traits extend classes?
-             => ClassDefStmt(false, name, Nil, whatExtends, extendsWith, body) })
+             => ClassDefStmt("trait", name, Nil, whatExtends, extendsWith, body) })
 
   lazy val classDef: P[(String, List[ParamDclStmt], (ClassInstance, List[Type], List[Stmt]))] =
-    //Pass back everything but the caseFlag
     (id ~ paramClause ~ classTemplateOpt ^^
       { case name ~ params ~ extra  => (name, params, extra) }
       |id ~ classTemplateOpt ^^
@@ -901,7 +907,6 @@ object Parser extends RegexParsers with PackratParsers {
       { case _ => null })
 
   //Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
-  //These Could be replaced with a foldL or foldR eventually
   def buildLeft(base: Expr, rest: List[OpPair]): Expr =
     rest.foldLeft(base)((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
 

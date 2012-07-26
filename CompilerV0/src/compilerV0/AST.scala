@@ -7,11 +7,11 @@ import scala.collection.mutable.Map;
 sealed trait Stmt {
 	def isExpr(): Boolean = {false}
 }
-case class ValDefStmt(ids: List[String], valType: Type, value: Expr, valTypeflag: String) extends Stmt
-case class FunDefStmt(name: String, paramClauses: List[List[ParamDclStmt]], retType: Type, body: Expr) extends Stmt
-case class ParamDclStmt(id: String, varType: Type) extends Stmt
-case class ClassDefStmt(caseFlag: Boolean,
-                        className: String,
+case class ValDefStmt(ids : List[String], valType: Type, value : Expr, valTypeflag : String) extends Stmt
+case class FunDefStmt(name : String, paramClauses : List[List[ParamDclStmt]], retType : Type, body : Expr) extends Stmt
+case class ParamDclStmt(id : String, varType: Type) extends Stmt
+case class ClassDefStmt(typeFlag: String,
+                        className : String,
                         params: List[ParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[Type],
@@ -35,6 +35,7 @@ case class WhileExpr(test: Expr, body: Expr) extends Expr //TODO Implement Do-Wh
 case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 case class ClassExpr(name: Type, args : List[Expr]) extends Expr
+case class FieldSelectionExpr(selection: String) extends Expr
 
 //Annotated AST
 sealed trait Tableless {
@@ -47,7 +48,7 @@ sealed trait AnnotStmt {
 case class AnnotValDefStmt(ids: List[String], varType: Type, value: AnnotExpr, valTypeflag: String) extends AnnotStmt with Tableless
 case class AnnotFunDefStmt(name: String, params: List[AnnotParamDclStmt], retType: Type, body: AnnotExpr, symbolTable: Scope) extends AnnotStmt
 case class AnnotParamDclStmt(id: String, varType: Type) extends AnnotStmt with Tableless
-case class AnnotClassDefStmt(caseFlag: Boolean,
+case class AnnotClassDefStmt(typeFlag: String,
                         className: String,
                         params: List[AnnotParamDclStmt],
                         extendClass: ClassInstance,
@@ -79,21 +80,24 @@ sealed trait TypedStmt {
 	def evalType(): Type = null;
 	def symbolTable(): Scope;
 }
+
 case class TypedValDefStmt(ids: List[String], varType: Type, value: TypedExpr, valTypeflag: String) extends TypedStmt with Tableless
 case class TypedFunDefStmt(name: String, params: List[TypedParamDclStmt], retType: Type, body: TypedExpr, symbolTable: Scope) extends TypedStmt
 case class TypedParamDclStmt(id: String, varType: Type) extends TypedStmt with Tableless
-case class TypedClassDefStmt(caseFlag: Boolean,
+case class TypedClassDefStmt(typeFlag: String,
                         className: String,
                         params: List[TypedParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[String],
                         body: List[TypedStmt],
                         symbolTable: Scope) extends TypedStmt
+
                         
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr(): Boolean = {true}
 	override def evalType(): Type;
 }
+
 case class TypedBoolExpr(bool: Boolean, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedNumExpr(num: Numeric, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedStringExpr(str: String, override val evalType: Type) extends TypedExpr with Tableless
@@ -109,6 +113,8 @@ case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, override val evalTyp
 case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, symbolTable: Scope, override val evalType: Type) extends TypedExpr
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedClassExpr(name: Type, args: List[Expr]) extends TypedExpr with Tableless
+case class TypedFieldSelectionExpr(selection: String) extends TypedExpr with Tableless
+
 
 //Classes used for compiling
 sealed trait Numeric
