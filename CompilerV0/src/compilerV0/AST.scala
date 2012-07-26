@@ -90,7 +90,8 @@ case class TypedClassDefStmt(typeFlag: String,
                         extendClass: ClassInstance,
                         withIds: List[String],
                         body: List[TypedStmt],
-                        symbolTable: Scope) extends TypedStmt
+                        symbolTable: Scope,
+                        superClasses: List[String]) extends TypedStmt
 
                         
 sealed trait TypedExpr extends TypedStmt {
@@ -113,7 +114,7 @@ case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, override val evalTyp
 case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, symbolTable: Scope, override val evalType: Type) extends TypedExpr
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedClassExpr(name: Type, args: List[Expr]) extends TypedExpr with Tableless
-case class TypedFieldSelectionExpr(selection: String) extends TypedExpr with Tableless
+case class TypedFieldSelectionExpr(obj: String, field: String) extends TypedExpr with Tableless
 
 
 //Classes used for compiling
