@@ -701,8 +701,8 @@ object Parser extends RegexParsers with PackratParsers {
   lazy val templateBody: P[List[Stmt]] =
     ("{" ~ selfType ~ templateStats ~ "}" ^^
       { case _ => null }
-      | "{" ~ templateStats ~ "}" ^^
-      { case _ ~ stmts ~ _ => stmts }
+      | "{" ~ templateStats ~ "}" ^^ //Strip out the nulls
+      { case _ ~ stmts ~ _ => stmts.filter((x => x != null)) }
     )
 
   lazy val templateStats : P[List[Stmt]] = 

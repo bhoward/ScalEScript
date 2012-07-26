@@ -2,13 +2,15 @@ package compilerV0
 
 object CodeGenerator {
 	def generate (ast : TypedStmt):String = ast match {
-	    case TypedAnonFuncExpr(args, body, rettype) => "(function (" + commaSeparatedProcess(args) + 
+	    case TypedAnonFuncExpr(args, body, symbolTable, rettype) => "(function (" + commaSeparatedProcess(args) + 
 	                                                   " ) { return " + generate(body) + " }) "
 	    case TypedAssignExpr(lhs, rhs, valtype) => "(" + generate(lhs) + " = " + generate(rhs) + ")"
         case TypedBinOpExpr(op, l, r, rettype) =>  "(" + generate(l) + " " + (op match {case "==" => "==="
     	                                                                  case "!=" => "!=="
     	                                                                  case _ => op}) + " " + generate(r) + ")"
-    	case TypedBlockExpr(listofstatements, rettype) => "(function() { \n" + blockProcess(listofstatements) + " })()"
+
+    	
+    	case TypedBlockExpr(listofstatements, symbolTable, rettype) => "(function() { \n" + blockProcess(listofstatements) + " })()"
     	case TypedBoolExpr(value, valtype) => value.toString
     	case TypedIfThenExpr(predicate, expr, valtype) => "ifThen( " + 
 		     thunkify(generate(predicate)) + ", " +
@@ -30,7 +32,7 @@ object CodeGenerator {
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
     	
-    	case TypedFunDefStmt(name, args, retType, body) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
+    	case TypedFunDefStmt(name, args, retType, body, symbolTable) => "var " + name + " = function ( " + commaSeparatedProcess(args) + " )\n {" +
                                                                                    (if(retType == "Unit") generate(body) + "; return "
     	                                                                           else "return " + generate(body)) +
     	                                                                           "; \n }"
