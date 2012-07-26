@@ -20,6 +20,7 @@ object ASTConverter {
 		case ValDefStmt(listOfValNames, valType, expr, valTypeFlag) => convertValDefStmt(listOfValNames, valType, expr, valTypeFlag, scopes);
     	case ParamDclStmt(id, varType) => convertParamDclStmt(id, varType, scopes);
     	case FunDefStmt(name, params, retType, body) => convertFunDefStmt(name, params, retType, body, scopes);
+    	case ClassDefStmt(caseFlag, className, params, extendClass, withIds, body) => convertClassDefStmt(caseFlag, className, params, extendClass, withIds, body, scopes);
     	case _ => return convertExpr(stmt, scopes);
 	}
 	def convertExpr(stmt: Stmt, scopes: List[Scope]): AnnotExpr = stmt match {
@@ -76,6 +77,18 @@ object ASTConverter {
 			}
 		    return AnnotFunDefStmt(name, annotParams, retType, annotBody, newScope)
 		}
+	}
+	def convertClassDefStmt(caseFlag: Boolean, className: String, params: List[ParamDclStmt], extendClass: ClassInstance, withIds: List[Type], body: List[Stmt], scopes: List[Scope]): AnnotClassDefStmt = {
+		var newScope: Scope = Scope();
+
+		//Strip the with Ids out of the Types (this may need to be changed later to handle more complex types)
+		var withIdStrings: List[String] = withIds.map(idType => idType.getType());
+		
+		var annotParams: List[AnnotParamDclStmt] = params.map(param => convertParamDclStmt(param.id, param.varType, newScope::scopes));
+		var annotBody: List[AnnotStmt] = body.map(stmt => convertStmt(stmt, newScope::scopes));
+		
+		//TODO Add linearization of SuperClasses to the symbol table
+		return AnnotClassDefStmt(caseFlag, className, annotParams, extendClass, withIdStrings, annotBody, newScope)
 	}
 	def convertBlockExpr(stmts: List[Stmt], scopes: List[Scope]): AnnotBlockExpr = {
 		var newScope: Scope = Scope();

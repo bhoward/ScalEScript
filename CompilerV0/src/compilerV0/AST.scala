@@ -49,10 +49,10 @@ case class AnnotFunDefStmt(name: String, params: List[AnnotParamDclStmt], retTyp
 case class AnnotParamDclStmt(id: String, varType: Type) extends AnnotStmt with Tableless
 case class AnnotClassDefStmt(caseFlag: Boolean,
                         className: String,
-                        paramClauses: List[List[ParamDclStmt]],
+                        params: List[AnnotParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[String],
-                        body: List[Stmt], 
+                        body: List[AnnotStmt], 
                         symbolTable: Scope) extends AnnotStmt
                         
 sealed trait AnnotExpr extends AnnotStmt {
@@ -84,10 +84,10 @@ case class TypedFunDefStmt(name: String, params: List[TypedParamDclStmt], retTyp
 case class TypedParamDclStmt(id: String, varType: Type) extends TypedStmt with Tableless
 case class TypedClassDefStmt(caseFlag: Boolean,
                         className: String,
-                        paramClauses: List[List[ParamDclStmt]],
+                        params: List[TypedParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[String],
-                        body: List[Stmt],
+                        body: List[TypedStmt],
                         symbolTable: Scope) extends TypedStmt
                         
 sealed trait TypedExpr extends TypedStmt {
