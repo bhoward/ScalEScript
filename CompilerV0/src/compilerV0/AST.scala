@@ -12,7 +12,7 @@ case class FunDefStmt(name: String, paramClauses: List[List[ParamDclStmt]], retT
 case class ParamDclStmt(id: String, varType: Type) extends Stmt
 case class ClassDefStmt(caseFlag: Boolean,
                         className: String,
-                        paramClauses: List[ParamDclStmt],
+                        params: List[ParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[Type],
                         body: List[Stmt]) extends Stmt
@@ -31,7 +31,7 @@ case class BinOpExpr(op: String, left: Expr, right: Expr) extends Expr
 case class UnOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
-case class WhileExpr(test: Expr, body: Expr) extends Expr
+case class WhileExpr(test: Expr, body: Expr) extends Expr //TODO Implement Do-While loops (should be trivial)
 case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 case class ClassExpr(name: Type, args : List[Expr]) extends Expr

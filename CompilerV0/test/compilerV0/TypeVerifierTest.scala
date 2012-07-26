@@ -56,10 +56,7 @@ object TypeVerifierTest extends Test {
 	                                        TypedVarExpr("f",BaseType("Int")),
 	                                        { var scope: Scope = Scope(); 
 	                                        	scope.types = scala.collection.mutable.Map[String,Scope]();
-	                                        	scope.objects = scala.collection.mutable.Map[String,Type]();
-	                                        	scope.objects.put("x", BaseType("Any"));
-	                                        	scope.objects.put("y", BaseType("Int"));
-                                        	    scope.objects.put("s", BaseType("String"));
+	                                        	scope.objects = scala.collection.mutable.Map[String,Type]("x"->BaseType("Any"), "y"->BaseType("Int"), "s"->BaseType("String"));
                                         	    scope;
                                         	}),
 	                        TypedFunExpr(TypedVarExpr("bar",FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String")))),
@@ -69,9 +66,7 @@ object TypeVerifierTest extends Test {
 	                                     BaseType("AnyVal"))),
                        {	var scope: Scope = Scope(); 
                     		scope.types = scala.collection.mutable.Map[String,Scope]();
-                        	scope.objects = scala.collection.mutable.Map[String,Type]();
-                        	scope.objects.put("bar", FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String"))));
-                        	scope.objects.put("f", BaseType("Int"));
+                        	scope.objects = scala.collection.mutable.Map[String,Type]("bar"->FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String"))), "f"->BaseType("Int"));
                     	    scope;
                 	   },
 	                   BaseType("AnyVal")));

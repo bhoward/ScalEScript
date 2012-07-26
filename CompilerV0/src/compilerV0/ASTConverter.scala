@@ -1,5 +1,7 @@
 package compilerV0
 
+//TODO Add comments descriptions of functions - especially helper functions
+
 //Note: Because of this import all "Map"s will be mutable by default
 import scala.collection.mutable.Map;
 
@@ -58,16 +60,16 @@ object ASTConverter {
 			return convertFunDefStmt(newFunc.name, newFunc.paramClauses, newFunc.retType, newFunc.body, scopes);
 		} else {
 			//From this point on you can assume there is only one param clause (it would have been curried otherwise)
-			var paramClause: List[ParamDclStmt] = paramClauses.head;
+			var params: List[ParamDclStmt] = paramClauses.head;
 		  
 			var newScope: Scope = Scope();
 			
-		    var annotParams: List[AnnotParamDclStmt] = paramClause.map(param => convertParamDclStmt(param.id, param.varType, newScope::scopes));
+		    var annotParams: List[AnnotParamDclStmt] = params.map(param => convertParamDclStmt(param.id, param.varType, newScope::scopes));
 		    var annotBody: AnnotExpr = convertExpr(body, newScope::scopes);
 		    
 		    //Add the function to the scope
 		    if (paramClauses.length > 0) {
-				var paramTypes: List[Type] = paramClause.map(param => param.varType)
+				var paramTypes: List[Type] = params.map(param => param.varType)
 				putFunc(scopes, name, paramTypes, retType);
 			} else {
 				putFunc(scopes, name, Nil, retType);
@@ -102,11 +104,9 @@ object ASTConverter {
 		return AnnotWhileExpr(annotPredicate, annotBody);
 	}
 	def convertVarExpr(varName: String, scopes: List[Scope]): AnnotVarExpr = {
-		//TODO check if var is defined?
 		return AnnotVarExpr(varName);
 	}
 	def convertFunExpr(id: Expr, args: List[Expr], scopes: List[Scope]): AnnotFunExpr = {
-		//TODO check if function is defined? -- But not all the time?
 		var annotId: AnnotExpr = convertExpr(id, scopes);
 		var annotArgs: List[AnnotExpr] = args.map(arg => convertExpr(arg, scopes));
 		return AnnotFunExpr(annotId, annotArgs);
@@ -151,7 +151,7 @@ object ASTConverter {
 			var paramRest: List[List[ParamDclStmt]] = paramClauses.tail;
 			var paramRestTypes: List[List[Type]] = paramRest.map(params => params.map(param => param.varType));
 			
-			//Make sure to call curryFuncH with reversed parameterClauses (more efficient to work from the head than from the tail)
+			//Make sure to call curryFuncH with reversed parameterClauses (more efficient to work from the head than from the tail, so it pulls from the head first when currying)
 			return FunDefStmt(name, List(paramClause), curryFuncType(retType, paramRestTypes), curryFuncH(body, retType, paramRest.reverse))
 		} else {
 			//No need to curry the function - there is only 1 param clause

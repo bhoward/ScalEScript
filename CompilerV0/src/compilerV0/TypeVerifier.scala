@@ -1,5 +1,7 @@
 package compilerV0
 
+//TODO Add comments descriptions of functions - especially helper functions
+
 import scala.collection.mutable.Map;
 
 object TypeVerifier {
@@ -11,8 +13,6 @@ object TypeVerifier {
 		
 		return verifyStmt(source, scopes)
 	}
-	
-	/* Combined Verify Functions start here */
 	def verifyStmt(stmt: AnnotStmt, scopes: List[Scope]): TypedStmt = stmt match {
 		case AnnotValDefStmt(ids, varType, value, valTypeflag) => verifyValDefStmt(ids, varType, value, valTypeflag, scopes)
     	case AnnotParamDclStmt(id, varType) => verifyParamDclStmt(id, varType, scopes)
@@ -64,7 +64,7 @@ object TypeVerifier {
 		var typedParamClause = paramClause.map(param => verifyParamDclStmt(param.id, param.varType, newScopes));
 		
 		var typedBody = verifyExpr(body, newScopes);
-		if (!checkType(typedBody.evalType(), retType, scopes)) { //TODO - should this be scopes or newScopes?
+		if (!checkType(typedBody.evalType(), retType, newScopes)) {
   			throw new Exception("Body type "+typedBody.evalType()+" does not match the required return type "+retType+" for function "+name+".")
   		}
 		
