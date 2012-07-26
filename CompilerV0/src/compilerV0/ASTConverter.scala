@@ -87,7 +87,9 @@ object ASTConverter {
 		var annotParams: List[AnnotParamDclStmt] = params.map(param => convertParamDclStmt(param.id, param.varType, newScope::scopes));
 		var annotBody: List[AnnotStmt] = body.map(stmt => convertStmt(stmt, newScope::scopes));
 		
-		//TODO Add linearization of SuperClasses to the symbol table
+		//TODO Add linearization of SuperClasses to the symbol table - Use lazy vals
+		//TODO Add the class to the scope
+		
 		return AnnotClassDefStmt(caseFlag, className, annotParams, extendClass, withIdStrings, annotBody, newScope)
 	}
 	def convertBlockExpr(stmts: List[Stmt], scopes: List[Scope]): AnnotBlockExpr = {
