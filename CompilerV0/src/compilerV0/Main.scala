@@ -19,7 +19,12 @@ object Main {
 	    println(Parser("object Truck extends VEhicle with Car {25}"))
 	    println(Parser("new Car(5,6)"))
 	    */
-
+		
+		println(Parser("""{var z:Int = 6; def foo():Int = {x+y+z};}"""));
+		println(Parser("""class Foo(x:Int, y:Int) {var z:Int = 6; def foo():Int = {x+y+z};}"""));
+		println(ASTConverter(Parser("""class Foo(x:Int, y:Int) {var z:Int = 6; def foo():Int = {x+y+z};}""")))
+		
+		/*
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -55,6 +60,7 @@ object Main {
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
 	        "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
 	    testCompiler("Curry", """println({def doSomeMath(x:Int)(y:Int)(z:Int) : Int = x*y+z; doSomeMath(2)(3)(4)})""")
+		*/
 	}
   
 	def testCompiler(testName : String, scalaSource : String) {
