@@ -175,11 +175,11 @@ object Parser extends RegexParsers with PackratParsers {
       | "if" ~ "(" ~ expr ~ ")" ~ expr ^^
       { case _ ~ _ ~ test ~ _ ~ trueClause => IfThenExpr(test, trueClause) }
       | "while" ~ "(" ~ expr ~ ")" ~ expr ^^
-      { case _ ~ _ ~ test ~ _ ~ body => WhileExpr(test, body) }
+      { case _ ~ _ ~ test ~ _ ~ body => WhileExpr(test, body, false) }
       | "do" ~ expr ~ ";" ~ "while" ~ "(" ~ expr ~ ")" ^^
-      { case _ => null }
+      { case _ ~ body ~ _ ~ _ ~ _ ~ test ~ _ => WhileExpr(test, body, true) }
       | "do" ~ expr ~ "while" ~ "(" ~ expr ~ ")" ^^
-      { case _ => null }
+      { case _ ~ body ~ _ ~ _ ~ test ~ _ => WhileExpr(test, body, true) }
       | "for" ~ "(" ~ enumerators ~ ")" ~ expr ^^
       { case _ => null }
       | "for" ~ "{" ~ enumerators ~ "}" ~ "yield" ~ expr ^^

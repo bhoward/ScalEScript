@@ -26,7 +26,7 @@ object ASTConverter {
 	  	case BinOpExpr(op, l, r) => convertBinOpExpr(op, l, r, scopes);
 	  	case IfThenExpr(predicate, expr) => convertIfThenExpr(predicate, expr, scopes);
   	    case IfThenElseExpr(predicate, trueValue, falseValue) => convertIfThenElseExpr(predicate, trueValue, falseValue, scopes);
-  	    case WhileExpr(predicate, body) => convertWhileExpr(predicate, body, scopes);
+  	    case WhileExpr(predicate, body, doFlag) => convertWhileExpr(predicate, body, doFlag, scopes);
 	  	case VarExpr(varName) => convertVarExpr(varName, scopes);
     	case FunExpr(id, args) => convertFunExpr(id, args, scopes);
     	case StringExpr(value) => convertStringExpr(value, scopes);
@@ -146,10 +146,10 @@ object ASTConverter {
 		var annotFalse: AnnotExpr = convertExpr(falseValue, scopes);
 		return AnnotIfThenElseExpr(annotPredicate, annotTrue, annotFalse);
 	}
-	def convertWhileExpr(predicate: Expr, body: Expr, scopes: List[Scope]): AnnotWhileExpr = {
+	def convertWhileExpr(predicate: Expr, body: Expr, doFlag: Boolean, scopes: List[Scope]): AnnotWhileExpr = {
 		var annotPredicate: AnnotExpr = convertExpr(predicate, scopes);
 		var annotBody: AnnotExpr = convertExpr(body, scopes);
-		return AnnotWhileExpr(annotPredicate, annotBody);
+		return AnnotWhileExpr(annotPredicate, annotBody, doFlag);
 	}
 	def convertVarExpr(varName: String, scopes: List[Scope]): AnnotVarExpr = {
 		return AnnotVarExpr(varName);

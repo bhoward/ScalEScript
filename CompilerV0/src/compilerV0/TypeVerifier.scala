@@ -26,7 +26,7 @@ object TypeVerifier {
 	  	case AnnotBinOpExpr(op, left, right) => verifyBinOpExpr(op, left, right, scopes)
 	  	case AnnotIfThenExpr(test, trueClause) => verifyIfThenExpr(test, trueClause, scopes)
   	    case AnnotIfThenElseExpr(test, trueClause, falseClause) => verifyIfThenElseExpr(test, trueClause, falseClause, scopes)
-  	    case AnnotWhileExpr(test, body) => verifyWhileExpr(test, body, scopes)
+  	    case AnnotWhileExpr(test, body, doFlag) => verifyWhileExpr(test, body, doFlag, scopes)
 	  	case AnnotVarExpr(id) => verifyVarExpr(id, scopes)
     	case AnnotFunExpr(id, args) => verifyFunExpr(id, args, scopes)
     	case AnnotStringExpr(str) => verifyStringExpr(str, scopes)
@@ -170,13 +170,13 @@ object TypeVerifier {
   			}
   		}
 	}
-	def verifyWhileExpr(predicate: AnnotExpr, body: AnnotExpr, scopes: List[Scope]): TypedWhileExpr = {
+	def verifyWhileExpr(predicate: AnnotExpr, body: AnnotExpr, doFlag: Boolean, scopes: List[Scope]): TypedWhileExpr = {
 		var predicateTyped = verifyExpr(predicate, scopes)
     	var bodyTyped = verifyExpr(body, scopes)
     	if (predicateTyped.evalType() != BaseType("Boolean")) {
   			throw new Exception("While loops require a predicate of type Boolean");
   		} else {
-  			return TypedWhileExpr(predicateTyped, bodyTyped, BaseType("Unit"));
+  			return TypedWhileExpr(predicateTyped, bodyTyped, doFlag, BaseType("Unit"));
   		}
 	}
 	def verifyVarExpr(varName: String, scopes: List[Scope]): TypedVarExpr = {

@@ -15,6 +15,11 @@ function whileLoop(test, body) {
         body();
     }
 }
+function doLoop(test, body) {
+    do {
+        body();
+    } while (test())
+}
 
 function println(stmt) {
     document.writeln(stmt);

@@ -30,7 +30,7 @@ case class BinOpExpr(op: String, left: Expr, right: Expr) extends Expr
 case class UnOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
-case class WhileExpr(test: Expr, body: Expr) extends Expr //TODO Implement Do-While loops (should be trivial)
+case class WhileExpr(test: Expr, body: Expr, doFlag: Boolean) extends Expr
 case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 case class ClassExpr(name: Type, args : List[Expr]) extends Expr
@@ -63,7 +63,7 @@ case class AnnotBinOpExpr(op: String, left: AnnotExpr, right: AnnotExpr) extends
 case class AnnotUnOpExpr(op: String, expr: AnnotExpr) extends AnnotExpr  with Tableless
 case class AnnotIfThenExpr(test: AnnotExpr, trueClause: AnnotExpr) extends AnnotExpr with Tableless
 case class AnnotIfThenElseExpr(test: AnnotExpr, trueClause: AnnotExpr, falseClause: AnnotExpr) extends AnnotExpr with Tableless
-case class AnnotWhileExpr(test: AnnotExpr, body: AnnotExpr) extends AnnotExpr with Tableless
+case class AnnotWhileExpr(test: AnnotExpr, body: AnnotExpr, doFlag: Boolean) extends AnnotExpr with Tableless
 case class AnnotAnonFuncExpr(args: List[AnnotParamDclStmt], body: AnnotExpr, symbolTable: Scope) extends AnnotExpr
 case class AnnotAssignExpr(lhs: AnnotExpr, rhs: AnnotExpr) extends AnnotExpr with Tableless
 
@@ -99,7 +99,7 @@ case class TypedBinOpExpr(op: String, left: TypedExpr, right: TypedExpr, overrid
 case class TypedUnOpExpr(op: String, expr: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedIfThenExpr(test: TypedExpr, trueClause: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedIfThenElseExpr(test: TypedExpr, trueClause: TypedExpr, falseClause: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
-case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
+case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, doFlag: Boolean, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, symbolTable: Scope, override val evalType: Type) extends TypedExpr
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedClassExpr(name: Type, args: List[Expr]) extends TypedExpr with Tableless
