@@ -829,13 +829,17 @@ object Parser extends RegexParsers with PackratParsers {
     ("extends" ~ classTemplate ^^
       { case _ ~ cTemplate => cTemplate   }
       | templateBody ^^
-      { case stmts => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stmts) })
+      { case stmts => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stmts) }
+      | "" ^^
+      { case _ => (ClassInstance(BaseType("AnyRef"), Nil), Nil, Nil)})
 
   lazy val traitTemplateOpt: P[(ClassInstance, List[Type], List[Stmt])] =
     ("extends" ~ traitTemplate ^^
       { case _ ~ tTemplate => tTemplate }
       | templateBody ^^
-      { case stms => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stms) })
+      { case stms => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stms) }
+      | "" ^^
+      { case _ => (ClassInstance(BaseType("AnyRef"), Nil), Nil, Nil)})
 
   lazy val classTemplate: P[(ClassInstance, List[Type], List[Stmt])] =
     (classParents ~ templateBody ^^

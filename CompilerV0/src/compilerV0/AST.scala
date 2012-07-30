@@ -15,8 +15,7 @@ case class ClassDefStmt(typeFlag: String,
                         params: List[ParamDclStmt],
                         extendClass: ClassInstance,
                         withIds: List[Type],
-                        body: List[Stmt]) extends Stmt
-                        
+                        body: List[Stmt]) extends Stmt                        
 sealed trait Expr extends Stmt {
 	override def isExpr(): Boolean = {true}
 }
@@ -48,14 +47,8 @@ sealed trait AnnotStmt {
 case class AnnotValDefStmt(ids: List[String], varType: Type, value: AnnotExpr, valTypeflag: String) extends AnnotStmt with Tableless
 case class AnnotFunDefStmt(name: String, params: List[AnnotParamDclStmt], retType: Type, body: AnnotExpr, symbolTable: Scope) extends AnnotStmt
 case class AnnotParamDclStmt(id: String, varType: Type) extends AnnotStmt with Tableless
-case class AnnotClassDefStmt(typeFlag: String,
-                        className: String,
-                        params: List[AnnotParamDclStmt],
-                        extendClass: ClassInstance,
-                        withIds: List[String],
-                        body: List[AnnotStmt], 
-                        symbolTable: Scope) extends AnnotStmt
-                        
+case class AnnotClassDefStmt(typeFlag: String, className: String, params: List[AnnotParamDclStmt], extendClassId: String, extendClassArgs: List[AnnotExpr], 
+							 withIds: List[String], body: List[AnnotStmt], symbolTable: ClassScope) extends AnnotStmt  
 sealed trait AnnotExpr extends AnnotStmt {
 	override def isExpr(): Boolean = {true}
 }
@@ -80,25 +73,21 @@ sealed trait TypedStmt {
 	def evalType(): Type = null;
 	def symbolTable(): Scope;
 }
-
 case class TypedValDefStmt(ids: List[String], varType: Type, value: TypedExpr, valTypeflag: String) extends TypedStmt with Tableless
 case class TypedFunDefStmt(name: String, params: List[TypedParamDclStmt], retType: Type, body: TypedExpr, symbolTable: Scope) extends TypedStmt
 case class TypedParamDclStmt(id: String, varType: Type) extends TypedStmt with Tableless
 case class TypedClassDefStmt(typeFlag: String,
                         className: String,
                         params: List[TypedParamDclStmt],
-                        extendClass: ClassInstance,
+                        extendClassId: String,
+                        extendClassArgs: List[TypedExpr],
                         withIds: List[String],
                         body: List[TypedStmt],
-                        symbolTable: Scope,
-                        superClasses: List[String]) extends TypedStmt
-
-                        
+                        symbolTable: ClassScope) extends TypedStmt                 
 sealed trait TypedExpr extends TypedStmt {
 	override def isExpr(): Boolean = {true}
 	override def evalType(): Type;
 }
-
 case class TypedBoolExpr(bool: Boolean, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedNumExpr(num: Numeric, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedStringExpr(str: String, override val evalType: Type) extends TypedExpr with Tableless
@@ -116,7 +105,6 @@ case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType
 case class TypedClassExpr(name: Type, args: List[Expr]) extends TypedExpr with Tableless
 case class TypedFieldSelectionExpr(obj: String, field: String) extends TypedExpr with Tableless
 
-
 //Classes used for compiling
 sealed trait Numeric
 case class NInt(num: Int) extends Numeric
@@ -124,7 +112,7 @@ case class NDouble(Num: Double) extends Numeric
 
 case class DefWrapper(ids: List[String], varType: Type, value: Expr)
 case class FunWrapper(name: String, paramClauses: List[List[ParamDclStmt]], retType: Type,  body: Expr)
-case class ClassInstance(id: Type, argClauses: List[Expr])
+case class ClassInstance(id: Type, args: List[Expr])
 case class TraitInstance(id: Type)
 
 sealed trait OpPair {
@@ -161,15 +149,23 @@ case class FuncType(retType: Type, argTypes: List[Type]) extends Type {
 	def getRetType(): Type = retType;
 	def getArgTypes(): List[Type] = argTypes;
 }
-case class ObjType(varType: String) extends Type{
-    def isFunc(): Boolean = false;
-	def getType(): String = varType;
-	def getArgTypes(): List[Type] = Nil;
-	def getRetType(): Type = null;
-}
 
 case class Scope {
-	var types: Map[String, Scope] = Map[String, Scope]()
 	var objects: Map[String, Type] = Map[String, Type]()
+	var types: Map[String, ClassScope] = Map[String, ClassScope]()
 	override def toString(): String = "Scope(Types="+types+", Objects="+objects+")";
+}
+case class ClassScope(sups: ()=>List[String], paramTypes: List[Type]) extends Scope {
+	lazy val superTypes: List[String] = sups();
+	override def toString(): String = "Scope(SuperTypes="+superTypes+",ParamTypes="+paramTypes+",Types="+types+",Objects="+objects+")";
+	
+	//This is purely for testing purposes. Without overriding, it will compare sups which will never match (they aren't the same reference)
+	override def equals(obj: Any): Boolean = {
+		if (obj.isInstanceOf[ClassScope]) {
+			val otherObj: ClassScope = obj.asInstanceOf[ClassScope];
+			return paramTypes == otherObj.paramTypes && superTypes == otherObj.superTypes && super.equals(otherObj);
+		} else {
+			return false;
+		}
+	}
 }
