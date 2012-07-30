@@ -28,7 +28,7 @@ object CodeGenerator {
     	case TypedVarExpr(varName, valtype) => varName
     	//case TypedFieldSelectionExpr(selection) => 
     	
-    	case TypedWhileExpr(predicate, body, doFlag, valtype) => if (doFlag) {"doLoop( "} else {"whileLoop( "} +
+    	case TypedWhileExpr(predicate, body, doFlag, valtype) => {if (doFlag) "doLoop( " else "whileLoop( "} +
 		     thunkify(generate(predicate)) + ", " + 
 		     thunkify(generate(body)) + " )"
     	
