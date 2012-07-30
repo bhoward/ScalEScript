@@ -1,7 +1,7 @@
 package compilerV0
 
 object ParserTest extends Test {
-  def checkParse(src: String, expect: Expr) {
+  def checkParse(src: String, expect: Stmt) {
 	try {
 	  val actual = Parser(src)
 	  if (actual != expect) {
@@ -123,5 +123,14 @@ object ParserTest extends Test {
     // Assignment
     checkParse("""{var x: Int = 0; x = 1}""",
       BlockExpr(List(ValDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0)),"var"), AssignExpr(VarExpr("x"),NumExpr(NInt(1))))))
+      
+    //Classes
+    checkParse("""object Main {trait A; class B extends A; trait C extends A; class D(x: Int) extends B; class E extends D(5) with C}""",
+      ClassDefStmt("object","Main",List(),ClassInstance(BaseType("AnyRef"),List()),List(),List(
+          ClassDefStmt("trait","A",List(),ClassInstance(BaseType("AnyRef"),List()),List(),List()), 
+          ClassDefStmt("class","B",List(),ClassInstance(BaseType("A"),List()),List(),List()), 
+          ClassDefStmt("trait","C",List(),ClassInstance(BaseType("A"),List()),List(),List()), 
+          ClassDefStmt("class","D",List(ParamDclStmt("x",BaseType("Int"))),ClassInstance(BaseType("B"),List()),List(),List()), 
+          ClassDefStmt("class","E",List(),ClassInstance(BaseType("D"),List(NumExpr(NInt(5)))),List(BaseType("C")),List()))))
   }
 }

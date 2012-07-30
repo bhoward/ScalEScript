@@ -1,13 +1,14 @@
 package compilerV0
 
-//TODO Add comments descriptions of functions - especially helper functions
-
 import scala.collection.mutable.Map;
 
 object TypeVerifier {
 	def apply(source: AnnotStmt): TypedStmt = {
 		verify(source)
 	}
+	
+	//Verify either throws an exception or converts an annotated AST in to a typed AST
+	/* Verify functions */
 	def verify(source: AnnotStmt): TypedStmt = {
 		var scopes: List[Scope] = Scope()::ScalaBase.getScope()::Nil;
 		
@@ -17,6 +18,7 @@ object TypeVerifier {
 		case AnnotValDefStmt(ids, varType, value, valTypeflag) => verifyValDefStmt(ids, varType, value, valTypeflag, scopes)
     	case AnnotParamDclStmt(id, varType) => verifyParamDclStmt(id, varType, scopes)
     	case AnnotFunDefStmt(name, params, retType, body, symbolTable) => verifyFunDefStmt(name, params, retType, body, symbolTable, scopes)
+    	case AnnotClassDefStmt(typeFlag, className, params, extendsClassId, extendsArgs, withIds, body, symbolTable) => verifyClassDefStmt(typeFlag, className, params, extendsClassId, extendsArgs, withIds, body, symbolTable, scopes)
     	case _ => return verifyExpr(stmt, scopes)
 	}
 	def verifyExpr(stmt: AnnotStmt, scopes: List[Scope]): TypedExpr = stmt match {
@@ -35,8 +37,6 @@ object TypeVerifier {
     	case AnnotAssignExpr(lhs, rhs) => verifyAssignExpr(lhs, rhs, scopes)
 		case _ => throw new Exception("Unknown expr: "+stmt)
 	}
-	
-	/* Specific Verify Functions start here */
 	def verifyValDefStmt(ids: List[String], valType: Type, value: AnnotExpr, valTypeFlag: String, scopes: List[Scope]): TypedValDefStmt = {	
 		var exprTyped = verifyExpr(value, scopes);
 		if (!checkTypes(scopes, valType)) {
@@ -54,21 +54,45 @@ object TypeVerifier {
 		}
 		return TypedParamDclStmt(id, varType);
 	}
-	def verifyFunDefStmt(name: String, paramClause: List[AnnotParamDclStmt], retType: Type, body: AnnotExpr, symbolTable: Scope, scopes: List[Scope]): TypedFunDefStmt = {
+	def verifyFunDefStmt(name: String, params: List[AnnotParamDclStmt], retType: Type, body: AnnotExpr, symbolTable: Scope, scopes: List[Scope]): TypedFunDefStmt = {
 		var newScopes: List[Scope] = symbolTable::scopes;
 		if (!checkTypes(newScopes, retType)){
 			throw new Exception("Type "+retType+" is not defined in the scope for return type of function "+name+".")
 		}
 		
 		var typedStmt: TypedFunDefStmt = null;
-		var typedParamClause = paramClause.map(param => verifyParamDclStmt(param.id, param.varType, newScopes));
+		var typedParams = params.map(param => verifyParamDclStmt(param.id, param.varType, newScopes));
 		
 		var typedBody = verifyExpr(body, newScopes);
 		if (!checkType(typedBody.evalType(), retType, newScopes)) {
   			throw new Exception("Body type "+typedBody.evalType()+" does not match the required return type "+retType+" for function "+name+".")
   		}
 		
-	    return TypedFunDefStmt(name, typedParamClause, retType, typedBody, symbolTable)
+	    return TypedFunDefStmt(name, typedParams, retType, typedBody, symbolTable)
+	}
+	def verifyClassDefStmt(typeFlag: String, className: String, params: List[AnnotParamDclStmt], extendsClassId: String, extendsArgs: List[AnnotExpr], withIds: List[String], body: List[AnnotStmt], symbolTable: ClassScope, scopes: List[Scope]): TypedClassDefStmt = {
+		var newScopes: List[Scope] = symbolTable::scopes;
+  		var typedBody: List[TypedStmt] = body.map(stmt => verifyStmt(stmt, newScopes));
+  		var typedParams = params.map(param => verifyParamDclStmt(param.id, param.varType, newScopes));
+
+  		var typedExtendsArgs: List[TypedExpr] = extendsArgs.map(arg => verifyExpr(arg, newScopes));
+  		var extendsArgsTypes: List[Type] = typedExtendsArgs.map(arg => arg.evalType());
+  		var extendsClassParamTypes: List[Type] = getClassScope(newScopes, extendsClassId).paramTypes;
+  		
+  		while (extendsArgsTypes.length > 0 && extendsClassParamTypes.length > 0) {
+	    	if (!checkType(extendsArgsTypes.head, extendsClassParamTypes.head, scopes)){
+	    		throw new Exception("Arguement type "+extendsArgsTypes.head+" does not match the required type "+extendsArgsTypes.head+" for class "+extendsClassId+".")
+	    	} else {
+	    		extendsArgsTypes = extendsArgsTypes.tail;
+	    		extendsClassParamTypes = extendsClassParamTypes.tail;
+	    	}
+	    }
+    	if (extendsArgsTypes.length > 0) {
+    		throw new Exception("Too many arguements specified for function for class "+extendsClassId+".")
+    	} else if (extendsClassParamTypes.length > 0) {
+    		throw new Exception("Not enough arguements specified for function for class "+extendsClassId+".")
+    	}
+  		return TypedClassDefStmt(typeFlag, className, typedParams, extendsClassId, typedExtendsArgs, withIds, typedBody, symbolTable);
 	}
 	def verifyBlockExpr(listofstatements: List[AnnotStmt], symbolTable: Scope, scopes: List[Scope]): TypedBlockExpr = {
 		var newScopes: List[Scope] = symbolTable::scopes;
@@ -230,10 +254,10 @@ object TypeVerifier {
 	    }
 	    return TypedAssignExpr(lhsTyped, rhsTyped, BaseType("Unit"))
 	}
-	
-	
+	/* End verify functions */
 	
 	/* Helper functions */
+	//Returns the type of the variable (or function or object) specified, by searching through the objects maps of scopes
 	def getObjType(scopes: List[Scope], varName: String): Type = scopes match {
 	  	case Nil => throw new Exception("Unknown variable "+varName+".");
 	  	case currentScope::rest => {
@@ -245,6 +269,19 @@ object TypeVerifier {
 	  		}
 	  	}
 	}
+	//Returns the ClassScope of the class (or trait) specified, by searching through the types maps of scopes
+	def getClassScope(scopes: List[Scope], className: String): ClassScope = scopes match {
+	  	case Nil => throw new Exception("Unknown class "+className+".");
+	  	case currentScope::rest => {
+	  		var currentObjects = currentScope.types;
+	  		if (currentObjects.contains(className)) {
+	  			return currentObjects.get(className).get
+  			} else {
+	  			return getClassScope(rest, className)
+	  		}
+	  	}
+	}
+	//Returns true if all the types uses in varType (if the type is a function, it checks all argument and result types) are defined
 	def checkTypes(scopes: List[Scope], varType: Type): Boolean = {
 		if (varType.isFunc()) {
 			return varType.getArgTypes().foldLeft(checkTypes(scopes, varType.getRetType()))((result, argType) => result && checkTypes(scopes: List[Scope], argType));
@@ -252,6 +289,7 @@ object TypeVerifier {
 			return containsType(scopes, varType.getType());
 		}
 	}
+	//Checks to see if all the types uses in varType are defined
 	def containsType(scopes: List[Scope], varName: String): Boolean = scopes match {
 	  	case Nil => false;
 	  	case currentScope::rest => {
@@ -261,52 +299,18 @@ object TypeVerifier {
 	  			return containsType(rest, varName)
 	  	}
 	}
-	def putFunc(scopes: List[Scope], funcName: String, params: List[Type], retType: Type): Boolean = {
-		var map: Map[String, Type] = scopes.head.objects;
-		if (!map.contains(funcName)) {
-			if (!checkTypes(scopes, retType)) { //Unknown return type
-				throw new Exception("Unknown return type "+retType+" for function "+funcName+".");
-			} else if (params.foldLeft(false)((result, param) => result || !checkTypes(scopes, param))) { //Unknown param type
-				throw new Exception("Unknown parameter type found in parameters: "+params+" for function "+funcName+".");
-			} else {
-				var paramTypes: List[Type] = params.map(param => param);
-				map.put(funcName, FuncType(retType, paramTypes)); 
-				return true;
-			}
-		} else {
-			throw new Exception("The function "+funcName+" is already defined in the current scope.");
-		}
-	}
-	def putAllVars(scopes: List[Scope], varNames: List[String], varType: Type): Boolean = {
-		var map: Map[String, Type] = scopes.head.objects;
-		if (!checkTypes(scopes, varType)) { //Unknown type
-			throw new Exception("Unknown type "+varType+" for vars "+prettyPrint(varNames)+".");
-		}
-		return putAllVarsH(map, varNames, varType);
-	}
-	def putAllVarsH(map: Map[String, Type], varNames: List[String], varType: Type): Boolean = varNames match {
-	  	case Nil => return true;
-	 	case x::xs => {
-	 		if (!map.contains(x)) {
-	 			map.put(x, varType); 
-	 			return putAllVarsH(map, xs, varType);
-	 		} else {
-	 			throw new Exception("The variable "+x+" is already defined in the current scope.");
-	 		}
-	 	}
-	}
+	//Prints a List with a comma and space separating the elements
 	def prettyPrint(l: List[String]): String = {
 		l.tail.fold(l.head)((result, element) => result + ", " + element);
 	}
-	
+	//Returns true if exprType is a paramType, or extends paramType, using String as types
 	def checkTypeS(exprType: String, paramType: String, scopes: List[Scope]): Boolean = {
 		if (containsType(scopes, paramType)) { //Make sure the paramType is a defined type
 			if (exprType == paramType) { //They match
 				return true; 
 			} else { //They don't match, check the parent types
 				if (containsType(scopes, exprType)){
-					//TODO check not only scalaTypes for the type hierarchy
-					return (ScalaBase.typeHierarchy.get(exprType).get).contains(paramType);
+					return getClassScope(scopes, exprType).superTypes.contains(paramType)
 				} else {
 					throw new Exception("Unknown type "+exprType+".")
 				}
@@ -315,6 +319,7 @@ object TypeVerifier {
 			throw new Exception("Unknown type "+paramType+".")
 		}
 	}
+	//Returns true if exprType is a paramType, or extends paramType, using Type as types
 	def checkType(exprType: Type, paramType: Type, scopes: List[Scope]): Boolean = {
 		if (paramType.isFunc()) {
 			if (exprType.isFunc()) {
@@ -352,16 +357,15 @@ object TypeVerifier {
 			}
 		}
 	}
-	
+	//Returns the String className of the first common super-type of type1 and type2, using String as types
 	def firstCommonSuperTypeS(type1: String, type2: String, scopes: List[Scope]): String = {
 		if (containsType(scopes, type1)) {
 			if (type1 == type2) {
 				return type1; //Common superType
 			} else {
 				if (containsType(scopes, type2)) {
-					//TODO check not only scalaTypes for the type hierarchy
-					var types1: List[String] = ScalaBase.typeHierarchy.get(type1).get
-					var types2: List[String] = ScalaBase.typeHierarchy.get(type2).get
+					var types1: List[String] = getClassScope(scopes, type1).superTypes.reverse
+					var types2: List[String] = getClassScope(scopes, type2).superTypes.reverse
 					var temp: String = "";
 					while (types1.length > 0 && types2.length > 0 && types1.head == types2.head) {
 						temp = types1.head;
@@ -377,6 +381,7 @@ object TypeVerifier {
 			throw new Exception("Unknown type "+type1+".")
 		}
 	}
+	//Returns the String className of the first common super-type of type1 and type2, using Type as types
 	def firstCommonSuperType(type1: Type, type2: Type, scopes: List[Scope]): Type = {
 		if (type1.isFunc()) {
 			if (type2.isFunc()) {
@@ -410,6 +415,4 @@ object TypeVerifier {
 		}
 	}
 	/* End helper functions */
-
-	
 }

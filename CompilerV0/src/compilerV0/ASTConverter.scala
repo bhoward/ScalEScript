@@ -1,7 +1,5 @@
 package compilerV0
 
-//TODO Add comments descriptions of functions - especially helper functions
-
 //Note: Because of this import all "Map"s will be mutable by default
 import scala.collection.mutable.Map;
 
@@ -85,12 +83,47 @@ object ASTConverter {
 		var withIdStrings: List[String] = withIds.map(idType => idType.getType());
 		
 		var annotParams: List[AnnotParamDclStmt] = params.map(param => convertParamDclStmt(param.id, param.varType, newScope::scopes));
+		var paramTypes: List[Type] = annotParams.map(param => param.varType);
 		var annotBody: List[AnnotStmt] = body.map(stmt => convertStmt(stmt, newScope::scopes));
 
-		//TODO Add the class to the scope
-
-		//TODO Add linearization of SuperClasses to the symbol table - Use lazy vals
-		return AnnotClassDefStmt(typeFlag, className, annotParams, extendClass, withIdStrings, annotBody, newScope)
+		var extendsClassName: String = "";
+		if (extendClass != null) {
+			extendsClassName = extendClass.id.getType();
+		}
+		var annotExtendsArgs: List[AnnotExpr] = extendClass.args.map(arg => convertExpr(arg, newScope::scopes));
+		
+		var withClassNames: List[String] = withIds.map(idType => idType.getType());
+		
+		//The initialization for this is slightly different for objects - it gets intialized in the match
+		var symbolTable: ClassScope = null;
+		
+		//Add the class to the scope (or Object to the object scope along with its "class")
+		typeFlag match {
+		  	case "class" => {
+		  		symbolTable = buildClassScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		putClass(scopes, className, symbolTable);
+		  	}
+		  	case "case class" => {
+		  		//TODO add case class stuff to symbolTable
+		  		symbolTable = buildClassScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		putClass(scopes, className, symbolTable);
+		  	}
+		  	case "trait" => {
+		  		symbolTable = buildClassScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		putClass(scopes, className, symbolTable);
+		  	}
+		  	case "object" => {
+		  		symbolTable = buildObjectScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		putObject(scopes, className, symbolTable);
+		  	}
+		  	case "case object" => {
+		  		//TODO add case class stuff to symbolTable
+		  		symbolTable = buildObjectScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		putObject(scopes, className, symbolTable);
+		  	}
+		  	case _ => {throw new Exception("Unknown class typeFlag: "+typeFlag)}
+		}
+		return AnnotClassDefStmt(typeFlag, className, annotParams, extendsClassName, annotExtendsArgs, withIdStrings, annotBody, symbolTable)
 	}
 	def convertBlockExpr(stmts: List[Stmt], scopes: List[Scope]): AnnotBlockExpr = {
 		var newScope: Scope = Scope();
@@ -153,6 +186,7 @@ object ASTConverter {
 	/* End convert functions */
 	
 	/* Currying functions */
+	//Returns the type of a curried version of a function with multiple parameter clauses
 	def curryFuncType(retType: Type, paramClauses: List[List[Type]]): Type = {
 		if (paramClauses.length == 0) {
 			return retType;
@@ -160,19 +194,21 @@ object ASTConverter {
 			return curryFuncType(new FuncType(retType, paramClauses.head), paramClauses.tail);
 		}
 	}
+	//Returns a Curried version of the function specified. IE: converts a FunDefStmt with multiple parameter clauses to one with only one parameter clause (by returning an anonymous function which expects another parameter clause)
 	def curryFunc(name: String, paramClauses: List[List[ParamDclStmt]], retType: Type, body: Expr) : FunDefStmt = {
 		if (paramClauses.length > 1) {
 			var paramClause: List[ParamDclStmt] = paramClauses.head;
 			var paramRest: List[List[ParamDclStmt]] = paramClauses.tail;
 			var paramRestTypes: List[List[Type]] = paramRest.map(params => params.map(param => param.varType));
 			
-			//Make sure to call curryFuncH with reversed parameterClauses (more efficient to work from the head than from the tail, so it pulls from the head first when currying)
+			//Make sure to call curryFuncH with reversed parameterClauses (more efficient to work from the head than from the tail, so it pulls from the head first when nesting)
 			return FunDefStmt(name, List(paramClause), curryFuncType(retType, paramRestTypes), curryFuncH(body, retType, paramRest.reverse))
 		} else {
 			//No need to curry the function - there is only 1 param clause
 			return FunDefStmt(name, paramClauses, retType, body);
 		}
 	}
+	//Returns a nesting of anonymous functions from a paramClauses.head to body, until all paramClauses are used. (Call this with the expected parameter clauses in reversed order. (More efficient to work from the head than from the tail, so it pulls from the head first when currying)
 	def curryFuncH(body: Expr, retType: Type, paramClauses: List[List[ParamDclStmt]]): Expr = {
 		if (paramClauses.length == 0) {
 			return body;
@@ -184,22 +220,7 @@ object ASTConverter {
 	/* End currying functions */
 	
 	/* Helper functions */
-	def checkTypes(scopes: List[Scope], varType: Type): Boolean = {
-		if (varType.isFunc()) {
-			return varType.getArgTypes().foldLeft(checkTypes(scopes, varType.getRetType()))((result, argType) => result && checkTypes(scopes: List[Scope], argType));
-		} else {
-			return containsType(scopes, varType.getType());
-		}
-	}
-	def containsType(scopes: List[Scope], varName: String): Boolean = scopes match {
-	  	case Nil => false;
-	  	case currentScope::rest => {
-	  		if (currentScope.types.contains(varName))
-	  			return true
-	  		else
-	  			return containsType(rest, varName)
-	  	}
-	}
+	//Adds a function to the objects map of the head of the scope specified
 	def putFunc(scopes: List[Scope], funcName: String, params: List[Type], retType: Type): Boolean = {
 		var map: Map[String, Type] = scopes.head.objects;
 		if (!map.contains(funcName)) {
@@ -210,10 +231,12 @@ object ASTConverter {
 			throw new Exception("The function "+funcName+" is already defined in the current scope.");
 		}
 	}
+	//Adds all variables specified in varNames to the objects map of the head of the scope specified
 	def putAllVars(scopes: List[Scope], varNames: List[String], varType: Type): Boolean = {
 		var map: Map[String, Type] = scopes.head.objects;
 		return putAllVarsH(map, varNames, varType);
 	}
+	//Adds all variables specified in varNames to the map specified
 	def putAllVarsH(map: Map[String, Type], varNames: List[String], varType: Type): Boolean = varNames match {
 	  	case Nil => return true;
 	 	case x::xs => {
@@ -225,6 +248,68 @@ object ASTConverter {
 	 		}
 	 	}
 	}
+	//Adds a class (or trait) to the types map of the head of the scope specified
+	def putClass(scopes: List[Scope], className: String, symbolTable: ClassScope): Boolean = {
+		var map: Map[String, ClassScope] = scopes.head.types;
+		if (!map.contains(className)) {
+			map.put(className, symbolTable); 
+			return true;
+		} else {
+			throw new Exception("The class "+className+" is already defined in the current scope.");
+		}
+	}
+	//Adds an object to the objects map of the head of the scope specified, as well as adding its "hidden" class type (object name followed by an underscore) to the types map
+	def putObject(scopes: List[Scope], className: String, symbolTable: ClassScope): Boolean = {
+		putClass(scopes, "_"+className, symbolTable);
+  		putAllVars(scopes, List(className), BaseType("_"+className))
+	}
+	//Returns a function that, when invoked, will calculate the linearization of super-types for the class specified. 
+	def getLinearization(scopes: List[Scope], className: String, extendsClass: String, withClasses: List[String]): ()=>List[String] = {
+		var func: ()=>List[String] = ()=>({
+			var classes: List[String] = Nil;
+			if (extendsClass != "") {
+				classes = getClassScope(scopes, extendsClass).superTypes;
+			}
+			var withs: List[String] = withClasses;
+			while (withs.length > 0){
+				var withSuperTypes: List[String] = getClassScope(scopes, withs.head).superTypes;
+				while (withSuperTypes.length > 0){
+					if (!classes.contains(withSuperTypes.head)){
+						classes = withSuperTypes.head::classes;
+					}
+					withSuperTypes = withSuperTypes.tail;
+				}
+				withs = withs.tail;
+			}
+			classes = className::classes;
+			classes
+		})
+		return func
+	}
+	//Returns the ClassScope of the class (or trait) specified, by searching through the types maps of scopes
+	def getClassScope(scopes: List[Scope], className: String): ClassScope = scopes match {
+	  	case Nil => throw new Exception("Unknown class "+className+".");
+	  	case currentScope::rest => {
+	  		var currentObjects = currentScope.types;
+	  		if (currentObjects.contains(className)) {
+	  			return currentObjects.get(className).get
+  			} else {
+	  			return getClassScope(rest, className)
+	  		}
+	  	}
+	}
+	//Returns a constructed ClassScope using the information specified
+	def buildClassScope(scopes: List[Scope], className: String, extendsClassName: String, withClassNames: List[String], paramTypes: List[Type], symbolTable: Scope): ClassScope = {
+		var classScope: ClassScope = ClassScope(getLinearization(scopes, className, extendsClassName, withClassNames), paramTypes);
+		classScope.types = symbolTable.types;
+		classScope.objects = symbolTable.objects;
+		return classScope
+	}
+	//Returns a constructed ClassScope representing the "hidden" class type of the object, using the information specified
+	def buildObjectScope(scopes: List[Scope], className: String, extendsClassName: String, withClassNames: List[String], paramTypes: List[Type], symbolTable: Scope): ClassScope = {
+		return buildClassScope(scopes, "_"+className, extendsClassName, withClassNames, paramTypes, symbolTable);
+	}
+	//Prints a List with a comma and space separating the elements
 	def prettyPrint(l: List[String]): String = {
 		l.tail.fold(l.head)((result, element) => result + ", " + element);
 	}

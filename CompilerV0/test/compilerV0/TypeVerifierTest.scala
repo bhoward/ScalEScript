@@ -1,5 +1,7 @@
 package compilerV0
 
+import scala.collection.mutable.Map;
+
 object TypeVerifierTest extends Test {
   def checkSrcType(src: String, expect: TypedStmt) {
     try {
@@ -55,7 +57,7 @@ object TypeVerifierTest extends Test {
 	                                             TypedParamDclStmt("s",BaseType("String"))),BaseType("AnyVal"),
 	                                        TypedVarExpr("f",BaseType("Int")),
 	                                        { var scope: Scope = Scope(); 
-	                                        	scope.types = scala.collection.mutable.Map[String,Scope]();
+	                                        	scope.types = scala.collection.mutable.Map[String,ClassScope]();
 	                                        	scope.objects = scala.collection.mutable.Map[String,Type]("x"->BaseType("Any"), "y"->BaseType("Int"), "s"->BaseType("String"));
                                         	    scope;
                                         	}),
@@ -65,11 +67,74 @@ object TypeVerifierTest extends Test {
 	                                          TypedStringExpr("",BaseType("String"))),
 	                                     BaseType("AnyVal"))),
                        {	var scope: Scope = Scope(); 
-                    		scope.types = scala.collection.mutable.Map[String,Scope]();
+                    		scope.types = scala.collection.mutable.Map[String,ClassScope]();
                         	scope.objects = scala.collection.mutable.Map[String,Type]("bar"->FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String"))), "f"->BaseType("Int"));
                     	    scope;
                 	   },
 	                   BaseType("AnyVal")));
+	checkSrcType("""object Main {trait A; class B extends A; trait C extends A; class D(x: Int, y:Int) extends B; class E extends D(5,7) with C}""",
+	    TypedClassDefStmt("object","Main",List(),"AnyRef",List(),List(),List(
+	        TypedClassDefStmt("trait","A",List(),"AnyRef",List(),List(),List(),
+	            {var theScope: ClassScope = ClassScope(()=>List("A", "AnyRef", "Any"), Nil);
+					theScope.types = Map[String, ClassScope]();
+					theScope.objects = Map[String, Type]();
+					theScope;
+	            }), 
+	        TypedClassDefStmt("class","B",List(),"A",List(),List(),List(),
+	            {var theScope: ClassScope = ClassScope(()=>List("B", "A", "AnyRef", "Any"), Nil);
+					theScope.types = Map[String, ClassScope]();
+					theScope.objects = Map[String, Type]();
+					theScope;
+	            }), 
+	        TypedClassDefStmt("trait","C",List(),"A",List(),List(),List(),
+	            {var theScope: ClassScope = ClassScope(()=>List("C", "A", "AnyRef", "Any"), Nil);
+					theScope.types = Map[String, ClassScope]();
+					theScope.objects = Map[String, Type]();
+					theScope;
+	            }), 
+	        TypedClassDefStmt("class","D",List(TypedParamDclStmt("x",BaseType("Int")), TypedParamDclStmt("y",BaseType("Int"))),"B",List(),List(),List(),
+	            {var theScope: ClassScope = ClassScope(()=>List("D", "B", "A", "AnyRef", "Any"), List(BaseType("Int"), BaseType("Int")));
+					theScope.types = Map[String, ClassScope]();
+					theScope.objects = Map[String, Type]("x" -> BaseType("Int"), "y" -> BaseType("Int"));
+					theScope;
+	            }), 
+	        TypedClassDefStmt("class","E",List(),"D",List(TypedNumExpr(NInt(5),BaseType("Int")), TypedNumExpr(NInt(7),BaseType("Int"))),List("C"),List(),
+	            {var theScope: ClassScope = ClassScope(()=>List("E", "C", "D", "B", "A", "AnyRef", "Any"), Nil);
+					theScope.types = Map[String, ClassScope]();
+					theScope.objects = Map[String, Type]();
+					theScope;
+	            })),
+            {var theScope: ClassScope = ClassScope(()=>List("_Main", "AnyRef", "Any"), Nil);
+				theScope.types = Map(
+				    "A"->{var theScope: ClassScope = ClassScope(()=>List("A", "AnyRef", "Any"), Nil);
+						theScope.types = Map[String, ClassScope]();
+						theScope.objects = Map[String, Type]();
+						theScope;
+					},
+				    "B"->{var theScope: ClassScope = ClassScope(()=>List("B", "A", "AnyRef", "Any"), Nil);
+						theScope.types = Map[String, ClassScope]();
+						theScope.objects = Map[String, Type]();
+						theScope;
+		            },
+				    "C"->{var theScope: ClassScope = ClassScope(()=>List("C", "A", "AnyRef", "Any"), Nil);
+						theScope.types = Map[String, ClassScope]();
+						theScope.objects = Map[String, Type]();
+						theScope;
+		            },
+				    "D"->{var theScope: ClassScope = ClassScope(()=>List("D", "B", "A", "AnyRef", "Any"), List(BaseType("Int"), BaseType("Int")));
+						theScope.types = Map[String, ClassScope]();
+						theScope.objects = Map[String, Type]("x" -> BaseType("Int"), "y" -> BaseType("Int"));
+						theScope;
+		            },
+				    "E"->{var theScope: ClassScope = ClassScope(()=>List("E", "C", "D", "B", "A", "AnyRef", "Any"), Nil);
+						theScope.types = Map[String, ClassScope]();
+						theScope.objects = Map[String, Type]();
+						theScope;
+		            }
+				)
+				theScope.objects = Map[String, Type]();
+				theScope;
+			}));
     
     checkSubType(FuncType(BaseType("Int"), List(BaseType("Int"))), FuncType(BaseType("Int"), List(BaseType("Int"))), true);
 	checkSubType(FuncType(BaseType("Int"), List(BaseType("Boolean"))), FuncType(BaseType("Int"), List(BaseType("Int"))), false);
