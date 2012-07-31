@@ -20,22 +20,26 @@ object Main {
 	    println(Parser("class Foo(x:Int, y:Int) {5; 6}"))
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5) {5; 6}"))
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5, 6) with Fee with Foh {5}"))
-	    println(Parser("trait Fee {4}"))
+	    */
+	    
+	    println(CodeGenerator(TypeVerifier(ASTConverter(Parser("trait A {var y : Int = 0; def f(x : Int) : Int = g(g(x)); def g(x : Int) : Int = x + 2}"))), "top"))
+	    /*
 	    println(Parser("trait Baz extends Fee {5}"))
+	    println(Parser("def foo(x:Int):Int = x + 1 "))
+	    
+	    
 	    println(Parser("trait Boo extends Fee with Baz {7}"))
 	    println(Parser("object Car {6}"))
 	    println(Parser("object Truck extends Vehicle {17}"))
 	    println(Parser("object Truck extends Vehicle with Car {25}"))
 	    println(Parser("new Car(5,6)"))
+	    
+
 	    println(Parser("this.first"))
 	    println(Parser("this.first=(4)"))
 	    */
 
-        //println(Parser("""{var z:Int = 6; def foo():Int = {x+y+z};}"""));
-        //println(Parser("""object Foo {var z:Int = 6; def foo():Int = {z+z};}"""));
-
-        //println(TypeVerifier(ASTConverter(Parser("""object O {class A(x:Int) {def foo():Int = {x+1}}; class B extends A(5); var z:B = new B; z.foo();}"""))))
-
+	    /*
         testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
         testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
         testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -70,7 +74,7 @@ object Main {
                 "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
                 "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
         testCompiler("Curry", """println({def doSomeMath(x:Int)(y:Int)(z:Int) : Int = x*y+z; doSomeMath(2)(3)(4)})""");
-
+        */
     }
     /** Generates an HTML page with the specified testName consisting of each stage of the compilation process of the specified scalaSource */
     def testCompiler(testName: String, scalaSource: String) {
