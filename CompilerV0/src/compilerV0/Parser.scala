@@ -3,6 +3,11 @@ package compilerV0
 import scala.util.parsing.combinator._
 import java.io.Reader
 
+/** The Parser takes as input a String containing the Scala source and outputs an AST
+ * 
+ * @author Trevor Griswold
+ * @author Mike Stees
+ */
 object Parser extends RegexParsers with PackratParsers {
     type P[T] = PackratParser[T]
 
@@ -224,11 +229,11 @@ object Parser extends RegexParsers with PackratParsers {
     lazy val infixExpr: P[Expr] =
         (iE0)
 
-    //Start of infix expression precedence groups
-    //iE0 through iE9 are not defined in the scala grammar. 
-    //These are used to enforce precedence of infix operators in the parsing process.
-    //iE# = infix expression of precedence group #, iE#Rest = helper for iE#, 
-    //iE#L = left associative operator of an infix expression of precedence group #, iE#R = same as iE#L, but right associative
+    /* Start of infix expression precedence groups */
+    /* iE0 through iE9 are not defined in the scala grammar. 
+     * These are used to enforce precedence of infix operators in the parsing process.
+     * iE# = infix expression of precedence group #, iE#Rest = helper for iE#, 
+     * iE#L = left associative operator of an infix expression of precedence group #, iE#R = same as iE#L, but right associative */
     lazy val iE0: P[Expr] =
         (iE1)
 
@@ -474,7 +479,7 @@ object Parser extends RegexParsers with PackratParsers {
         (op9 ~ prefixExpr ~ iE9L ^^
             { case op ~ left ~ right => LeftOpPair(op, left) :: right }
             | "" ^^ { case _ => List[LeftOpPair]() })
-    //End of infix expression precedence groups
+    /* End of infix expression precedence groups */
 
     lazy val prefixExpr: P[Expr] =
         ("-" ~ simpleExpr ^^
@@ -891,7 +896,7 @@ object Parser extends RegexParsers with PackratParsers {
             | simpleType ^^
             { case simpleType => (simpleType, Nil) })
 
-    lazy val topStatSeq: P[Expr] = //TODO make this the top of the parser? Wrap in some container in AST - An Object?
+    lazy val topStatSeq: P[Expr] =
         (topStat ~ topStatSeqH ^^
             { case _ => null }
             | topStat)
@@ -922,12 +927,12 @@ object Parser extends RegexParsers with PackratParsers {
     def buildLeft(base: Expr, rest: List[OpPair]): Expr = {
         rest.foldLeft(base)((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
     }
-
     def buildRight(base: Expr, rest: List[OpPair]): Expr = rest match {
         case Nil => base
         case op :: ops => BinOpExpr(op.getOp(), buildRight(op.getExpr(), ops), base)
     }
 
+    /** Converts a dot separated string in to a sequence of nested FieldSelectionExpr */
     def fieldSplit(id: String): FieldSelectionExpr = {
         var ids: Array[String] = id.split("\\.");
         if (ids.length > 0) {

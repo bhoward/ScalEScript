@@ -4,6 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import scala.collection.mutable.Map;
 
+/** The Main object for running the compiler
+ * 
+ * Since specific tests were stripped out and moved in to the test objects, 
+ * the main purpose of Main is to generate HTML pages for testing JavaScript
+ * 
+ * @author Trevor Griswold
+ * @author Mike Stees
+ */
 object Main {
     def main(args: Array[String]) {
         /*
@@ -64,7 +72,7 @@ object Main {
         testCompiler("Curry", """println({def doSomeMath(x:Int)(y:Int)(z:Int) : Int = x*y+z; doSomeMath(2)(3)(4)})""");
 
     }
-
+    /** Generates an HTML page with the specified testName consisting of each stage of the compilation process of the specified scalaSource */
     def testCompiler(testName: String, scalaSource: String) {
         try {
             val ast = Parser(scalaSource);
@@ -77,7 +85,6 @@ object Main {
             case e: Exception => { System.err.println("Error while compiling " + testName + ". " + e); }
         }
     }
-
     def testCompilerThrows(scalaSource: String, expect: String) {
         try {
             CodeGenerator(TypeVerifier(ASTConverter(Parser(scalaSource))), "top")
@@ -89,13 +96,13 @@ object Main {
                 }
         }
     }
-
+    /** Writes the specified contents to the specified fileName */
     def writeToFile(fileName: String, contents: String) {
         val fw = new FileWriter(fileName);
         fw.write(contents);
         fw.close();
     }
-
+    /** Builds a String containing the contents of an HTML page to be generated for a specific test */
     def makeHTML(scalaSource: String, ast: String, typedAst: String, jsSource: String): String = {
         val p1: String = """<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">""";
         val p2: String = """</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">""";

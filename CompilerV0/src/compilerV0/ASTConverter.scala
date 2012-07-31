@@ -3,6 +3,11 @@ package compilerV0
 //Note: Because of this import all "Map"s will be mutable by default
 import scala.collection.mutable.Map;
 
+/** The ASTConverted takes as input an AST and outputs an AST annotated with symbol tables
+ * 
+ * @author Trevor Griswold
+ * @author Mike Stees
+ */
 object ASTConverter {
     def apply(source: Stmt): AnnotStmt = {
         convert(source)
@@ -197,7 +202,7 @@ object ASTConverter {
     /* End convert functions */
 
     /* Currying functions */
-    //Returns the type of a curried version of a function with multiple parameter clauses
+    /** Returns the type of a curried version of a function with multiple parameter clauses */
     def curryFuncType(retType: Type, paramClauses: List[List[Type]]): Type = {
         if (paramClauses.length == 0) {
             return retType;
@@ -205,7 +210,11 @@ object ASTConverter {
             return curryFuncType(new FuncType(retType, paramClauses.head), paramClauses.tail);
         }
     }
-    //Returns a Curried version of the function specified. IE: converts a FunDefStmt with multiple parameter clauses to one with only one parameter clause (by returning an anonymous function which expects another parameter clause)
+    /** Returns a Curried version of the function specified.
+     * 
+     *  IE: converts a FunDefStmt with multiple parameter clauses to one with only one parameter clause 
+     *  (by returning an anonymous function which expects another parameter clause)
+     */
     def curryFunc(name: String, paramClauses: List[List[ParamDclStmt]], retType: Type, body: Expr): FunDefStmt = {
         if (paramClauses.length > 1) {
             var paramClause: List[ParamDclStmt] = paramClauses.head;
@@ -219,7 +228,11 @@ object ASTConverter {
             return FunDefStmt(name, paramClauses, retType, body);
         }
     }
-    //Returns a nesting of anonymous functions from a paramClauses.head to body, until all paramClauses are used. (Call this with the expected parameter clauses in reversed order. (More efficient to work from the head than from the tail, so it pulls from the head first when currying)
+    /** Returns a nesting of anonymous functions from a paramClauses.head to body, until all paramClauses are used.
+     * 
+     *  Call this with the expected parameter clauses in reversed order. 
+     *  (It was more efficient to work from the head than from the tail, so it pulls from the head first when currying)
+     */
     def curryFuncH(body: Expr, retType: Type, paramClauses: List[List[ParamDclStmt]]): Expr = {
         if (paramClauses.length == 0) {
             return body;
@@ -231,7 +244,7 @@ object ASTConverter {
     /* End currying functions */
 
     /* Helper functions */
-    //Adds a function to the objects map of the head of the scope specified
+    /** Adds a function to the objects map of the head of the scope specified */
     def putFunc(scopes: List[Scope], funcName: String, params: List[Type], retType: Type): Boolean = {
         var map: Map[String, Type] = scopes.head.objects;
         if (!map.contains(funcName)) {
@@ -242,12 +255,12 @@ object ASTConverter {
             throw new Exception("The function " + funcName + " is already defined in the current scope.");
         }
     }
-    //Adds all variables specified in varNames to the objects map of the head of the scope specified
+    /** Adds all variables specified in varNames to the objects map of the head of the scope specified */
     def putAllVars(scopes: List[Scope], varNames: List[String], varType: Type): Boolean = {
         var map: Map[String, Type] = scopes.head.objects;
         return putAllVarsH(map, varNames, varType);
     }
-    //Adds all variables specified in varNames to the map specified
+    /** Adds all variables specified in varNames to the map specified */
     def putAllVarsH(map: Map[String, Type], varNames: List[String], varType: Type): Boolean = varNames match {
         case Nil => return true;
         case x :: xs => {
@@ -259,7 +272,7 @@ object ASTConverter {
             }
         }
     }
-    //Adds a class (or trait) to the types map of the head of the scope specified
+    /** Adds a class (or trait) to the types map of the head of the scope specified */
     def putClass(scopes: List[Scope], className: String, symbolTable: ClassScope): Boolean = {
         var map: Map[String, ClassScope] = scopes.head.types;
         if (!map.contains(className)) {
@@ -269,12 +282,12 @@ object ASTConverter {
             throw new Exception("The class " + className + " is already defined in the current scope.");
         }
     }
-    //Adds an object to the objects map of the head of the scope specified, as well as adding its "hidden" class type (object name followed by an underscore) to the types map
+    /** Adds an object to the objects map of the head of the scope specified, as well as adding its "hidden" class type (object name followed by an underscore) to the types map */
     def putObject(scopes: List[Scope], className: String, symbolTable: ClassScope): Boolean = {
         putClass(scopes, "_" + className, symbolTable);
         putAllVars(scopes, List(className), BaseType("_" + className))
     }
-    //Returns a function that, when invoked, will calculate the linearization of super-types for the class specified. 
+    /** Returns a function that, when invoked, will calculate the linearization of super-types for the class specified. */
     def getLinearization(scopes: List[Scope], className: String, extendsClass: String, withClasses: List[String]): () => List[String] = {
         var func: () => List[String] = () => ({
             var classes: List[String] = Nil;
@@ -297,7 +310,7 @@ object ASTConverter {
         })
         return func
     }
-    //Returns the ClassScope of the class (or trait) specified, by searching through the types maps of scopes
+    /** Returns the ClassScope of the class (or trait) specified, by searching through the types maps of scopes */
     def getClassScope(scopes: List[Scope], className: String): ClassScope = scopes match {
         case Nil => throw new Exception("Unknown class " + className + ".");
         case currentScope :: rest => {
@@ -309,18 +322,18 @@ object ASTConverter {
             }
         }
     }
-    //Returns a constructed ClassScope using the information specified
+    /** Returns a constructed ClassScope using the information specified */
     def buildClassScope(scopes: List[Scope], className: String, extendsClassName: String, withClassNames: List[String], paramTypes: List[Type], symbolTable: Scope): ClassScope = {
         var classScope: ClassScope = ClassScope(getLinearization(scopes, className, extendsClassName, withClassNames), paramTypes);
         classScope.types = symbolTable.types;
         classScope.objects = symbolTable.objects;
         return classScope
     }
-    //Returns a constructed ClassScope representing the "hidden" class type of the object, using the information specified
+    /** Returns a constructed ClassScope representing the "hidden" class type of the object, using the information specified */
     def buildObjectScope(scopes: List[Scope], className: String, extendsClassName: String, withClassNames: List[String], paramTypes: List[Type], symbolTable: Scope): ClassScope = {
         return buildClassScope(scopes, "_" + className, extendsClassName, withClassNames, paramTypes, symbolTable);
     }
-    //Prints a List with a comma and space separating the elements
+    /** Prints a List with a comma and space separating the elements */
     def prettyPrint(l: List[String]): String = {
         l.tail.fold(l.head)((result, element) => result + ", " + element);
     }

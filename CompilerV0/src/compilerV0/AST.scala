@@ -3,7 +3,7 @@ package compilerV0
 //Note: Because of this import all "Map"s will be mutable by default
 import scala.collection.mutable.Map;
 
-//Non-Typed AST
+/* AST */
 sealed trait Stmt {
     def isExpr(): Boolean = { false }
 }
@@ -35,8 +35,9 @@ case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
 case class ClassExpr(name: Type, args: List[Expr]) extends Expr
 case class FieldSelectionExpr(obj: Expr, field: String) extends Expr
+/* End AST */
 
-//Annotated AST
+/* Annotated AST */
 sealed trait Tableless {
     def symbolTable(): Scope = null;
 }
@@ -68,8 +69,9 @@ case class AnnotAnonFuncExpr(args: List[AnnotParamDclStmt], body: AnnotExpr, sym
 case class AnnotAssignExpr(lhs: AnnotExpr, rhs: AnnotExpr) extends AnnotExpr with Tableless
 case class AnnotClassExpr(name: String, args: List[AnnotExpr]) extends AnnotExpr with Tableless
 case class AnnotFieldSelectionExpr(obj: AnnotExpr, field: String) extends AnnotExpr with Tableless
+/* End Annotated AST */
 
-//Typed AST
+/* Typed AST */
 sealed trait TypedStmt {
     def isExpr(): Boolean = { false }
     def evalType(): Type = null;
@@ -106,8 +108,9 @@ case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, sym
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedClassExpr(name: String, args: List[TypedExpr], override val evalType: Type) extends TypedExpr with Tableless
 case class TypedFieldSelectionExpr(obj: TypedExpr, field: String, override val evalType: Type) extends TypedExpr with Tableless
+/* End Typed AST */
 
-//Classes used for compiling
+/* Other classes used for compiling */
 sealed trait Numeric
 case class NInt(num: Int) extends Numeric
 case class NDouble(Num: Double) extends Numeric
@@ -171,3 +174,4 @@ case class ClassScope(sups: () => List[String], paramTypes: List[Type]) extends 
         }
     }
 }
+/* End other classes used for compiling */

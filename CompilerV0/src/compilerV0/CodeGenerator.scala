@@ -1,5 +1,10 @@
 package compilerV0
 
+/** The CodeGenerator takes as input a typed AST and outputs a String containing the generated JavaScript
+ * 
+ * @author Trevor Griswold
+ * @author Mike Stees
+ */
 object CodeGenerator {
     def generate(ast: TypedStmt): String = ast match {
         case TypedAnonFuncExpr(args, body, symbolTable, rettype) => "(function (" + commaSeparatedProcess(args) +

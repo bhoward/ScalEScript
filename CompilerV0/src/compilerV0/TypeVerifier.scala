@@ -2,6 +2,11 @@ package compilerV0
 
 import scala.collection.mutable.Map;
 
+/** The TypeVerifier takes as input an annotated AST and outputs an typed AST (an annotated ast with expression evaluation types)
+ * 
+ * @author Trevor Griswold
+ * @author Mike Stees
+ */
 object TypeVerifier {
     def apply(source: AnnotStmt): TypedStmt = {
         verify(source)
@@ -289,7 +294,7 @@ object TypeVerifier {
     /* End verify functions */
 
     /* Helper functions */
-    //Returns the type of the variable (or function or object) specified, by searching through the objects maps of scopes
+    /** Returns the type of the variable (or function or object) specified, by searching through the objects maps of scopes */
     def getObjType(scopes: List[Scope], varName: String): Type = scopes match {
         case Nil => throw new Exception("Unknown variable " + varName + ".");
         case currentScope :: rest => {
@@ -301,7 +306,7 @@ object TypeVerifier {
             }
         }
     }
-    //Returns the ClassScope of the class (or trait) specified, by searching through the types maps of scopes
+    /** Returns the ClassScope of the class (or trait) specified, by searching through the types maps of scopes */
     def getClassScope(scopes: List[Scope], className: String): ClassScope = scopes match {
         case Nil => throw new Exception("Unknown class " + className + ".");
         case currentScope :: rest => {
@@ -313,7 +318,7 @@ object TypeVerifier {
             }
         }
     }
-    //Returns the type of the specified field in the specified class (also checking superClasses)
+    /** Returns the type of the specified field in the specified class (also checking superClasses) */
     def getFieldType(scopes: List[Scope], className: String, fieldName: String): Type = {
         var classScope: ClassScope = getClassScope(scopes, className);
         if (classScope.objects.contains(fieldName)) {
@@ -332,7 +337,7 @@ object TypeVerifier {
             throw new Exception("The field: " + fieldName + " was not found in class " + className + ".");
         }
     }
-    //Returns the type of the specified field in the specified class (without checking superClasses)
+    /** Returns the type of the specified field in the specified class (without checking superClasses) */
     def getFieldTypeH(scopes: List[Scope], className: String, fieldName: String): Type = {
         var classScope: ClassScope = getClassScope(scopes, className);
         if (classScope.objects.contains(fieldName)) {
@@ -341,7 +346,7 @@ object TypeVerifier {
             return null;
         }
     }
-    //Returns true if all the types uses in varType (if the type is a function, it checks all argument and result types) are defined
+    /** Returns true if all the types uses in varType (if the type is a function, it checks all argument and result types) are defined */
     def checkTypes(scopes: List[Scope], varType: Type): Boolean = {
         if (varType.isFunc()) {
             return varType.getArgTypes().foldLeft(checkTypes(scopes, varType.getRetType()))((result, argType) => result && checkTypes(scopes: List[Scope], argType));
@@ -349,7 +354,7 @@ object TypeVerifier {
             return containsType(scopes, varType.getType());
         }
     }
-    //Checks to see if all the types uses in varType are defined
+    /** Checks to see if all the types uses in varType are defined */
     def containsType(scopes: List[Scope], varName: String): Boolean = scopes match {
         case Nil => false;
         case currentScope :: rest => {
@@ -359,11 +364,11 @@ object TypeVerifier {
                 return containsType(rest, varName)
         }
     }
-    //Prints a List with a comma and space separating the elements
+    /** Prints a List with a comma and space separating the elements */
     def prettyPrint(l: List[String]): String = {
         l.tail.fold(l.head)((result, element) => result + ", " + element);
     }
-    //Returns true if exprType is a paramType, or extends paramType, using String as types
+    /** Returns true if exprType is a paramType, or extends paramType, using String as types */
     def checkTypeS(exprType: String, paramType: String, scopes: List[Scope]): Boolean = {
         if (containsType(scopes, paramType)) { //Make sure the paramType is a defined type
             if (exprType == paramType) { //They match
@@ -379,7 +384,7 @@ object TypeVerifier {
             throw new Exception("Unknown type " + paramType + ".")
         }
     }
-    //Returns true if exprType is a paramType, or extends paramType, using Type as types
+    /** Returns true if exprType is a paramType, or extends paramType, using Type as types */
     def checkType(exprType: Type, paramType: Type, scopes: List[Scope]): Boolean = {
         if (paramType.isFunc()) {
             if (exprType.isFunc()) {
@@ -417,7 +422,7 @@ object TypeVerifier {
             }
         }
     }
-    //Returns the String className of the first common super-type of type1 and type2, using String as types
+    /** Returns the String className of the first common super-type of type1 and type2, using String as types */
     def firstCommonSuperTypeS(type1: String, type2: String, scopes: List[Scope]): String = {
         if (containsType(scopes, type1)) {
             if (type1 == type2) {
@@ -441,7 +446,7 @@ object TypeVerifier {
             throw new Exception("Unknown type " + type1 + ".")
         }
     }
-    //Returns the String className of the first common super-type of type1 and type2, using Type as types
+    /** Returns the String className of the first common super-type of type1 and type2, using Type as types */
     def firstCommonSuperType(type1: Type, type2: Type, scopes: List[Scope]): Type = {
         if (type1.isFunc()) {
             if (type2.isFunc()) {
