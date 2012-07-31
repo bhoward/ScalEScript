@@ -106,8 +106,8 @@ object ASTConverter {
 		  		putClass(scopes, className, symbolTable);
 		  	}
 		  	case "case class" => {
-		  		//TODO add case class stuff to symbolTable
 		  		symbolTable = buildClassScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		//TODO add case class stuff to symbolTable
 		  		putClass(scopes, className, symbolTable);
 		  	}
 		  	case "trait" => {
@@ -119,8 +119,8 @@ object ASTConverter {
 		  		putObject(scopes, className, symbolTable);
 		  	}
 		  	case "case object" => {
-		  		//TODO add case class stuff to symbolTable
 		  		symbolTable = buildObjectScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		//TODO add case class stuff to symbolTable
 		  		putObject(scopes, className, symbolTable);
 		  	}
 		  	case _ => {throw new Exception("Unknown class typeFlag: "+typeFlag)}

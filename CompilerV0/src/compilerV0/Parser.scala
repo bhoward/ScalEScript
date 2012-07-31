@@ -489,7 +489,7 @@ object Parser extends RegexParsers with PackratParsers {
       | simpleExpr)
 
   lazy val simpleExpr: P[Expr] =
-    ("new" ~ classTemplate ^^ //TODO what if stms is not Nil? What happens with stms?
+    ("new" ~ classTemplate ^^ //TODO what if stms is not Nil? Then create an anonymous subclass, and do a classExpr on that
       { case _ ~ Tuple3(ClassInstance(name, args), types, stms) => ClassExpr(name, args)  }
       | blockExpr
       | simpleExpr1 ~ "_" ^^
@@ -507,7 +507,7 @@ object Parser extends RegexParsers with PackratParsers {
       | "(" ~ ")" ^^
       { case _ => null }
       | simpleExpr ~ "." ~ id ^^
-      { case left ~ _ ~ right => FieldSelectionExpr(left, right) } //TODO Make this reachable?
+      { case left ~ _ ~ right => FieldSelectionExpr(left, right) } //TODO Make this reachable. - Parser gets caught up before reaching this. Possible workaround: just assign to a variable and call a field on that.
       | simpleExpr ~ typeArgs ^^
       { case _ => null })
 
@@ -890,9 +890,9 @@ object Parser extends RegexParsers with PackratParsers {
       | simpleType  ^^
       { case simpleType => (simpleType, Nil) })
 
-  lazy val topStatSeq: P[Expr] =
+  lazy val topStatSeq: P[Expr] = //TODO make this the top of the parser? Wrap in some container in AST - An Object?
     (topStat ~ topStatSeqH ^^
-      { case _ => null }
+      { case _ => null } 
       | topStat)
   lazy val topStatSeqH: P[Expr] =
     (";" ~ topStat ~ topStatSeqH ^^
