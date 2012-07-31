@@ -26,13 +26,13 @@ object CodeGenerator {
     	case TypedStringExpr(value, valtype) => "\"" + (value.map(escapify).mkString) + "\""
     	case TypedCharExpr(value, valtype) => "\"" + escapify(value) + "\""
     	case TypedVarExpr(varName, valtype) => varName
-    	//case TypedFieldSelectionExpr(obj:String, field:String) => obj + " " + field
+    	
     	
     	case TypedWhileExpr(predicate, body, valtype) => "whileLoop( " +
 		     thunkify(generate(predicate, cObj)) + ", " + 
 		     thunkify(generate(body, cObj)) + " )"
     	
-    	case TypedClassDefStmt(objType, name, constrParams, whatExtends, extendsWith, body, symTable, supers) => 
+    	case TypedClassDefStmt(objType, name, constrParams, whatExtends, extendArgs, extendsWith, body, symTable) => 
     	   objType match {
     	     case "trait" => traitGenerator(name, whatExtends, extendsWith, body, cObj)
     	     case _ => "fail"
@@ -80,10 +80,10 @@ object CodeGenerator {
     	case x::Nil => x + " ; \n"
     	case x::xs => x + " , " + varProcess(xs, expr)
 	} 
-	def traitGenerator(name : String, extendsWhat : ClassInstance, extendsWith : List[String], body : List[TypedStmt], cObj : String) = 
+	def traitGenerator(name : String, extendsWhat : String, extendsWith : List[String], body : List[TypedStmt], cObj : String) = 
 	  cObj + "." + name + " = " + "{}; \n" +
-	  cObj + "." + name + "_initProto = " + initProto(name, body, cObj) + "\n" +
-	  cObj + "." + name + "_init = " 
+	  cObj + "." + name + "._initProto = " + initProto(name, body, cObj) + "\n" +
+	  cObj + "." + name + "_init = " + init(name, body, cObj) + "\n"
 	
 	
 	def varProcessAux(los : List[String], expr : TypedExpr, cObj : String):String = los match{
@@ -96,26 +96,34 @@ object CodeGenerator {
 	   case None => op
 	}
 	
-	def processTraitBody(body : List[TypedStmt]) = body match {
-	   case Nil => ""
-	   case x::xs => x match {
-	     case TypedFunDefStmt(name, args, retType, body, symbolTable) => ""
-	     case _ => ""
-	   }
-	}
-	
-	
-	
-	def initProto(name : String, body : List[TypedStmt], cObj : String) = "function(p) {" + body.map(x => gen(x, cObj)) + "p.supers[" + name + "] = true; };"
+	def initProto(name : String, body : List[TypedStmt], cObj : String) = "function(p) { \n " + body.foldLeft("")((acc, x) => acc + gen(x, cObj)) + 
+	                                                                      "p.supers[" + name + "] = true; \n };"
+	                                                                      
+	def init(name : String, body : List[TypedStmt], cObj : String) = "function(o) { \n " + body.foldLeft("")((acc, x) => acc + gen2(x, cObj)) + "};"
 	
 	  
 	def gen(stmt : TypedStmt, cObj : String) = stmt match {
-	  case TypedFunDefStmt(name, params, retType, body, symTable) => name + " = function(" + commaSeparatedProcess(params, cObj) + "){ \n" +
-	  																 "var self = this; \n" + "return ...." //TODO// Take body of function
-	  
+	  case TypedFunDefStmt(name, params, retType, body, symTable) => "p." + name + " = function(" + commaSeparatedProcess(params, cObj) + "){ \n \t" +
+	  																 "var self = this; \n \t" + "return " + generate(body, cObj) + ";\n }; \n" 
+	  case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => listofvaldecs.foldLeft("") ((acc, x) => acc + classVar(x))
+	  case _ => "fail"
+	}
+	
+	def gen2(stmt : TypedStmt, cObj : String) = stmt match {
+	 
+	  case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => listofvaldecs.foldLeft("") ((acc, x) => acc + classVar2(x, expr, cObj)) + "\n " 
 	  case _ => ""
 	}
 	
-	//def classGen(name : Type, )
-	def apply(source: TypedStmt, currentObj: String): String = generate (source, currentObj)
+	def classVar(id : String): String = "p." + id + " = function(){ \n \t" +
+			                            "var self = this; \n \t" +
+			                            "return self._" + id + "; \n }; \n" + 
+			                            "p." + id + "_ = function(" + id + "){ \n \t" +
+			                            "var self = this; \n \t" +
+			                            "self._" + id + " = " + id + "; \n }; \n"
+   
+   def classVar2(id : String, expr : TypedExpr, cObj : String): String = "o._" + id + " = " + generate(expr, cObj) + ";"
+   		
+  
+   def apply(source: TypedStmt, currentObj: String): String = generate (source, currentObj)
 }

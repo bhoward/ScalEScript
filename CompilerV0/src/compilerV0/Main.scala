@@ -14,22 +14,23 @@ object Main {
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5) {5; 6}"))
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5, 6) with Fee with Foh {5}"))
 	    */
-	    println(Parser("trait Fee {4}"))
 	    
+	    println(CodeGenerator(TypeVerifier(ASTConverter(Parser("trait A {var y : Int = 0; var x : Int = 5; def f(x : Int) : Int = x + 1; def g(x : Int) : Int = x + 2}"))), "top"))
+	    /*
 	    println(Parser("trait Baz extends Fee {5}"))
 	    println(Parser("def foo(x:Int):Int = x + 1 "))
-	    /*
+	    
 	    
 	    println(Parser("trait Boo extends Fee with Baz {7}"))
 	    println(Parser("object Car {6}"))
 	    println(Parser("object Truck extends Vehicle {17}"))
 	    println(Parser("object Truck extends Vehicle with Car {25}"))
 	    println(Parser("new Car(5,6)"))
-	    */
+	    
 
 	    println(Parser("this.first"))
-	    //println(Parser("this.first=(4)"))
-	    
+	    println(Parser("this.first=(4)"))
+	    */
 	    /*
 		println(Parser("""{var z:Int = 6; def foo():Int = {x+y+z};}"""));
 		println(Parser("""class Foo(x:Int, y:Int) {var z:Int = 6; def foo():Int = {x+y+z};}"""));
