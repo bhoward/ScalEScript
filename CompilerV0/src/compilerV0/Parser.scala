@@ -553,8 +553,7 @@ object Parser extends RegexParsers with PackratParsers {
       | defG
       | rep1(localModifier) ~ tmplDef ^^
       { case _ => null }
-      | tmplDef ^^
-      { case _ => null }
+      | tmplDef
       | expr1
       | "" ^^
       { case _ => null })
