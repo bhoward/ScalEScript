@@ -28,9 +28,7 @@ object CodeGenerator {
     	case TypedVarExpr(varName, valtype) => varName
     	
     	
-    	case TypedWhileExpr(predicate, body, valtype) => "whileLoop( " +
-		     thunkify(generate(predicate, cObj)) + ", " + 
-		     thunkify(generate(body, cObj)) + " )"
+
     	
     	case TypedClassDefStmt(objType, name, constrParams, whatExtends, extendArgs, extendsWith, body, symTable) => 
     	   objType match {
@@ -39,6 +37,11 @@ object CodeGenerator {
     	     //"class" => classGenerator()
     	     //"object" => objectGenerator()
     	}
+
+    	case TypedWhileExpr(predicate, body, doFlag, valtype) => {if (doFlag) "doLoop( " else "whileLoop( "} +
+		     thunkify(generate(predicate, cObj)) + ", " + 
+		     thunkify(generate(body, cObj)) + " )"
+
     	
     	     
     	case TypedFunDefStmt(name, args, retType, body, symbolTable) => "var " + name + " = function ( " + commaSeparatedProcess(args, cObj) + " )\n {" +

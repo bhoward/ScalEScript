@@ -26,7 +26,7 @@ object TypeVerifier {
 	  	case AnnotBinOpExpr(op, left, right) => verifyBinOpExpr(op, left, right, scopes)
 	  	case AnnotIfThenExpr(test, trueClause) => verifyIfThenExpr(test, trueClause, scopes)
   	    case AnnotIfThenElseExpr(test, trueClause, falseClause) => verifyIfThenElseExpr(test, trueClause, falseClause, scopes)
-  	    case AnnotWhileExpr(test, body) => verifyWhileExpr(test, body, scopes)
+  	    case AnnotWhileExpr(test, body, doFlag) => verifyWhileExpr(test, body, doFlag, scopes)
 	  	case AnnotVarExpr(id) => verifyVarExpr(id, scopes)
     	case AnnotFunExpr(id, args) => verifyFunExpr(id, args, scopes)
     	case AnnotStringExpr(str) => verifyStringExpr(str, scopes)
@@ -35,6 +35,8 @@ object TypeVerifier {
     	case AnnotBoolExpr(bool) => verifyBoolExpr(bool, scopes)
     	case AnnotAnonFuncExpr(args, body, symbolTable) => verifyAnonFuncExpr(args, body, symbolTable, scopes)
     	case AnnotAssignExpr(lhs, rhs) => verifyAssignExpr(lhs, rhs, scopes)
+    	case AnnotClassExpr(name, args) => verifyClassExpr(name, args, scopes)
+    	case AnnotFieldSelectionExpr(obj, field) => verifyFieldSelectionExpr(obj, field, scopes)
 		case _ => throw new Exception("Unknown expr: "+stmt)
 	}
 	def verifyValDefStmt(ids: List[String], valType: Type, value: AnnotExpr, valTypeFlag: String, scopes: List[Scope]): TypedValDefStmt = {	
@@ -170,13 +172,13 @@ object TypeVerifier {
   			}
   		}
 	}
-	def verifyWhileExpr(predicate: AnnotExpr, body: AnnotExpr, scopes: List[Scope]): TypedWhileExpr = {
+	def verifyWhileExpr(predicate: AnnotExpr, body: AnnotExpr, doFlag: Boolean, scopes: List[Scope]): TypedWhileExpr = {
 		var predicateTyped = verifyExpr(predicate, scopes)
     	var bodyTyped = verifyExpr(body, scopes)
     	if (predicateTyped.evalType() != BaseType("Boolean")) {
   			throw new Exception("While loops require a predicate of type Boolean");
   		} else {
-  			return TypedWhileExpr(predicateTyped, bodyTyped, BaseType("Unit"));
+  			return TypedWhileExpr(predicateTyped, bodyTyped, doFlag, BaseType("Unit"));
   		}
 	}
 	def verifyVarExpr(varName: String, scopes: List[Scope]): TypedVarExpr = {
@@ -254,6 +256,36 @@ object TypeVerifier {
 	    }
 	    return TypedAssignExpr(lhsTyped, rhsTyped, BaseType("Unit"))
 	}
+	def verifyClassExpr(name: String, args: List[AnnotExpr], scopes: List[Scope]): TypedClassExpr = {
+		var paramTypes: List[Type] = getClassScope(scopes, name).paramTypes;
+		var argsTyped: List[TypedExpr] = args.map(arg => verifyExpr(arg, scopes))
+		var argTypes: List[Type] = argsTyped.map(arg => arg.evalType())
+		while (argTypes.length > 0 && paramTypes.length > 0) {
+	    	if (!checkType(argTypes.head, paramTypes.head, scopes)){
+	    		throw new Exception("Arguement type "+argTypes.head+" does not match the required type "+argTypes.head+" for class "+name+".")
+	    	} else {
+	    		argTypes = argTypes.tail;
+	    		paramTypes = paramTypes.tail;
+	    	}
+	    }
+    	if (argTypes.length > 0) {
+    		throw new Exception("Too many arguements specified for function for class "+name+".")
+    	} else if (paramTypes.length > 0) {
+    		throw new Exception("Not enough arguements specified for function for class "+name+".")
+    	}
+    	
+    	return TypedClassExpr(name, argsTyped, BaseType(name));
+	}
+	def verifyFieldSelectionExpr(obj: AnnotExpr, field: String, scopes: List[Scope]): TypedFieldSelectionExpr = {
+		var typedObj: TypedExpr = verifyExpr(obj, scopes);
+		var fieldType: Type = null;
+		if (typedObj.evalType().isFunc()){
+			throw new Exception("Cannot select a field from a function") //Or can you?
+		} else {
+			fieldType = getFieldType(scopes, typedObj.evalType().getType(), field);
+		}
+		return TypedFieldSelectionExpr(typedObj, field, fieldType);
+	}
 	/* End verify functions */
 	
 	/* Helper functions */
@@ -280,6 +312,34 @@ object TypeVerifier {
 	  			return getClassScope(rest, className)
 	  		}
 	  	}
+	}
+	//Returns the type of the specified field in the specified class (also checking superClasses)
+	def getFieldType(scopes: List[Scope], className: String, fieldName: String): Type = {
+		var classScope: ClassScope = getClassScope(scopes, className);
+		if (classScope.objects.contains(fieldName)) {
+			return classScope.objects.get(fieldName).get;
+		} else {
+			//Check superclasses!
+			var superClasses: List[String] = classScope.superTypes;
+			var theType: Type = null;
+			while (superClasses.length > 0) { 
+				theType = getFieldTypeH(scopes, superClasses.head, fieldName)
+				if (theType != null) {
+					return theType;
+				}
+				superClasses = superClasses.tail;
+			}
+			throw new Exception("The field: "+fieldName+" was not found in class "+className+".");
+		}
+	}
+	//Returns the type of the specified field in the specified class (without checking superClasses)
+	def getFieldTypeH(scopes: List[Scope], className: String, fieldName: String): Type = {
+		var classScope: ClassScope = getClassScope(scopes, className);
+		if (classScope.objects.contains(fieldName)) {
+			return classScope.objects.get(fieldName).get;
+		} else {
+			return null;
+		}
 	}
 	//Returns true if all the types uses in varType (if the type is a function, it checks all argument and result types) are defined
 	def checkTypes(scopes: List[Scope], varType: Type): Boolean = {

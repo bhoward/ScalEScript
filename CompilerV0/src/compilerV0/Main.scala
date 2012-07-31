@@ -40,8 +40,9 @@ object Main {
 	  
 		//println(Parser("""{var z:Int = 6; def foo():Int = {x+y+z};}"""));
 		//println(Parser("""object Foo {var z:Int = 6; def foo():Int = {z+z};}"""));
-
-		/*
+	  
+		//println(TypeVerifier(ASTConverter(Parser("""object O {class A(x:Int) {def foo():Int = {x+1}}; class B extends A(5); var z:B = new B; z.foo();}"""))))
+	  
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 
 	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
@@ -73,6 +74,7 @@ object Main {
 	        );
 	    testCompiler("while", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n);}; println("Done");}""");
 	    testCompiler("while2", """{var n: Int = 0; while (n < 10) {n = n + 1; print(n + " ");}; println("Done");}""");
+	    testCompiler("do", """{var x: Int = 0; do {x = x + 1; println(x);} while (x < 10)}""")
 	    testCompiler("strings",
 	        "{println(\"\"\"Hello\n" +
 	        "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
@@ -82,7 +84,6 @@ object Main {
 		*/
 
 	    testCompiler("Curry", """println({def doSomeMath(x:Int)(y:Int)(z:Int) : Int = x*y+z; doSomeMath(2)(3)(4)})""");
-	    */
 
 	}
   

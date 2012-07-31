@@ -26,7 +26,7 @@ object ASTConverter {
 	  	case BinOpExpr(op, l, r) => convertBinOpExpr(op, l, r, scopes);
 	  	case IfThenExpr(predicate, expr) => convertIfThenExpr(predicate, expr, scopes);
   	    case IfThenElseExpr(predicate, trueValue, falseValue) => convertIfThenElseExpr(predicate, trueValue, falseValue, scopes);
-  	    case WhileExpr(predicate, body) => convertWhileExpr(predicate, body, scopes);
+  	    case WhileExpr(predicate, body, doFlag) => convertWhileExpr(predicate, body, doFlag, scopes);
 	  	case VarExpr(varName) => convertVarExpr(varName, scopes);
     	case FunExpr(id, args) => convertFunExpr(id, args, scopes);
     	case StringExpr(value) => convertStringExpr(value, scopes);
@@ -35,6 +35,8 @@ object ASTConverter {
     	case BoolExpr(value) => convertBoolExpr(value, scopes);
     	case AnonFuncExpr(args, body) => convertAnonFuncExpr(args, body, scopes);
     	case AssignExpr(lhs, rhs) => convertAssignExpr(lhs, rhs, scopes);
+    	case ClassExpr(name, args) => convertClassExpr(name, args, scopes);
+    	case FieldSelectionExpr(obj, field) => convertFieldSelectionExpr(obj, field, scopes);
 		case _ => throw new Exception("Unknown expr: "+stmt);
 	}
 	def convertValDefStmt(ids: List[String], valType: Type, value: Expr, valTypeFlag: String, scopes: List[Scope]): AnnotValDefStmt = {	
@@ -104,8 +106,8 @@ object ASTConverter {
 		  		putClass(scopes, className, symbolTable);
 		  	}
 		  	case "case class" => {
-		  		//TODO add case class stuff to symbolTable
 		  		symbolTable = buildClassScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		//TODO add case class stuff to symbolTable
 		  		putClass(scopes, className, symbolTable);
 		  	}
 		  	case "trait" => {
@@ -117,8 +119,8 @@ object ASTConverter {
 		  		putObject(scopes, className, symbolTable);
 		  	}
 		  	case "case object" => {
-		  		//TODO add case class stuff to symbolTable
 		  		symbolTable = buildObjectScope(scopes, className, extendsClassName, withClassNames, paramTypes, newScope);
+		  		//TODO add case class stuff to symbolTable
 		  		putObject(scopes, className, symbolTable);
 		  	}
 		  	case _ => {throw new Exception("Unknown class typeFlag: "+typeFlag)}
@@ -146,10 +148,10 @@ object ASTConverter {
 		var annotFalse: AnnotExpr = convertExpr(falseValue, scopes);
 		return AnnotIfThenElseExpr(annotPredicate, annotTrue, annotFalse);
 	}
-	def convertWhileExpr(predicate: Expr, body: Expr, scopes: List[Scope]): AnnotWhileExpr = {
+	def convertWhileExpr(predicate: Expr, body: Expr, doFlag: Boolean, scopes: List[Scope]): AnnotWhileExpr = {
 		var annotPredicate: AnnotExpr = convertExpr(predicate, scopes);
 		var annotBody: AnnotExpr = convertExpr(body, scopes);
-		return AnnotWhileExpr(annotPredicate, annotBody);
+		return AnnotWhileExpr(annotPredicate, annotBody, doFlag);
 	}
 	def convertVarExpr(varName: String, scopes: List[Scope]): AnnotVarExpr = {
 		return AnnotVarExpr(varName);
@@ -182,6 +184,15 @@ object ASTConverter {
 	    var annotLhs: AnnotExpr = convertExpr(lhs, scopes);
 		var annotRhs: AnnotExpr = convertExpr(rhs, scopes);
 		return AnnotAssignExpr(annotLhs, annotRhs);
+	}
+	def convertClassExpr(name: Type, args: List[Expr], scopes: List[Scope]): AnnotClassExpr = {
+		var className: String = name.getType();
+		var annotArgs: List[AnnotExpr] = args.map(arg => convertExpr(arg, scopes));
+		return AnnotClassExpr(className, annotArgs);
+	}
+	def convertFieldSelectionExpr(obj: Expr, field: String, scopes: List[Scope]): AnnotFieldSelectionExpr = {
+		var annotObj: AnnotExpr = convertExpr(obj, scopes);
+		return AnnotFieldSelectionExpr(annotObj, field);
 	}
 	/* End convert functions */
 	

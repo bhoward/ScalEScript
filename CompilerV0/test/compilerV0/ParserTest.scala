@@ -89,8 +89,11 @@ object ParserTest extends Test {
     checkParse("if (5 < 5) 5 else 6", IfThenElseExpr(BinOpExpr("<",NumExpr(NInt(5)),NumExpr(NInt(5))),NumExpr(NInt(5)),NumExpr(NInt(6))))
 
     //While statement
-    checkParse("while (true) 5", WhileExpr(BoolExpr(true),NumExpr(NInt(5))))
-
+    checkParse("while (true) 5", WhileExpr(BoolExpr(true),NumExpr(NInt(5)), false))
+    checkParse("{var x: Int = 0; do {x = x + 1; println(x);} while (x < 10)}", BlockExpr(List(ValDefStmt(List("x"),BaseType("Int"),NumExpr(NInt(0)),"var"), 
+            WhileExpr(BinOpExpr("<",VarExpr("x"),NumExpr(NInt(10))),BlockExpr(List(AssignExpr(VarExpr("x"),BinOpExpr("+",VarExpr("x"),NumExpr(NInt(1)))), FunExpr(VarExpr("println"),List(VarExpr("x"))))),true))))
+    checkParse("{do 5; while (true)}", BlockExpr(List(WhileExpr(BoolExpr(true),NumExpr(NInt(5)),true)))) 
+            
     //Block statement
     checkParse("{ 1; 2; 3; 4; }", BlockExpr(List(NumExpr(NInt(1)), NumExpr(NInt(2)), NumExpr(NInt(3)), NumExpr(NInt(4)))))
     checkParse("{ 1; 2; 3; 4 }", BlockExpr(List(NumExpr(NInt(1)), NumExpr(NInt(2)), NumExpr(NInt(3)), NumExpr(NInt(4)))))
