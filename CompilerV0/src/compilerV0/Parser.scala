@@ -808,7 +808,8 @@ object Parser extends RegexParsers with PackratParsers {
       { case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body))
              => ClassDefStmt("class", name, args, whatExtends, extendsWith, body ) }
       | "case" ~ "object" ~ objectDef ^^
-      { case _ => null }
+      { case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body))
+    	  	 => ClassDefStmt("case object", name, args, whatExtends, extendsWith, body ) }
       | "object" ~ objectDef ^^
       { case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) 
              => ClassDefStmt("object", name, args, whatExtends, extendsWith, body ) }
