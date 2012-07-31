@@ -15,7 +15,7 @@ object Main {
 	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5, 6) with Fee with Foh {5}"))
 	    */
 	    
-	    println(CodeGenerator(TypeVerifier(ASTConverter(Parser("trait A {var y : Int = 0; var x : Int = 5; def f(x : Int) : Int = x + 1; def g(x : Int) : Int = x + 2}"))), "top"))
+	    println(CodeGenerator(TypeVerifier(ASTConverter(Parser("trait A {var y : Int = 0; def f(x : Int) : Int = g(g(x)); def g(x : Int) : Int = x + 2}"))), "top"))
 	    /*
 	    println(Parser("trait Baz extends Fee {5}"))
 	    println(Parser("def foo(x:Int):Int = x + 1 "))
