@@ -26,8 +26,9 @@ object Main {
 	  
 		//println(Parser("""{var z:Int = 6; def foo():Int = {x+y+z};}"""));
 		//println(Parser("""object Foo {var z:Int = 6; def foo():Int = {z+z};}"""));
-
-		
+	  
+		//println(TypeVerifier(ASTConverter(Parser("""object O {class A(x:Int) {def foo():Int = {x+1}}; class B extends A(5); var z:B = new B; z.foo();}"""))))
+	  
 	    testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
 	    testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
 	    testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");

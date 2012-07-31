@@ -6,6 +6,11 @@ import java.io.Reader
 object Parser extends RegexParsers with PackratParsers {
   type P[T] = PackratParser[T]
 
+  def apply(source: String): Stmt = parseAll(top, source) match {
+    case Success(result, _) => result
+    case ns: NoSuccess => throw new Exception(ns.msg)
+  }
+  
   // Treat comments as whitespace
   override val whiteSpace = """(\s|(//(?d:.)*\n)|(/\*(?s:.)*?\*/))*""".r
 
@@ -49,9 +54,10 @@ object Parser extends RegexParsers with PackratParsers {
   //This differs a bit from the scala grammar. I combined upper and idrest to make upperid
   lazy val plainid: P[String] =
     (upperid
-      | varid // op // TODO
+      | varid 
+      //| op // TODO Add op to plainid
       )
-  //Doesn't handle the _ op at this moment // TODO
+  //TODO handle the _ op
 
   def upperid: Parser[String] = """[A-Z$][A-Za-z0-9$_]*|_[A-Za-z0-9$_]+""".r
 
@@ -483,7 +489,7 @@ object Parser extends RegexParsers with PackratParsers {
       | simpleExpr)
 
   lazy val simpleExpr: P[Expr] =
-    ("new" ~ classTemplate ^^
+    ("new" ~ classTemplate ^^ //TODO what if stms is not Nil? What happens with stms?
       { case _ ~ Tuple3(ClassInstance(name, args), types, stms) => ClassExpr(name, args)  }
       | blockExpr
       | simpleExpr1 ~ "_" ^^
@@ -495,13 +501,13 @@ object Parser extends RegexParsers with PackratParsers {
       | simpleExpr1 ~ argumentExprs ^^
       { case funcName ~ args => FunExpr(funcName, args) }
       | path ^^
-      { case str => {if (str.contains('.')) FieldSelectionExpr(str) else VarExpr(str)} }
+      { case str => {if (str.contains('.')) {fieldSplit(str)} else VarExpr(str)} }
       | "(" ~ exprs ~ ")" ^^
       { case _ ~ exprs ~ _ => {if (exprs.length == 1) exprs.head else null } }
       | "(" ~ ")" ^^
       { case _ => null }
       | simpleExpr ~ "." ~ id ^^
-      { case _ => null }
+      { case left ~ _ ~ right => FieldSelectionExpr(left, right) } //TODO Make this reachable?
       | simpleExpr ~ typeArgs ^^
       { case _ => null })
 
@@ -910,45 +916,57 @@ object Parser extends RegexParsers with PackratParsers {
       | topStatSeq ^^
       { case _ => null })
 
-  //Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
-  def buildLeft(base: Expr, rest: List[OpPair]): Expr =
-    rest.foldLeft(base)((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
-
-  def buildRight(base: Expr, rest: List[OpPair]): Expr = rest match {
-    case Nil => base
-    case op :: ops => BinOpExpr(op.getOp(), buildRight(op.getExpr(), ops), base)
-  }
-
-  def apply(source: String): Stmt = parseAll(top, source) match {
-    case Success(result, _) => result
-    case ns: NoSuccess => throw new Exception(ns.msg)
-  }
-
-
-  // Expects first and last characters to be either " or '
-  def deQuotify(s: String): String = {
-    val buf = new StringBuilder
-    var i = 1 // Skip first character
-    while (i < s.length - 1) {
-      s.charAt(i) match {
-        case '\\' => s.charAt(i + 1) match {
-          case 'b' => buf.append('\b'); i += 1
-          case 'f' => buf.append('\f'); i += 1
-          case 'n' => buf.append('\n'); i += 1
-          case 'r' => buf.append('\r'); i += 1
-          case 't' => buf.append('\t'); i += 1
-          case c => buf.append(c); i += 1 // Includes \ " and ', plus any other
-        }
-
-        case c => buf.append(c)
-      }
-      i += 1
+    /* Helper functions */    
+    //Used to turn the list of left or right associative expressions in to nested expressions of the correct associativity
+    def buildLeft(base: Expr, rest: List[OpPair]): Expr = {
+    	rest.foldLeft(base)((acc, pair) => BinOpExpr(pair.getOp(), acc, pair.getExpr()))
     }
-    buf.toString
-  }
 
-  // Expects first and last _three_ characters to be "
-  def deTriquotify(s: String): String = {
-    s.substring(3, s.length - 3)
-  }
+    def buildRight(base: Expr, rest: List[OpPair]): Expr = rest match {
+    	case Nil => base
+    	case op :: ops => BinOpExpr(op.getOp(), buildRight(op.getExpr(), ops), base)
+    }
+
+	def fieldSplit(id: String): FieldSelectionExpr = {
+		var ids: Array[String] = id.split("\\.");
+    	if (ids.length > 0) {
+    		return fieldSplitH(ids.toList.reverse);
+    	} else {
+    		throw new Exception("No dot found in id: "+id+".");
+    	}
+ 	}
+	def fieldSplitH(ids: List[String]): FieldSelectionExpr = {
+		if (ids.length > 2){
+			return FieldSelectionExpr(fieldSplitH(ids.tail), ids.head);
+		} else {
+			return FieldSelectionExpr(VarExpr(ids.last), ids.head)
+		}
+	}
+
+
+	// Expects first and last characters to be either " or '
+	def deQuotify(s: String): String = {
+		val buf = new StringBuilder
+		var i = 1 // Skip first character
+		while (i < s.length - 1) {
+			s.charAt(i) match {
+				case '\\' => s.charAt(i + 1) match {
+					case 'b' => buf.append('\b'); i += 1
+					case 'f' => buf.append('\f'); i += 1
+					case 'n' => buf.append('\n'); i += 1
+					case 'r' => buf.append('\r'); i += 1
+					case 't' => buf.append('\t'); i += 1
+					case c => buf.append(c); i += 1 // Includes \ " and ', plus any other
+				}
+				case c => buf.append(c)
+			}
+			i += 1
+		}
+		buf.toString
+	}
+
+	// Expects first and last _three_ characters to be "
+	def deTriquotify(s: String): String = {
+		s.substring(3, s.length - 3)
+	}
 }

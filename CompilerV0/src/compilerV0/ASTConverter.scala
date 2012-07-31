@@ -35,6 +35,8 @@ object ASTConverter {
     	case BoolExpr(value) => convertBoolExpr(value, scopes);
     	case AnonFuncExpr(args, body) => convertAnonFuncExpr(args, body, scopes);
     	case AssignExpr(lhs, rhs) => convertAssignExpr(lhs, rhs, scopes);
+    	case ClassExpr(name, args) => convertClassExpr(name, args, scopes);
+    	case FieldSelectionExpr(obj, field) => convertFieldSelectionExpr(obj, field, scopes);
 		case _ => throw new Exception("Unknown expr: "+stmt);
 	}
 	def convertValDefStmt(ids: List[String], valType: Type, value: Expr, valTypeFlag: String, scopes: List[Scope]): AnnotValDefStmt = {	
@@ -182,6 +184,15 @@ object ASTConverter {
 	    var annotLhs: AnnotExpr = convertExpr(lhs, scopes);
 		var annotRhs: AnnotExpr = convertExpr(rhs, scopes);
 		return AnnotAssignExpr(annotLhs, annotRhs);
+	}
+	def convertClassExpr(name: Type, args: List[Expr], scopes: List[Scope]): AnnotClassExpr = {
+		var className: String = name.getType();
+		var annotArgs: List[AnnotExpr] = args.map(arg => convertExpr(arg, scopes));
+		return AnnotClassExpr(className, annotArgs);
+	}
+	def convertFieldSelectionExpr(obj: Expr, field: String, scopes: List[Scope]): AnnotFieldSelectionExpr = {
+		var annotObj: AnnotExpr = convertExpr(obj, scopes);
+		return AnnotFieldSelectionExpr(annotObj, field);
 	}
 	/* End convert functions */
 	

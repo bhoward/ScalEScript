@@ -33,8 +33,8 @@ case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) exten
 case class WhileExpr(test: Expr, body: Expr, doFlag: Boolean) extends Expr
 case class AnonFuncExpr(args: List[ParamDclStmt], body: Expr) extends Expr
 case class AssignExpr(lhs: Expr, rhs: Expr) extends Expr
-case class ClassExpr(name: Type, args : List[Expr]) extends Expr
-case class FieldSelectionExpr(selection: String) extends Expr
+case class ClassExpr(name: Type, args: List[Expr]) extends Expr
+case class FieldSelectionExpr(obj: Expr, field: String) extends Expr
 
 //Annotated AST
 sealed trait Tableless {
@@ -66,6 +66,8 @@ case class AnnotIfThenElseExpr(test: AnnotExpr, trueClause: AnnotExpr, falseClau
 case class AnnotWhileExpr(test: AnnotExpr, body: AnnotExpr, doFlag: Boolean) extends AnnotExpr with Tableless
 case class AnnotAnonFuncExpr(args: List[AnnotParamDclStmt], body: AnnotExpr, symbolTable: Scope) extends AnnotExpr
 case class AnnotAssignExpr(lhs: AnnotExpr, rhs: AnnotExpr) extends AnnotExpr with Tableless
+case class AnnotClassExpr(name: String, args: List[AnnotExpr]) extends AnnotExpr with Tableless
+case class AnnotFieldSelectionExpr(obj: AnnotExpr, field: String) extends AnnotExpr with Tableless
 
 //Typed AST
 sealed trait TypedStmt {
@@ -102,8 +104,8 @@ case class TypedIfThenElseExpr(test: TypedExpr, trueClause: TypedExpr, falseClau
 case class TypedWhileExpr(test: TypedExpr, body: TypedExpr, doFlag: Boolean, override val evalType: Type) extends TypedExpr with Tableless
 case class TypedAnonFuncExpr(args: List[TypedParamDclStmt], body: TypedExpr, symbolTable: Scope, override val evalType: Type) extends TypedExpr
 case class TypedAssignExpr(lhs: TypedExpr, rhs: TypedExpr, override val evalType: Type) extends TypedExpr with Tableless
-case class TypedClassExpr(name: Type, args: List[Expr]) extends TypedExpr with Tableless
-case class TypedFieldSelectionExpr(obj: String, field: String) extends TypedExpr with Tableless
+case class TypedClassExpr(name: String, args: List[TypedExpr], override val evalType: Type) extends TypedExpr with Tableless
+case class TypedFieldSelectionExpr(obj: TypedExpr, field: String, override val evalType: Type) extends TypedExpr with Tableless
 
 //Classes used for compiling
 sealed trait Numeric
