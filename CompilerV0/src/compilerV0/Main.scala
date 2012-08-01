@@ -14,32 +14,8 @@ import scala.collection.mutable.Map;
  */
 object Main {
     def main(args: Array[String]) {
-        /*
-	    println(Parser("class Foo {5; 6}"))
-	    println(Parser("class Foo() {5; 6}"))
-	    println(Parser("class Foo(x:Int, y:Int) {5; 6}"))
-	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5) {5; 6}"))
-	    println(Parser("class Foo(x:Int, y:Int) extends Bar(5, 6) with Fee with Foh {5}"))
-	    */
-	    
-	    println(CodeGenerator(TypeVerifier(ASTConverter(Parser("trait A {var y : Int = 0; def f(x : Int) : Int = g(g(x)); def g(x : Int) : Int = x + 2}"))), "top"))
-	    /*
-	    println(Parser("trait Baz extends Fee {5}"))
-	    println(Parser("def foo(x:Int):Int = x + 1 "))
-	    
-	    
-	    println(Parser("trait Boo extends Fee with Baz {7}"))
-	    println(Parser("object Car {6}"))
-	    println(Parser("object Truck extends Vehicle {17}"))
-	    println(Parser("object Truck extends Vehicle with Car {25}"))
-	    println(Parser("new Car(5,6)"))
-	    
-
-	    println(Parser("this.first"))
-	    println(Parser("this.first=(4)"))
-	    */
-
-	    /*
+	    testCompiler("Factorial", """{ def factorial(n: Int):Int = if (n == 0) 1 else n * factorial(n-1); println(factorial(5)); }""");
+	    testCompiler("Arithmetic", """4+5.0*3""");
         testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
         testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
         testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
@@ -74,7 +50,6 @@ object Main {
                 "This is a test:\\tone\\ttwo\\tthree\"\"\"); /* should not be tabbed */\n" +
                 "println(\"This is a test:\\tone\\ttwo\\tthree\") /* should be tabbed */}");
         testCompiler("Curry", """println({def doSomeMath(x:Int)(y:Int)(z:Int) : Int = x*y+z; doSomeMath(2)(3)(4)})""");
-        */
     }
     /** Generates an HTML page with the specified testName consisting of each stage of the compilation process of the specified scalaSource */
     def testCompiler(testName: String, scalaSource: String) {
@@ -83,7 +58,7 @@ object Main {
             val annotatedAst = ASTConverter(ast)
             val typedAst = TypeVerifier(annotatedAst);
             val jsSource = CodeGenerator(typedAst, "top");
-            writeToFile("""src/HTML/""" + testName + ".html", makeHTML(scalaSource, ast.toString(), typedAst.toString(), jsSource));
+            writeToFile("""src/HTML/""" + testName + ".html", makeHTML(scalaSource, ast.toString(), annotatedAst.toString(), typedAst.toString(), jsSource));
             println(testName + ".html was successfully created.");
         } catch {
             case e: Exception => { System.err.println("Error while compiling " + testName + ". " + e); }
@@ -107,14 +82,15 @@ object Main {
         fw.close();
     }
     /** Builds a String containing the contents of an HTML page to be generated for a specific test */
-    def makeHTML(scalaSource: String, ast: String, typedAst: String, jsSource: String): String = {
+    def makeHTML(scalaSource: String, ast: String, annotAst: String, typedAst: String, jsSource: String): String = {
         val p1: String = """<html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><title>CompilerV0</title><link rel="stylesheet" type="text/css" href="CompilerV0.css" /><script type="text/javascript" src="CompilerV0.js" /></script></head><body><h1>Scala to Javascript compiler test page </h1><h2>Scala Source:</h2><div id="ScalaCode" class="code">""";
         val p2: String = """</div><h2>Abstract Syntax Tree:</h2><div id="AST" class="code">""";
-        val p3: String = """</div><h2>Typed Abstract Syntax Tree:</h2><div id="TypedAST" class="code">""";
-        val p4: String = """</div><h2>Javascript Source:</h2><div id="JSCode" class="code">""";
-        val p5: String = """</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">""";
-        val p6: String = """</script></div></body>""";
+        val p3: String = """</div><h2>Annotated Abstract Syntax Tree:</h2><div id="AnnotAST" class="code">""";
+        val p4: String = """</div><h2>Typed Abstract Syntax Tree:</h2><div id="TypedAST" class="code">""";
+        val p5: String = """</div><h2>Javascript Source:</h2><div id="JSCode" class="code">""";
+        val p6: String = """</div><h2>Javascript Execution:</h2><div id="JSExec" class="code"><script language="Javascript">""";
+        val p7: String = """</script></div></body>""";
 
-        return p1 + scalaSource + p2 + ast + p3 + typedAst + p4 + jsSource + p5 + jsSource + p6;
+        return p1 + scalaSource + p2 + ast + p3 + annotAst + p4 + typedAst + p5 + jsSource + p6 + jsSource + p7;
     }
 }
