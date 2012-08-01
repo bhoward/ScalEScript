@@ -38,11 +38,9 @@ object CodeGenerator {
         case TypedVarExpr(varName, valtype) => varName
 
         case TypedClassDefStmt(objType, name, constrParams, whatExtends, extendArgs, extendsWith, body, symTable) =>
-            objType match {
+            objType match { // TODO // Add clauses for "class", "object", etc
                 case "trait" => traitGenerator(name, whatExtends, extendsWith, body, cObj)
-                case _ => "fail"
-                //"class" => classGenerator()
-                //"object" => objectGenerator()
+                case _ => "fail"  // FIXME // Should throw an exception eventually
             }
 
         case TypedWhileExpr(predicate, body, doFlag, valtype) => { if (doFlag) "doLoop( " else "whileLoop( " } +
@@ -62,6 +60,7 @@ object CodeGenerator {
         case _ => throw new Exception("No match found for pattern")
 
     }
+    
     def thunkify(code: String): String = "(function() {\n return " + code + "})"
 
     def escapify(ch: Char): String = ch match {
@@ -80,6 +79,8 @@ object CodeGenerator {
         case List(x) => generate(x, cObj)
         case x :: xs => generate(x, cObj) + ", " + commaSeparatedProcess(xs, cObj)
     }
+    
+    /** Returns the JavaScript code corresponding to the given block statement */
     def blockProcess(lost: List[TypedStmt], cObj: String): String = lost match {
         case List() => "return ;"
         case List(x) => if (x.isExpr()) "return " + generate(x, cObj) +
@@ -87,6 +88,7 @@ object CodeGenerator {
         else throw new Exception("The last line in the block is a Stmt, expected an Expr")
         case x :: xs => generate(x, cObj) + "; \n" + blockProcess(xs, cObj)
     }
+    
     def varProcess(los: List[String], expr: TypedExpr): String = los match {
         case Nil => ""
         case x :: Nil => x + " ; \n"
@@ -103,33 +105,31 @@ object CodeGenerator {
         case None => op
     }
     
-
     def traitGenerator(name: String, extendsWhat: String, extendsWith: List[String], body: List[TypedStmt], cObj: String): String =
         cObj + "." + name + " = " + "{}; \n" +
             cObj + "." + name + "._initProto = " + initProto(name, body, cObj) + "\n" +
             cObj + "." + name + "_init = " + init(name, body, cObj) + "\n"
 
-    def initProto(name: String, body: List[TypedStmt], cObj: String): String = "function(p) { \n " + body.foldLeft("")((acc, x) => acc + gen(x, cObj)) +
-        "p.supers[" + name + "] = true; \n };"
     def gen(stmt: TypedStmt, cObj: String): String = stmt match {
         case TypedFunDefStmt(name, params, retType, body, symTable) => "p." + name + " = function(" + commaSeparatedProcess(params, cObj) + "){ \n \t" +
             "var self = this; \n \t" + "return " + generate(body, cObj) + ";\n }; \n"
         case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => listofvaldecs.foldLeft("")((acc, x) => acc + initProtoAux(x))
-        case _ => "fail"
+        case _ => throw new Exception("No match found for pattern")
     }
-
+    /** The following two functions build the string corresponding to the ._initProto function */
+    def initProto(name: String, body: List[TypedStmt], cObj: String): String = "function(p) { \n " + body.foldLeft("")((acc, stmt) => acc + gen(stmt, cObj)) +
+        "p.supers[" + name + "] = true; \n };"
     def initProtoAux(id: String): String = "p." + id + " = function(){ \n \t" +
         "var self = this; \n \t" +
         "return self._" + id + "; \n }; \n" +
         "p." + id + "_ = function(" + id + "){ \n \t" +
         "var self = this; \n \t" +
         "self._" + id + " = " + id + "; \n }; \n"
-
+    /** The following two functions build the string corresponding to the ._init function */
     def init(name: String, body: List[TypedStmt], cObj: String) =
-        "function(o) { \n " + body.foldLeft("")((acc, x) => acc + initAux(x, cObj)) + "};"
-
+        "function(o) { \n " + body.foldLeft("")((acc, stmt) => acc + initAux(stmt, cObj)) + "};"
     def initAux(stmt: TypedStmt, cObj: String) = stmt match {
-        case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => listofvaldecs.foldLeft("")((acc, x) => acc + "o._" + x + " = " + generate(expr, cObj) + ";") + "\n "
+        case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => listofvaldecs.foldLeft("")((acc, valdec) => acc + "o._" + valdec + " = " + generate(expr, cObj) + ";") + "\n "
         case _ => ""
     }
 
