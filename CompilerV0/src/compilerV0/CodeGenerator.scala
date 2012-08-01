@@ -32,13 +32,11 @@ object CodeGenerator {
     	case TypedVarExpr(varName, valtype) => varName
     	
     	case TypedClassDefStmt(objType, name, constrParams, whatExtends, extendArgs, extendsWith, body, symTable) => 
-    	   objType match {
+    	   objType match { //TODO // Add "class", "object" ... clauses
     	     case "trait" => traitGenerator(name, whatExtends, extendsWith, body, cObj)
     	     case _ => "fail"
-    	     //"class" => classGenerator()
-    	     //"object" => objectGenerator()
-    	}
-
+    	   }
+    	
     	case TypedWhileExpr(predicate, body, doFlag, valtype) => {if (doFlag) "doLoop( " else "whileLoop( "} +
 		     thunkify(generate(predicate, cObj)) + ", " + 
 		     thunkify(generate(body, cObj)) + " )"
@@ -73,6 +71,8 @@ object CodeGenerator {
 	  	case List(x) => generate(x, cObj)
 	  	case x::xs => generate(x, cObj) + ", " + commaSeparatedProcess(xs, cObj)
 	}
+	
+	
 	def blockProcess(lost : List[TypedStmt], cObj : String):String = lost match {
     	case List() => "return ;"
     	case List(x) => if (x.isExpr()) "return " + generate(x, cObj) + 
@@ -94,7 +94,7 @@ object CodeGenerator {
 	   case Some(operator) => operator
 	   case None => op
 	}
-	
+	                                         
 	def traitGenerator(name : String, extendsWhat : String, extendsWith : List[String], body : List[TypedStmt], cObj : String): String = 
 	  cObj + "." + name + " = " + "{}; \n" +
 	  cObj + "." + name + "._initProto = " + initProto(name, body, cObj) + "\n" +
