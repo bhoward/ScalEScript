@@ -21,6 +21,10 @@ function doLoop(test, body) {
     } while (test())
 }
 
+function div(left, right) {
+	return ~~(left / right);
+}
+
 function println(stmt) {
     document.writeln(stmt);
 }

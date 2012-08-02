@@ -11,12 +11,18 @@ object CodeGenerator {
         case TypedAnonFuncExpr(args, body, symbolTable, rettype) => "(function (" + commaSeparatedProcess(args, cObj) +
             " ) { return " + generate(body, cObj) + " }) "
         case TypedAssignExpr(lhs, rhs, valtype) => "(" + generate(lhs, cObj) + " = " + generate(rhs, cObj) + ")"
-        case TypedBinOpExpr(op, l, r, rettype) => "(" + generate(l, cObj) + " " +
-            (op match {
-                case "==" => "==="
-                case "!=" => "!=="
-                case _ => op
-            }) + " " + generate(r, cObj) + ")"
+        case TypedBinOpExpr(op, l, r, rettype) => {
+        	if (op == "/" && rettype == BaseType("Int")){
+        		"(" + "div(" + generate(l, cObj) + "," + generate(r, cObj) + "))"
+        	} else {
+	        	"(" + generate(l, cObj) + " " +
+	            (op match {
+	                case "==" => "==="
+	                case "!=" => "!=="
+	                case _ => op
+	            }) + " " + generate(r, cObj) + ")"
+        	}
+        }
 
         case TypedBlockExpr(listofstatements, symbolTable, rettype) => "(function() { \n" + blockProcess(listofstatements, cObj) + " })()"
         case TypedBoolExpr(value, valtype) => value.toString
