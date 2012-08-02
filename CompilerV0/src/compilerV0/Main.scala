@@ -15,7 +15,7 @@ import scala.collection.mutable.Map;
 object Main {
     def main(args: Array[String]) {
 	    testCompiler("Factorial", """{ def factorial(n: Int):Int = if (n == 0) 1 else n * factorial(n-1); println(factorial(5)); }""");
-	    testCompiler("Arithmetic", """4+5.0*3""");
+	    testCompiler("Arithmetic", """4.0+15/4""");
         testCompiler("Blocks", """println({{5; 4; ; ; ; 6;}; {}})""");
         testCompilerThrows("""println({{}; {var x : Int = 5; ; ; ;}})""", "The last line in the block is a Stmt, expected an Expr");
         testCompiler("simpleExpr", """println( 1 + 3 * 5 )""");
