@@ -105,10 +105,10 @@ object Parser extends RegexParsers {
     )
 
   lazy val path: Parser[List[String]] =
-    ( qualId
-    | "this" ^^ {
-        case _ => List("this")
+    ( "this" ^^ {
+        case _ => List("this") // TODO return something different here than what qualId would have anyway?
       }
+    | qualId
     )
 
   //Called type in the grammar (which is a reserved word, so I used typeG)
@@ -243,7 +243,54 @@ object Parser extends RegexParsers {
   lazy val bindings: Parser[List[ParamDclStmt]] = null // TODO
   lazy val caseClauses: Parser[Expr] = null // TODO
   
-  def handlePrecedence(eFirst: Expr, eRest: List[String ~ Expr]): Expr = null // TODO
+  def handlePrecedence(eFirst: Expr, eRest: List[String ~ Expr]): Expr = hpAux(Nil, eFirst, eRest)
+  
+  def hpAux(left: List[(Expr, String)], mid: Expr, right: List[String ~ Expr]): Expr = (left, right) match {
+    case (Nil, Nil) => mid
+    case ((lExpr, lOp) :: lRest, Nil) => hpAux(lRest, BinOpExpr(lOp, lExpr, mid), Nil)
+    case (Nil, (rOp ~ rExpr) :: rRest) => hpAux((mid, rOp) :: Nil, rExpr, rRest)
+    case ((lExpr, lOp) :: lRest, (rOp ~ rExpr) :: rRest) =>
+      if (isHigherPrecedence(lOp, rOp)) {
+        hpAux(lRest, BinOpExpr(lOp, lExpr, mid), right)
+      } else {
+        hpAux((mid, rOp) :: left, rExpr, rRest)
+      }
+  }
+    
+  def isHigherPrecedence(lOp: String, rOp: String): Boolean = {
+    val lPrec = getPrecedence(lOp)
+    val rPrec = getPrecedence(rOp)
+    val lAssoc = isLeftAssociative(lOp)
+    val rAssoc = isLeftAssociative(rOp)
+    if (lPrec == rPrec && lAssoc != rAssoc) {
+      throw new Exception("Mixture of left and right associative operators with same precedence")
+    }
+    lPrec > rPrec || (lPrec == rPrec && lAssoc)
+  }
+  
+  val precedence = Map(
+      '|' -> 1,
+      '^' -> 2,
+      '&' -> 3,
+      '=' -> 4, '!' -> 4,
+      '<' -> 5, '>' -> 5,
+      ':' -> 6,
+      '+' -> 7, '-' -> 7,
+      '*' -> 8, '/' -> 8, '%' -> 8
+    )
+    
+  def getPrecedence(operator: String): Int = {
+    val c = operator.charAt(0)
+    precedence.get(c) match {
+      case Some(p) => p
+      case None => if (c.isLetter) 0 else 9
+    }
+  }
+  
+  def isLeftAssociative(operator: String): Boolean = {
+    val c = operator.charAt(operator.length - 1)
+    c != ':'
+  }
   
   // Expects first and last characters to be either " or '
   def deQuotify(s: String): String = {
