@@ -1,5 +1,5 @@
-CompilerV0/bin/*
-CompilerV0/.cache
+bin/
+.cache
 CompilerV0/src/HTML/*.html
-.metadata/*
+.metadata/
 .DS_Store

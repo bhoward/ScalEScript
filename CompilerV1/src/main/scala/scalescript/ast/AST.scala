@@ -7,6 +7,7 @@ import scala.collection.mutable.Map;
 sealed trait Stmt {
     def isExpr(): Boolean = { false }
 }
+case object EmptyStmt extends Stmt
 case class ValDefStmt(ids: List[String], valType: Type, value: Expr, valTypeflag: String) extends Stmt
 case class FunDefStmt(name: String, paramClauses: List[List[ParamDclStmt]], retType: Type, body: Expr) extends Stmt
 case class ParamDclStmt(id: String, varType: Type) extends Stmt

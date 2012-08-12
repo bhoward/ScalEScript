@@ -2,13 +2,19 @@ package scalescript.parser
 
 import scalescript.ast._
 
+/**
+ * @author Trevor Griswold
+ * @author Mike Stees
+ * @author Brian Howard
+ */
 object Parser extends RegexParsers {
-  def apply(source: String): Stmt = parseAll(top, source) match {
+  def apply(source: String): List[Stmt] = parseAll(top, source) match {
     case Success(result, _) => result
     case ns: Failure => throw new Exception(ns.msg)
   }
   
-  def top: Parser[Stmt] = null // TODO
+  // def top: Parser[List[Stmt]] = topStatSeq // corresponds to a Scala "script" -- no package spec
+  def top: Parser[List[Stmt]] = templateStats // corresponds to REPL in :paste mode
   
   override val whitespace =
     """(\s|(//(?d:.)*\n)|(/\*(?s:.)*?\*/))*""".r
@@ -252,7 +258,7 @@ object Parser extends RegexParsers {
     | simpleExpr
     )
 
-    lazy val simpleExpr: Parser[Expr] =
+  lazy val simpleExpr: Parser[Expr] =
     ( "new" ~> classTemplate ^^ { //TODO what if stms is not Nil? Then create an anonymous subclass, and do a classExpr on that
         case Tuple3(ClassInstance(name, args), types, stms) => ClassExpr(name, args)
       }
@@ -263,10 +269,13 @@ object Parser extends RegexParsers {
     | simpleExpr1
     )
 
-    lazy val simpleExpr1: Parser[Expr] =
+  lazy val simpleExpr1: Parser[Expr] =
     ( literal
-    | simpleExpr1 ~ argumentExprs ^^ {
+    | simpleExpr1 ~ argumentExprs ^^ { // TODO eliminate this left recursion?
         case funcName ~ args => FunExpr(funcName, args)
+      }
+    | simpleExpr ~ ("." ~> id) ^^ {
+        case left ~ right => FieldSelectionExpr(left, right)
       }
     | path ^^ {
         case p => fieldSplit(VarExpr(p.head), p.tail)
@@ -277,457 +286,413 @@ object Parser extends RegexParsers {
     | "(" ~ ")" ^^ {
         case _ => null // TODO
       }
-    | simpleExpr ~ ("." ~> id) ^^ {
-        case left ~ right => FieldSelectionExpr(left, right)
-      } // TODO Make this reachable. - Parser gets caught up before reaching this. Possible workaround: just assign to a variable and call a field on that.
     | simpleExpr ~ typeArgs ^^ {
         case _ => null // TODO
       }
     )
-// TODO continue here
-    lazy val exprs: Parser[List[Expr]] =
-    ( expr ~ "," ~ exprs ^^ {
-        case expr ~ _ ~ exprs => expr :: exprs
+
+  lazy val exprs: Parser[List[Expr]] =
+    ( expr ~ ("," ~> exprs) ^^ {
+        case e ~ es => e :: es
       }
     | expr ^^ {
-        case expr => List(expr)
+        case e => List(e)
       }
     )
 
-    lazy val argumentExprs: Parser[List[Expr]] =
-    ( "(" ~ exprs ~ ")" ^^ {
-        case _ ~ exprs ~ _ => exprs
+  lazy val argumentExprs: Parser[List[Expr]] =
+    ( "(" ~> exprs <~ ")" ^^ {
+        case es => es
       }
     | "(" ~ ")" ^^ {
         case _ ~ _ => Nil
       }
     | blockExpr ^^ {
-        case blockExpr => null
+        case be => List(be)
       }
     )
 
-    lazy val blockExpr: Parser[Expr] =
-    ( "{" ~ caseClauses ~ "}" ^^ {
-        case _ => null
+  lazy val blockExpr: Parser[Expr] =
+    ( "{" ~> caseClauses <~ "}" ^^ {
+        case _ => null // TODO
       }
-    | "{" ~ block ~ "}" ^^ {
-        case _ ~ stmt ~ _ => BlockExpr(stmt)
-      }
-    )
-
-    //Filter out the nulls (empty statements)
-    lazy val block: Parser[List[Stmt]] =
-    ( (blockH *) ~ expr ^^ {
-        case stmt ~ expr => stmt.filter((x => x != null)) ++ List[Expr](expr)
-      }
-    | (blockH *) ^^ {
-        case stmt => stmt.filter((x => x != null))
-      }
-    )
-    //Not defined in scala grammar. Used to match multiple blockStats separated by a semicolon
-    lazy val blockH: Parser[Stmt] =
-    ( blockStat ~ ";" ^^ {
-        case stmt ~ _ => stmt
+    | "{" ~> block <~ "}" ^^ {
+        case stmt => BlockExpr(stmt)
       }
     )
 
-    lazy val blockStat: Parser[Stmt] =
+  lazy val block: Parser[List[Stmt]] =
+    ( (blockStat <~ ";" *) ~ (expr ?) ^^ {
+        case stmts ~ Some(e) => stmts ++ List(e)
+        case stmts ~ None => stmts
+      }
+    )
+    
+  lazy val blockStat: Parser[Stmt] =
     ( importG ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "implicit" ~ defG ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "lazy" ~ defG ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | defG
     | (localModifier *) ~ tmplDef ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | expr1
     | "" ^^ {
-        case _ => null
+        case _ => EmptyStmt
       }
     )
 
-    lazy val enumerators: Parser[Expr] =
+  lazy val enumerators: Parser[Expr] =
     ( generator ~ enumeratorsH ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
-    lazy val enumeratorsH: Parser[List[Expr]] =
-    ( ";" ~ enumerator ~ enumeratorsH ^^ {
-        case _ => null
+    
+  lazy val enumeratorsH: Parser[List[Expr]] =
+    ( ";" ~> enumerator ~ enumeratorsH ^^ {
+        case _ => null // TODO
       }
-    | ";" ~ enumerator ^^ {
-        case _ => null
+    | ";" ~> enumerator ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val enumerator: Parser[Expr] =
+  lazy val enumerator: Parser[Expr] =
     ( generator ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | guard ^^ {
-        case _ => null
+        case _ => null // TODO
       }
-    | "val" ~ pattern1 ~ "=" ~ expr ^^ {
-        case _ => null
-      }
-    )
-
-    lazy val generator: Parser[Expr] =
-    ( pattern1 ~ "<-" ~ expr ^^ {
-        case _ => null
+    | "val" ~> pattern1 ~ ("=" ~> expr) ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val caseClauses: Parser[List[Expr]] =
+  lazy val generator: Parser[Expr] =
+    ( pattern1 ~ ("<-" ~> expr) ^^ {
+        case _ => null // TODO
+      }
+    )
+
+  lazy val caseClauses: Parser[List[Expr]] =
     ( caseClause ~ caseClauses ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | caseClause ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
 
-    lazy val caseClause: Parser[Expr] =
-    ( "case" ~ pattern ~ guard ~ "=>" ~ block ^^ {
-        case _ => null
-      }
-    | "case" ~ pattern ~ "=>" ~ block ^^ {
-        case _ => null
+  lazy val caseClause: Parser[Expr] =
+    ( "case" ~> pattern ~ (guard ?) ~ ("=>" ~> block) ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val guard: Parser[Expr] =
-    ( "if" ~ postfixExpr ^^ {
-        case _ => null
+  lazy val guard: Parser[Expr] =
+    ( "if" ~> postfixExpr ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val pattern: Parser[Expr] =
-    ( pattern1 ~ "|" ~ pattern ^^ {
-        case _ => null
-      }
-    | pattern1 ^^ {
-        case _ => null
+  lazy val pattern: Parser[Expr] =
+    ( pattern1 ~ ("|" ~> pattern1 *) ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val pattern1: Parser[Expr] =
+  lazy val pattern1: Parser[Expr] =
     ( pattern2 ^^ {
-        case _ => null
+        case _ => null // TODO
       } //may add the following in the future:
-            // varid ~ ":" ~ typePat
-            // "_" ~ ":" ~ typePat
-            )
+        // varid ~ ":" ~ typePat
+        // "_" ~ ":" ~ typePat
+    )
 
-    lazy val pattern2: Parser[String] =
+  lazy val pattern2: Parser[String] =
     ( varid
     | pattern3
     )
 
-    lazy val pattern3: Parser[String] =
+  lazy val pattern3: Parser[String] =
     ( simplePattern ~ id ~ pattern3 ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | simplePattern
     )
 
-    lazy val simplePattern: Parser[String] =
+  lazy val simplePattern: Parser[String] =
     ( "_" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | varid ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | literal ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | qualId ^^ {
-        case _ => null
+        case _ => null // TODO
       }
-    | qualId ~ "(" ~ patterns ~ ")" ^^ {
-        case _ => null
+    | qualId ~ ("(" ~> patterns <~ ")") ^^ {
+        case _ => null // TODO
       }
-    | qualId ~ "(" ~ ")" ^^ {
-        case _ => null
+    | qualId <~ "(" ~ ")" ^^ {
+        case _ => null // TODO
       }
-    | "(" ~ patterns ~ ")" ^^ {
-        case _ => null
-      }
-    )
-
-    lazy val patterns: Parser[String] =
-    ( pattern ~ "," ~ pattern ^^ {
-        case _ => null
-      }
-    | pattern ^^ {
-        case _ => null
+    | "(" ~> patterns <~ ")" ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val paramClauses: Parser[List[List[ParamDclStmt]]] =
+  lazy val patterns: Parser[String] =
+    ( pattern ~ ("," ~> pattern *) ^^ {
+        case _ => null // TODO
+      }
+    )
+
+  lazy val paramClauses: Parser[List[List[ParamDclStmt]]] =
     ( paramClause *
     )
 
-    lazy val paramClause: Parser[List[ParamDclStmt]] =
-    ( "(" ~ params ~ ")" ^^ {
-        case _ ~ params ~ _ => params
-      }
+  lazy val paramClause: Parser[List[ParamDclStmt]] =
+    ( "(" ~> params <~ ")"
     | "(" ~ ")" ^^ {
-        case _ ~ _ => Nil
+        case _ => Nil
       }
     )
 
-    lazy val params: Parser[List[ParamDclStmt]] =
-    ( param ~ "," ~ params ^^ {
-        case param ~ _ ~ params => param :: params
-      }
-    | param ^^ {
-        case param => List(param)
+  lazy val params: Parser[List[ParamDclStmt]] =
+    ( param ~ ("," ~> param *) ^^ {
+        case p ~ ps => p :: ps
       }
     )
 
-    lazy val param: Parser[ParamDclStmt] =
-    ( id ~ ":" ~ paramType ^^ {
-        case id ~ _ ~ paramType => ParamDclStmt(id, paramType)
+  lazy val param: Parser[ParamDclStmt] =
+    ( id ~ (":" ~> paramType) ^^ {
+        case i ~ t => ParamDclStmt(i, t)
       }
     )
 
-    lazy val paramType: Parser[Type] =
+  lazy val paramType: Parser[Type] =
     ( typeG
     | "=>" ~ typeG ^^ {
         case _ => null
       }
     )
 
-    lazy val bindings: Parser[List[ParamDclStmt]] =
-    ( "(" ~ binding ~ bindingsH ~ ")" ^^ {
-        case _ ~ arg ~ args ~ _ => arg :: args
+  lazy val bindings: Parser[List[ParamDclStmt]] =
+    ( "(" ~> binding ~ bindingsH <~ ")" ^^ {
+        case arg ~ args => arg :: args
       }
-    | "(" ~ binding ~ ")" ^^ {
-        case _ ~ arg ~ _ => List(arg)
+    | "(" ~> binding <~ ")" ^^ {
+        case arg => List(arg)
       }
     )
-    lazy val bindingsH: Parser[List[ParamDclStmt]] =
-    ( "," ~ binding ~ bindingsH ^^ {
-        case _ ~ arg ~ args => arg :: args
+    
+  lazy val bindingsH: Parser[List[ParamDclStmt]] =
+    ( "," ~> binding ~ bindingsH ^^ {
+        case arg ~ args => arg :: args
       }
-    | "," ~ binding ^^ {
-        case _ ~ arg => List(arg)
+    | "," ~> binding ^^ {
+        case arg => List(arg)
       }
     )
 
-    lazy val binding: Parser[ParamDclStmt] =
-    ( id ~ ":" ~ typeG ^^ {
-        case arg ~ _ ~ typeG => ParamDclStmt(arg, typeG)
+  lazy val binding: Parser[ParamDclStmt] =
+    ( id ~ (":" ~> typeG) ^^ {
+        case arg ~ typeG => ParamDclStmt(arg, typeG)
       }
-    | "_" ~ ":" ~ typeG ^^ {
-        case _ => null
+    | "_" ~ (":" ~> typeG) ^^ {
+        case _ => null // TODO
       }
     | "_" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
 
-    lazy val modifier: Parser[Expr] =
+  lazy val modifier: Parser[Expr] =
     ( localModifier ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | accessModifier ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "override" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
 
-    lazy val localModifier: Parser[Expr] =
+  lazy val localModifier: Parser[Expr] =
     ( "sealed" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "implicit" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "lazy" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
 
-    lazy val accessModifier: Parser[Expr] =
+  lazy val accessModifier: Parser[Expr] =
     ( "private" ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
 
-    lazy val templateBody: Parser[List[Stmt]] =
-    ( "{" ~ selfType ~ templateStats ~ "}" ^^ {
-        case _ => null
+  lazy val templateBody: Parser[List[Stmt]] =
+    ( "{" ~> selfType ~ templateStats <~ "}" ^^ {
+        case _ => null // TODO
       }
-    | "{" ~ templateStats ~ "}" ^^ //Strip out the nulls
-            {
-        case _ ~ stmts ~ _ => stmts.filter((x => x != null))
+    | "{" ~> templateStats <~ "}"
+    )
+
+  lazy val templateStats: Parser[List[Stmt]] =
+    ( templateStat ~ (";" ~> templateStat *) ^^ {
+        case stat ~ stats => stat :: stats
       }
     )
 
-    lazy val templateStats: Parser[List[Stmt]] =
-    ( templateStat ~ ";" ~ templateStats ^^ {
-        case stat ~ _ ~ stats => stat :: stats
-      }
-    | templateStat ^^ {
-        case stat => List(stat)
-      }
-    )
-    lazy val templateStat: Parser[Stmt] =
+  lazy val templateStat: Parser[Stmt] =
     ( importG ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | modifier ~ defG ^^ {
-        case _ => null
+        case _ => null // TODO
       }
-    | defG ^^ {
-        case defG => defG
-      }
+    | defG
     | modifier ~ dcl ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | dcl ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | expr
     | "" ^^ {
-        case _ => null
+        case _ => EmptyStmt
       }
     )
 
-    lazy val selfType: Parser[Expr] =
-    ( id ~ "=>" ^^ {
-        case _ => null
+  lazy val selfType: Parser[Expr] =
+    ( id <~ "=>" ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val importG: Parser[Expr] =
-    ( "import" ~ importExpr ^^ {
-        case _ => null
+  lazy val importG: Parser[Expr] =
+    ( "import" ~> importExpr ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val importExpr: Parser[Expr] =
-    ( qualId ~ "." ~ id ^^ {
-        case _ => null
+  lazy val importExpr: Parser[Expr] =
+    ( qualId ~ ("." ~> id) ^^ {
+        case _ => null // TODO
       }
-    | qualId ~ "." ~ "_" ^^ {
-        case _ => null
+    | qualId ~ ("." ~> "_") ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val dcl: Parser[Expr] =
+  lazy val dcl: Parser[Expr] =
     ( "val" ~ valDcl ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "var" ~ varDcl ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "def" ~ funDcl ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
 
-    lazy val valDcl: Parser[Expr] =
-    ( ids ~ ":" ~ typeG ^^ {
-        case _ => null
+  lazy val valDcl: Parser[Expr] =
+    ( ids ~ (":" ~> typeG) ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val varDcl: Parser[Expr] =
-    ( ids ~ ":" ~ typeG ^^ {
-        case _ => null
+  lazy val varDcl: Parser[Expr] =
+    ( ids ~ (":" ~ typeG) ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val funDcl: Parser[Expr] =
-    ( funSig ~ ":" ~ typeG ^^ {
-        case _ => null
+  lazy val funDcl: Parser[Expr] =
+    ( funSig ~ (":" ~> typeG) ^^ {
+        case _ => null // TODO
       }
     )
 
-    lazy val funSig: Parser[(String, List[List[ParamDclStmt]])] =
+  lazy val funSig: Parser[(String, List[List[ParamDclStmt]])] =
     ( id ~ paramClauses ^^ {
-        case id ~ paramClauses => (id, paramClauses)
+        case i ~ ps => (i, ps)
       }
     )
 
     //Called def in the grammar (which is a reserved word, so I used defG)
-    lazy val defG: Parser[Stmt] =
-    ( "val" ~ patDef ^^ {
-        case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "val")
+  lazy val defG: Parser[Stmt] =
+    ( "val" ~> patDef ^^ {
+        case DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "val")
       }
-    | "var" ~ varDef ^^ {
-        case _ ~ DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "var")
+    | "var" ~> varDef ^^ {
+        case DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "var")
       }
-    | "def" ~ funDef ^^ {
-        case _ ~ FunWrapper(name, paramClauses, retType, body) => FunDefStmt(name, paramClauses, retType, body)
+    | "def" ~> funDef ^^ {
+        case FunWrapper(name, paramClauses, retType, body) => FunDefStmt(name, paramClauses, retType, body)
       }
-    | tmplDef ^^ {
-        case tmplDef => tmplDef
+    | tmplDef
+    )
+
+  lazy val patDef: Parser[DefWrapper] =
+    ( pattern2 ~ ("," ~> pattern2 *) ~ (":" ~> typeG) ~ ("=" ~> expr) ^^ {
+        case pat ~ pats ~ typeG ~ expr => DefWrapper(pat :: pats, typeG, expr)
       }
     )
 
-    lazy val patDef: Parser[DefWrapper] =
-    ( pattern2 ~ patDefH ~ ":" ~ typeG ~ "=" ~ expr ^^ {
-        case pat ~ pats ~ _ ~ typeG ~ _ ~ expr => DefWrapper(pat :: pats, typeG, expr)
-      }
-    | pattern2 ~ ":" ~ typeG ~ "=" ~ expr ^^ {
-        case pat ~ _ ~ typeG ~ _ ~ expr => DefWrapper(List(pat), typeG, expr)
-      }
+  lazy val varDef: Parser[DefWrapper] =
+    ( patDef
     )
-    //Not defined in scala grammar. Used to match multiple ids seperated by a comma
-    lazy val patDefH: Parser[List[String]] =
-    ( "," ~ pattern2 ~ patDefH ^^ {
-        case _ ~ pat ~ pats => pat :: pats
-      }
-    | "," ~ pattern2 ^^ {
-        case _ ~ pat => List(pat)
+
+  lazy val funDef: Parser[FunWrapper] =
+    ( funSig ~ (":" ~> typeG) ~ ("=" ~> expr) ^^ {
+        case (name, paramClauses) ~ retType ~ body => FunWrapper(name, paramClauses, retType, body)
       }
     )
 
-    lazy val varDef: Parser[DefWrapper] =
-    ( patDef)
-
-    lazy val funDef: Parser[FunWrapper] =
-    ( funSig ~ ":" ~ typeG ~ "=" ~ expr ^^ {
-        case (name, paramClauses) ~ _ ~ retType ~ _ ~ body => FunWrapper(name, paramClauses, retType, body)
-      }
-    )
-
-    lazy val tmplDef: Parser[Stmt] =
+  lazy val tmplDef: Parser[Stmt] =
         //Assemble the classDefStmt Here
-    ( "case" ~ "class" ~ classDef ^^ {
-                case _ ~ _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) => ClassDefStmt("case class", name, args, whatExtends, extendsWith, body)
-           
+    ( "case" ~ "class" ~> classDef ^^ {
+        case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
+          ClassDefStmt("case class", name, args, whatExtends, extendsWith, body)
       }
-    | "class" ~ classDef ^^ {
-                case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) => ClassDefStmt("class", name, args, whatExtends, extendsWith, body)
-           
+    | "class" ~> classDef ^^ {
+        case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
+          ClassDefStmt("class", name, args, whatExtends, extendsWith, body)
       }
-    | "case" ~ "object" ~ objectDef ^^ {
-                case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) => ClassDefStmt("case object", name, args, whatExtends, extendsWith, body)
-           
+    | "case" ~ "object" ~> objectDef ^^ {
+        case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
+          ClassDefStmt("case object", name, args, whatExtends, extendsWith, body)
       }
-    | "object" ~ objectDef ^^ {
-                case _ ~ Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) => ClassDefStmt("object", name, args, whatExtends, extendsWith, body)
-           
+    | "object" ~> objectDef ^^ {
+        case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
+          ClassDefStmt("object", name, args, whatExtends, extendsWith, body)
       }
-    | "trait" ~ traitDef ^^ {
-                case _ ~ Tuple2(name, Tuple3(whatExtends, extendsWith, body)) => ClassDefStmt("trait", name, Nil, whatExtends, extendsWith, body)
-           
+    | "trait" ~> traitDef ^^ {
+        case Tuple2(name, Tuple3(whatExtends, extendsWith, body)) =>
+          ClassDefStmt("trait", name, Nil, whatExtends, extendsWith, body)
       }
     )
 
-    lazy val classDef: Parser[(String, List[ParamDclStmt], (ClassInstance, List[Type], List[Stmt]))] =
+  lazy val classDef: Parser[(String, List[ParamDclStmt], (ClassInstance, List[Type], List[Stmt]))] =
     ( id ~ paramClause ~ classTemplateOpt ^^ {
         case name ~ params ~ extra => (name, params, extra)
       }
@@ -736,22 +701,20 @@ object Parser extends RegexParsers {
       }
     )
 
-    lazy val traitDef: Parser[(String, (ClassInstance, List[Type], List[Stmt]))] =
+  lazy val traitDef: Parser[(String, (ClassInstance, List[Type], List[Stmt]))] =
     ( id ~ traitTemplateOpt ^^ {
         case name ~ traitTemplate => (name, traitTemplate)
       }
     )
 
-    lazy val objectDef: Parser[(String, List[ParamDclStmt], (ClassInstance, List[Type], List[Stmt]))] =
+  lazy val objectDef: Parser[(String, List[ParamDclStmt], (ClassInstance, List[Type], List[Stmt]))] =
     ( id ~ classTemplateOpt ^^ {
         case name ~ classTemplateOpt => (name, Nil, classTemplateOpt)
       }
     )
 
-    lazy val classTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
-    ( "extends" ~ classTemplate ^^ {
-        case _ ~ cTemplate => cTemplate
-      }
+  lazy val classTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
+    ( "extends" ~> classTemplate
     | templateBody ^^ {
         case stmts => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, stmts)
       }
@@ -760,19 +723,17 @@ object Parser extends RegexParsers {
       }
     )
 
-    lazy val traitTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
-    ( "extends" ~ traitTemplate ^^ {
-        case _ ~ tTemplate => tTemplate
-      }
+  lazy val traitTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
+    ( "extends" ~> traitTemplate
     | templateBody ^^ {
-        case stms => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, stms)
+        case stmts => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, stmts)
       }
     | "" ^^ {
         case _ => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, Nil)
       }
     )
 
-    lazy val classTemplate: Parser[(ClassInstance, List[Type], List[Stmt])] =
+  lazy val classTemplate: Parser[(ClassInstance, List[Type], List[Stmt])] =
     ( classParents ~ templateBody ^^ {
         case (cInstance, withTypes) ~ body => (cInstance, withTypes, body)
       }
@@ -781,7 +742,7 @@ object Parser extends RegexParsers {
       }
     )
 
-    lazy val traitTemplate: Parser[(ClassInstance, List[Type], List[Stmt])] =
+  lazy val traitTemplate: Parser[(ClassInstance, List[Type], List[Stmt])] =
     ( traitParents ~ templateBody ^^ {
         case (cInstance, withTypes) ~ body => (cInstance, withTypes, body)
       }
@@ -790,88 +751,55 @@ object Parser extends RegexParsers {
       }
     )
 
-    lazy val classParents: Parser[(ClassInstance, List[Type])] =
-    ( constr ~ classParentsH ^^ {
+  lazy val classParents: Parser[(ClassInstance, List[Type])] =
+    ( constr ~ ("with" ~> simpleType *) ^^ {
         case (name, args) ~ types => (ClassInstance(name, args), types)
       }
-    | constr ^^ {
-        case (name, args) => (ClassInstance(name, args), Nil)
-      }
     )
 
-    lazy val classParentsH: Parser[List[Type]] =
-    ( "with" ~ simpleType ~ classParentsH ^^ {
-        case _ ~ name ~ names => name :: names
-      }
-    | "with" ~ simpleType ^^ {
-        case _ ~ name => List(name)
-      }
-    )
-
-    lazy val traitParents: Parser[(ClassInstance, List[Type])] =
-    ( simpleType ~ traitParentsH ^^ {
+  lazy val traitParents: Parser[(ClassInstance, List[Type])] =
+    ( simpleType ~ ("with" ~> simpleType *) ^^ {
         case name ~ types => (ClassInstance(name, Nil), types)
       }
-    | simpleType ^^ {
-        case name => (ClassInstance(name, Nil), Nil)
-      }
-    )
-    lazy val traitParentsH: Parser[List[Type]] =
-    ( "with" ~ simpleType ~ traitParentsH ^^ {
-        case _ ~ name ~ names => name :: names
-      }
-    | "with" ~ simpleType ^^ {
-        case _ ~ name => List(name)
-      }
     )
 
-    lazy val constr: Parser[(Type, List[Expr])] =
-    ( simpleType ~ "(" ~ exprs ~ ")" ^^ {
-        case simpleType ~ _ ~ args ~ _ => (simpleType, args)
+  lazy val constr: Parser[(Type, List[Expr])] =
+    ( simpleType ~ ("(" ~> exprs <~ ")") ^^ {
+        case simpleType ~ args => (simpleType, args)
       }
-    | simpleType ~ "(" ~ ")" ^^ {
-        case simpleType ~ _ ~ _ => (simpleType, Nil)
+    | simpleType <~ "(" ~ ")" ^^ {
+        case simpleType => (simpleType, Nil)
       }
-    | simpleType ^^ {
+    | simpleType ^^ { // TODO do these need to be distinguished?
         case simpleType => (simpleType, Nil)
       }
     )
 
-    lazy val topStatSeq: Parser[Expr] =
-    ( topStat ~ topStatSeqH ^^ {
-        case _ => null
-      }
-    | topStat)
-    lazy val topStatSeqH: Parser[Expr] =
-    ( ";" ~ topStat ~ topStatSeqH ^^ {
-        case _ => null
-      }
-    | ";" ~ topStat ^^ {
-        case _ => null
+  lazy val topStatSeq: Parser[List[Stmt]] =
+    ( topStat ~ (";" ~> topStat *) ^^ {
+        case s ~ ss => s :: ss
       }
     )
 
-    lazy val topStat: Parser[Expr] =
+  lazy val topStat: Parser[Stmt] =
     ( modifier ~ tmplDef ^^ {
-        case _ => null
+        case _ => null // TODO
       }
-    | tmplDef ^^ {
-        case _ => null
-      }
+    | tmplDef
     | importG ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | "" ^^ {
-        case _ => null
+        case _ => EmptyStmt
       }
     )
 
-    lazy val compilationUnit: Parser[Expr] =
+  lazy val compilationUnit: Parser[Expr] =
     ( "package" ~ qualId ~ ";" ~ topStatSeq ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     | topStatSeq ^^ {
-        case _ => null
+        case _ => null // TODO
       }
     )
   
