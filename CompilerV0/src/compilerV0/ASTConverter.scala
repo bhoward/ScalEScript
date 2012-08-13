@@ -15,7 +15,7 @@ object ASTConverter {
 
     /* Convert functions */
     def convert(ast: Stmt): AnnotStmt = {
-        var scopes: List[Scope] = Scope() :: ScalaBase.getScope() :: Nil;
+        var scopes: List[Scope] = new Scope() :: ScalaBase.getScope() :: Nil;
 
         return convertStmt(ast, scopes);
     }
@@ -68,7 +68,7 @@ object ASTConverter {
             //From this point on you can assume there is only one param clause (it would have been curried otherwise)
             var params: List[ParamDclStmt] = paramClauses.head;
 
-            var newScope: Scope = Scope();
+            var newScope: Scope = new Scope();
 
             var annotParams: List[AnnotParamDclStmt] = params.map(param => convertParamDclStmt(param.id, param.varType, newScope :: scopes));
             var annotBody: AnnotExpr = convertExpr(body, newScope :: scopes);
@@ -84,7 +84,7 @@ object ASTConverter {
         }
     }
     def convertClassDefStmt(typeFlag: String, className: String, params: List[ParamDclStmt], extendClass: ClassInstance, withIds: List[Type], body: List[Stmt], scopes: List[Scope]): AnnotClassDefStmt = {
-        var newScope: Scope = Scope();
+        var newScope: Scope = new Scope();
 
         //Strip the with Ids out of the Types (this may need to be changed later to handle more complex types)
         var withIdStrings: List[String] = withIds.map(idType => idType.getType());
@@ -133,7 +133,7 @@ object ASTConverter {
         return AnnotClassDefStmt(typeFlag, className, annotParams, extendsClassName, annotExtendsArgs, withIdStrings, annotBody, symbolTable)
     }
     def convertBlockExpr(stmts: List[Stmt], scopes: List[Scope]): AnnotBlockExpr = {
-        var newScope: Scope = Scope();
+        var newScope: Scope = new Scope();
         var annotStmts: List[AnnotStmt] = stmts.map(stmt => convertStmt(stmt, newScope :: scopes));
         return AnnotBlockExpr(annotStmts, newScope);
     }
@@ -179,7 +179,7 @@ object ASTConverter {
         return AnnotBoolExpr(bool);
     }
     def convertAnonFuncExpr(args: List[ParamDclStmt], body: Expr, scopes: List[Scope]): AnnotAnonFuncExpr = {
-        var newScope: Scope = Scope();
+        var newScope: Scope = new Scope();
 
         var annotArgs: List[AnnotParamDclStmt] = args.map(arg => convertParamDclStmt(arg.id, arg.varType, newScope :: scopes));
         var annotBody: AnnotExpr = convertExpr(body, newScope :: scopes);

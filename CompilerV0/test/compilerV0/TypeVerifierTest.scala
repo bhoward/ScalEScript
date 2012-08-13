@@ -56,7 +56,7 @@ object TypeVerifierTest extends Test {
 	                                             TypedParamDclStmt("y",BaseType("Int")),
 	                                             TypedParamDclStmt("s",BaseType("String"))),BaseType("AnyVal"),
 	                                        TypedVarExpr("f",BaseType("Int")),
-	                                        { var scope: Scope = Scope(); 
+	                                        { var scope: Scope = new Scope(); 
 	                                        	scope.types = scala.collection.mutable.Map[String,ClassScope]();
 	                                        	scope.objects = scala.collection.mutable.Map[String,Type]("x"->BaseType("Any"), "y"->BaseType("Int"), "s"->BaseType("String"));
                                         	    scope;
@@ -66,7 +66,7 @@ object TypeVerifierTest extends Test {
 	                                          TypedNumExpr(NInt(5),BaseType("Int")),
 	                                          TypedStringExpr("",BaseType("String"))),
 	                                     BaseType("AnyVal"))),
-                       {	var scope: Scope = Scope(); 
+                       {	var scope: Scope = new Scope(); 
                     		scope.types = scala.collection.mutable.Map[String,ClassScope]();
                         	scope.objects = scala.collection.mutable.Map[String,Type]("bar"->FuncType(BaseType("AnyVal"),List(BaseType("Any"), BaseType("Int"), BaseType("String"))), "f"->BaseType("Int"));
                     	    scope;

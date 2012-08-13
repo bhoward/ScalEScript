@@ -155,7 +155,7 @@ case class FuncType(retType: Type, argTypes: List[Type]) extends Type {
     def getArgTypes(): List[Type] = argTypes;
 }
 
-case class Scope {
+class Scope {
     var objects: Map[String, Type] = Map[String, Type]()
     var types: Map[String, ClassScope] = Map[String, ClassScope]()
     override def toString(): String = "Scope(Types=" + types + ", Objects=" + objects + ")";

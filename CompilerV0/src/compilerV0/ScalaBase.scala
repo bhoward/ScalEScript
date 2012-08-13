@@ -81,7 +81,7 @@ object ScalaBase {
     }
     /** Returns the Scala scope */
     def getScope(): Scope = {
-        var scope: Scope = Scope();
+        var scope: Scope = new Scope();
         scope.objects = ScalaBase.objects;
         scope.types = ScalaBase.types;
         return scope;

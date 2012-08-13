@@ -2,4 +2,5 @@ bin/
 .cache
 CompilerV0/src/HTML/*.html
 .metadata/
+.settings/
 .DS_Store

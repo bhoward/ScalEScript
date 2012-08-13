@@ -15,7 +15,7 @@ object TypeVerifier {
     //Verify either throws an exception or converts an annotated AST in to a typed AST
     /* Verify functions */
     def verify(source: AnnotStmt): TypedStmt = {
-        var scopes: List[Scope] = Scope() :: ScalaBase.getScope() :: Nil;
+        var scopes: List[Scope] = new Scope() :: ScalaBase.getScope() :: Nil;
 
         return verifyStmt(source, scopes)
     }
