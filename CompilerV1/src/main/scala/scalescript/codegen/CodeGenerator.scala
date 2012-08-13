@@ -1,16 +1,19 @@
-package compilerV0
+package scalescript.codegen
+
+import scalescript.ast._
 
 /**
  * The CodeGenerator takes as input a typed AST and outputs a String containing the generated JavaScript
  *
  * @author Trevor Griswold
  * @author Mike Stees
+ * @author Brian Howard
  */
 object CodeGenerator {
     def generate(ast: TypedStmt, cObj: String): String = ast match {
         case TypedAnonFuncExpr(args, body, symbolTable, rettype) => "(function (" + commaSeparatedProcess(args, cObj) +
             " ) { return " + generate(body, cObj) + " }) "
-        case TypedAssignExpr(lhs, rhs, valtype) => "(" + generate(lhs, cObj) + " = " + generate(rhs, cObj) + ")"
+        case TypedAssignExpr(lhs, op, rhs, valtype) => "(" + generate(lhs, cObj) + op + generate(rhs, cObj) + ")"
         case TypedBinOpExpr(op, l, r, rettype) => {
         	if (op == "/" && rettype == BaseType("Int")){
         		"(" + "div(" + generate(l, cObj) + "," + generate(r, cObj) + "))"
@@ -139,6 +142,7 @@ object CodeGenerator {
         case _ => ""
     }
 
-    def apply(source: TypedStmt, currentObj: String): String = generate(source, currentObj)
+    def apply(source: List[TypedStmt], currentObj: String): String =
+      (for (ast <- source) yield generate(ast, currentObj)).mkString("\n");
 
 }

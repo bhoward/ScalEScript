@@ -93,11 +93,8 @@ object Parser extends RegexParsers {
     )
     
   lazy val qualId: Parser[List[String]] =
-    ( id ~ ("." ~> qualId) ^^ {
+    ( id ~ ("." ~> id *) ^^ {
         case i ~ qual => i :: qual
-      }
-    | id ^^ {
-        case i => List(i)
       }
     )
   
@@ -159,7 +156,7 @@ object Parser extends RegexParsers {
         case _ => null // TODO do we need this?
       }
     | qualId ^^ {
-        case qid => BaseType(qid)
+        case qid => BaseType(qid.mkString(".")) // TODO handle this differently?
       }
     | "(" ~ types ~ ")" ^^ {
         case _ => null // TODO also handle ()?
@@ -263,20 +260,12 @@ object Parser extends RegexParsers {
         case Tuple3(ClassInstance(name, args), types, stms) => ClassExpr(name, args)
       }
     | blockExpr
-    | simpleExpr1 ~ "_" ^^ {
-        case simpleExpr1 ~ "_" => simpleExpr1
-      }
+    | simpleExpr1 <~ "_" // TODO mark this somehow?
     | simpleExpr1
     )
 
   lazy val simpleExpr1: Parser[Expr] =
     ( literal
-    | simpleExpr1 ~ argumentExprs ^^ { // TODO eliminate this left recursion?
-        case funcName ~ args => FunExpr(funcName, args)
-      }
-    | simpleExpr ~ ("." ~> id) ^^ {
-        case left ~ right => FieldSelectionExpr(left, right)
-      }
     | path ^^ {
         case p => fieldSplit(VarExpr(p.head), p.tail)
       }
@@ -285,6 +274,12 @@ object Parser extends RegexParsers {
       }
     | "(" ~ ")" ^^ {
         case _ => null // TODO
+      }
+    | simpleExpr1 ~ argumentExprs ^^ {
+        case funcName ~ args => FunExpr(funcName, args)
+      }
+    | simpleExpr ~ ("." ~> id) ^^ {
+        case left ~ right => FieldSelectionExpr(left, right)
       }
     | simpleExpr ~ typeArgs ^^ {
         case _ => null // TODO
@@ -716,20 +711,20 @@ object Parser extends RegexParsers {
   lazy val classTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
     ( "extends" ~> classTemplate
     | templateBody ^^ {
-        case stmts => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, stmts)
+        case stmts => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stmts)
       }
     | "" ^^ {
-        case _ => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, Nil)
+        case _ => (ClassInstance(BaseType("AnyRef"), Nil), Nil, Nil)
       }
     )
 
   lazy val traitTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
     ( "extends" ~> traitTemplate
     | templateBody ^^ {
-        case stmts => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, stmts)
+        case stmts => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stmts)
       }
     | "" ^^ {
-        case _ => (ClassInstance(BaseType(List("AnyRef")), Nil), Nil, Nil)
+        case _ => (ClassInstance(BaseType("AnyRef"), Nil), Nil, Nil)
       }
     )
 

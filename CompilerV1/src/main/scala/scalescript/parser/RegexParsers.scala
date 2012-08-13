@@ -4,6 +4,10 @@ import scala.util.matching.Regex
 
 /**
  * Just enough of the standard combinator parsers for our use.
+ * Based on scala.util.parsing.combinator and Daniel Spiewak's
+ * http://www.codecommit.com/blog/scala/the-magic-behind-parser-combinators
+ * 
+ * @author Brian Howard
  */
 trait RegexParsers {
   sealed trait Result[+A]
@@ -74,7 +78,7 @@ trait RegexParsers {
       if (s.startsWith(str)) {
         Success(str, s.substring(str.length))
       } else {
-        Failure("Expected '%s' got '%s'".format(str, s.substring(0, str.length)))
+        Failure("Expected '%s' got '%s'".format(str, s.substring(0, str.length min s.length)))
       }
     }
   }
@@ -129,7 +133,7 @@ trait RegexParsers {
         if (rem == "") {
           Success(a, "")
         } else {
-          Failure("Expected end of input, got '%s...'".format(rem.substring(0, 10)))
+          Failure("Expected end of input, got '%s...'".format(rem.substring(0, 10 min rem.length)))
         }
       case f: Failure => f
     }

@@ -9,6 +9,7 @@ import scalescript.ast._
  * 
  * @author Trevor Griswold
  * @author Mike Stees
+ * @author Brian Howard
  */
 object ScalaBase {
     //Objects and types are used in conjunction to create the base scope for the compilation process.
@@ -30,8 +31,8 @@ object ScalaBase {
     addType("String", "AnyRef");
     addType("Function", "AnyRef");
 
-    addObject("println", FuncType(BaseType(List("Unit")), List(BaseType(List("Any")))));
-    addObject("print", FuncType(BaseType(List("Unit")), List(BaseType(List("Any")))));
+    addObject("println", FuncType(BaseType("Unit"), List(BaseType("Any"))));
+    addObject("print", FuncType(BaseType("Unit"), List(BaseType("Any"))));
 
     // Make sure that these are called in the correct order, so they can build off eachother.
     addView("Double", "");
@@ -83,7 +84,7 @@ object ScalaBase {
     }
     /** Returns the Scala scope */
     def getScope(): Scope = {
-        var scope: Scope = Scope();
+        var scope: Scope = new Scope();
         scope.objects = ScalaBase.objects;
         scope.types = ScalaBase.types;
         return scope;
