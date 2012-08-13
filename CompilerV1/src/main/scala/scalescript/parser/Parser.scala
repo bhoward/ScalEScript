@@ -275,7 +275,7 @@ object Parser extends RegexParsers {
     | "(" ~ ")" ^^ {
         case _ => null // TODO
       }
-    | simpleExpr1 ~ argumentExprs ^^ {
+    | simpleExpr1 ~ argumentExprs ^^ { // TODO what about this left recursion?
         case funcName ~ args => FunExpr(funcName, args)
       }
     | simpleExpr ~ ("." ~> id) ^^ {
