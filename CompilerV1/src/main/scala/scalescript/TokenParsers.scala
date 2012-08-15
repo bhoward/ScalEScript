@@ -1,4 +1,4 @@
-package scalescript.parser
+package scalescript
 
 /**
  * Re-implementation of string-based combinator parser to have a separate lexing step.

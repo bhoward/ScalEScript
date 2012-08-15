@@ -1,6 +1,4 @@
-package scalescript.codegen
-
-import scalescript.ast._
+package scalescript
 
 /**
  * The CodeGenerator takes as input a typed AST and outputs a String containing the generated JavaScript

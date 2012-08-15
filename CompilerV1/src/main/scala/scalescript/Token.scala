@@ -1,4 +1,4 @@
-package scalescript.parser
+package scalescript
 
 sealed trait TokenType
 case object EOF extends TokenType

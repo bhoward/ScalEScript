@@ -1,4 +1,4 @@
-package scalescript.ast
+package scalescript
 
 //Note: Because of this import all "Map"s will be mutable by default
 import scala.collection.mutable.Map;

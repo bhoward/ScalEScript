@@ -1,8 +1,4 @@
-package scalescript.checker
-
-import scala.collection.mutable.Map;
-
-import scalescript.ast._
+package scalescript
 
 /**
  * The TypeVerifier takes as input an annotated AST and outputs an typed AST (an annotated ast with expression evaluation types)

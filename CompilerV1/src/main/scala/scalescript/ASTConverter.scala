@@ -1,11 +1,9 @@
-package scalescript.checker
+package scalescript
 
 //Note: Because of this import all "Map"s will be mutable by default
-import scala.collection.mutable.Map;
+import scala.collection.mutable.Map
 
-import scalescript.ast._
-
-/** The ASTConverted takes as input an AST and outputs an AST annotated with symbol tables
+/** The ASTConverter takes as input an AST and outputs an AST annotated with symbol tables
  * 
  * @author Trevor Griswold
  * @author Mike Stees

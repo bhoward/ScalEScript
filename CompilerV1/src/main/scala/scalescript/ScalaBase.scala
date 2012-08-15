@@ -1,9 +1,7 @@
-package scalescript.checker
+package scalescript
 
 //Note: Because of this import all "Map"s will be mutable by default
-import scala.collection.mutable.Map;
-
-import scalescript.ast._
+import scala.collection.mutable.Map
 
 /** ScalaBase is the object containing all the information related to the built-in Scala types, functions and objects.
  * 

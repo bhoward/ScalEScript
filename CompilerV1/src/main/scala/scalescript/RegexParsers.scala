@@ -1,4 +1,4 @@
-package scalescript.parser
+package scalescript
 
 import scala.util.matching.Regex
 

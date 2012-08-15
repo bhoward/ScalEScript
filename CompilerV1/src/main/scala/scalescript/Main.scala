@@ -2,11 +2,6 @@ package scalescript
 
 import java.io.FileWriter
 
-import parser.Parser
-import checker.ASTConverter
-import checker.TypeVerifier
-import codegen.CodeGenerator
-
 /**
  * The Main object for running the compiler
  *

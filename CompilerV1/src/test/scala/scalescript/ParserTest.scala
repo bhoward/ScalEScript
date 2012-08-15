@@ -1,8 +1,5 @@
 package scalescript
 
-import scalescript.parser.Parser
-import scalescript.ast._
-
 object ParserTest extends Test {
   def checkParse(src: String, expect: Stmt) {
 	try {

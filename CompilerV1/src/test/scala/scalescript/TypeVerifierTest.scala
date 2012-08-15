@@ -2,10 +2,6 @@ package scalescript
 
 import scala.collection.mutable.Map
 
-import scalescript.ast._
-import scalescript.checker._
-import scalescript.parser._
-
 object TypeVerifierTest extends Test
  {
   def checkSrcType(src: String, expect: TypedStmt) {

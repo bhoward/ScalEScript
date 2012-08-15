@@ -1,10 +1,5 @@
 package scalescript
 
-import scalescript.parser._
-import scalescript.ast._
-import scalescript.checker._
-import scalescript.codegen._
-
 object CodeGeneratorTest extends Test {
   def checkCodeBase(src: String): (List[TypedStmt], String) = {
 

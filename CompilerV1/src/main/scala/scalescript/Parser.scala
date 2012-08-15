@@ -1,6 +1,4 @@
-package scalescript.parser
-
-import scalescript.ast._
+package scalescript
 
 /**
  * @author Trevor Griswold
