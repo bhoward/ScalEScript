@@ -100,10 +100,3 @@ trait TokenParsers {
   def parseAll[A](p: Parser[A], ts: TokenStream): Result[A] =
     phrase(p).apply(ts)
 }
-
-// TODO implement this
-trait TokenStream {
-  def head: Token
-  def tail: TokenStream
-  def isEmpty: Boolean
-}
