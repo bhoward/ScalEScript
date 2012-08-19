@@ -38,6 +38,7 @@ case class FunExpr(id: Expr, args: List[Expr]) extends Expr
 case class BlockExpr(body: List[Stmt]) extends Expr
 case class BinOpExpr(op: String, left: Expr, right: Expr) extends Expr
 case class UnOpExpr(op: String, expr: Expr) extends Expr
+case class PostOpExpr(op: String, expr: Expr) extends Expr
 case class IfThenExpr(test: Expr, trueClause: Expr) extends Expr
 case class IfThenElseExpr(test: Expr, trueClause: Expr, falseClause: Expr) extends Expr
 case class WhileExpr(test: Expr, body: Expr, doFlag: Boolean) extends Expr

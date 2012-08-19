@@ -5,8 +5,8 @@ package scalescript
  * @author Mike Stees
  * @author Brian Howard
  */
-object Parser extends RegexParsers {
-  def apply(source: String): List[Stmt] = parseAll(top, source) match {
+object Parser extends TokenParsers {
+  def apply(source: String): List[Stmt] = parseAll(top, new TokenStream(source)) match {
     case Success(result, _) => result
     case ns: Failure => throw new Exception(ns.msg)
   }
@@ -14,60 +14,45 @@ object Parser extends RegexParsers {
   // def top: Parser[List[Stmt]] = topStatSeq // corresponds to a Scala "script" -- no package spec
   def top: Parser[List[Stmt]] = templateStats // corresponds to REPL in :paste mode
   
-  override val whitespace =
-    """(\s|(//(?d:.)*\n)|(/\*(?s:.)*?\*/))*""".r
-  
-  lazy val op: Parser[String] =
-    """[!#%&*+\-/:<=>?@\\^|~]*[!#%&*+\-/:<>?@\\^|~]|[!<>]=|=[!#%&*+\-/:<=>?@\\^|~]*=""".r
-    
-  lazy val assignop: Parser[String] =
-    """[#%&*+\-/:?@\\^|~][!#%&*+\-/:<=>?@\\^|~]*=|[!<>][!#%&*+\-/:<=>?@\\^|~]+=|=""".r
-  
   lazy val varid: Parser[String] =
-    """[a-z][A-Za-z0-9$_]*(_[!#%&*+\-/:<=>?@\\^|~]+)?""".r - """else|while|match""".r
-  
-  lazy val upperid: Parser[String] =
-    """([A-Z$]|_[A-Za-z0-9$_])[A-Za-z0-9$_]*(_[!#%&*+\-/:<=>?@\\^|~]+)?""".r
+    toktype(LID)
   
   lazy val plainid: Parser[String] =
-    ( upperid
+    ( UID
     | varid
-    | op
+    | OP
     )
   
   lazy val id: Parser[String] =
     ( plainid
-    | ("`" + """([^`\p{Cntrl}\\]|\\[\\"'bfnrt])+""" + "`").r ^^ {
-        case strLit => deQuotify(strLit)
-      }
+    | SID
     )
   
   lazy val integerLiteral: Parser[String] =
-    """\d+""".r
+    toktype(INT)
   
   lazy val floatingPointLiteral: Parser[String] =
-    """(\d+\.(\d*)?|\d*\.\d+)([eE][+-]?\d+)?|\d+([eE][+-]?\d+)""".r
+    toktype(DOUBLE)
 
   lazy val booleanLiteral: Parser[String] =
-    """(true|false)""".r
+    ( TRUE
+    | FALSE
+    )
 
   lazy val characterLiteral: Parser[String] =
-    ("\'" + """([^\p{Cntrl}\\]|\\[\\"'bfnrt])""" + "\'").r
+    toktype(CHAR)
 
   lazy val stringLiteral: Parser[String] =
-    ("\"" + """([^"\p{Cntrl}\\]|\\[\\"'bfnrt])*""" + "\"").r
+    toktype(STRING)
 
-  lazy val multilineStringLiteral: Parser[String] =
-    ("\"\"\"" + """("?"?[^"])*"*""" + "\"\"\"").r
-    
   lazy val literal: Parser[Expr] =
-    ( "-" ~> floatingPointLiteral ^^ {
+    ( Token(OP, "-") ~> floatingPointLiteral ^^ {
         case numLit => NumExpr(NDouble(-numLit.toDouble))
       }
     | floatingPointLiteral ^^ {
         case numLit => NumExpr(NDouble(numLit.toDouble))
       }
-    | "-" ~> integerLiteral ^^ {
+    | Token(OP, "-") ~> integerLiteral ^^ {
         case numLit => NumExpr(NInt(-numLit.toInt))
       }
     | integerLiteral ^^ {
@@ -77,27 +62,24 @@ object Parser extends RegexParsers {
         case boolLit => BoolExpr(boolLit.toBoolean)
       }
     | characterLiteral ^^ {
-        case charLit => CharExpr(deQuotify(charLit).charAt(0))
-      }
-    | multilineStringLiteral ^^ {
-        case strLit => StringExpr(deTriquotify(strLit))
+        case charLit => CharExpr(charLit.charAt(0))
       }
     | stringLiteral ^^ {
-        case strLit => StringExpr(deQuotify(strLit))
+        case strLit => StringExpr(strLit)
       }
-    | "null" ^^ {
+    | NULL ^^ {
         case _ => null // TODO
       }
     )
     
   lazy val qualId: Parser[List[String]] =
-    ( id ~ ("." ~> id *) ^^ {
+    ( id ~ (DOT ~> id *) ^^ {
         case i ~ qual => i :: qual
       }
     )
   
   lazy val ids: Parser[List[String]] =
-    ( id ~ ("," ~> ids) ^^ {
+    ( id ~ (COMMA ~> ids) ^^ {
         case i ~ is => i :: is
       }
     | id ^^ { 
@@ -106,7 +88,7 @@ object Parser extends RegexParsers {
     )
 
   lazy val path: Parser[List[String]] =
-    ( "this" ^^ {
+    ( THIS ^^ {
         case _ => List("this") // TODO return something different here than what qualId would have anyway?
       }
     | qualId
@@ -114,24 +96,24 @@ object Parser extends RegexParsers {
 
   //Called type in the grammar (which is a reserved word, so I used typeG)
   lazy val typeG: Parser[Type] =
-    ( functionArgTypes ~ ("=>" ~> typeG) ^^ {
+    ( functionArgTypes ~ (ARROW ~> typeG) ^^ {
         case argTypes ~ resultType => FuncType(resultType, argTypes)
       }
     | infixType
     )
 
   lazy val functionArgTypes: Parser[List[Type]] =
-    ( "(" ~> ")" ^^ {
+    ( LPAREN ~> RPAREN ^^ {
         case _ => Nil
       }
-    | "(" ~> functionArgTypesH <~ ")"
+    | LPAREN ~> functionArgTypesH <~ RPAREN
     | infixType ^^ {
         case iType => List(iType)
       }
     )
     
   lazy val functionArgTypesH: Parser[List[Type]] =
-    ( paramType ~ ("," ~> functionArgTypesH) ^^ {
+    ( paramType ~ (COMMA ~> functionArgTypesH) ^^ {
         case pType ~ moreTypes => pType :: moreTypes
       }
     | paramType ^^ {
@@ -147,25 +129,27 @@ object Parser extends RegexParsers {
     )
 
   lazy val simpleType: Parser[Type] =
-    ( simpleType ~ typeArgs ^^ {
-        case _ => null // TODO
+    ( qualId ~ (simpleTypeRest *) ^^ {
+        case qid ~ _ => BaseType(qid.mkString(".")) // TODO handle this differently?
       }
-    | simpleType ~ "#" ~ id ^^ {
-        case _ => null // TODO do we need this?
-      }
-    | qualId ^^ {
-        case qid => BaseType(qid.mkString(".")) // TODO handle this differently?
-      }
-    | "(" ~ types ~ ")" ^^ {
+    | LPAREN ~ types ~ RPAREN ~ (simpleTypeRest *) ^^ {
         case _ => null // TODO also handle ()?
       }
     )
+    
+  lazy val simpleTypeRest: Parser[Null] = // TODO
+    ( typeArgs ^^ {
+        case _ => null
+      }
+    | HASH ~ id ^^ {
+        case _ => null
+      })
 
   lazy val typeArgs: Parser[List[Type]] =
-    "[" ~> types <~ "]"
+    LBRACK ~> types <~ RBRACK
 
   lazy val types: Parser[List[Type]] =
-    ( typeG ~ ("," ~> types) ^^ {
+    ( typeG ~ (COMMA ~> types) ^^ {
         case t ~ ts => t :: ts
       }
     | typeG ^^ {
@@ -177,58 +161,60 @@ object Parser extends RegexParsers {
     typeG // TODO not currently used
 
   lazy val expr: Parser[Expr] =
-    ( bindings ~ ("=>" ~> expr) ^^ {
+    ( bindings ~ (ARROW ~> expr) ^^ {
         case args ~ body => AnonFuncExpr(args, body)
       }
-    | id ~ ("=>" ~ expr) ^^ {
+    | id ~ (ARROW ~ expr) ^^ {
         case arg ~ body => null // TODO
       }
-    | "_" ~> "=>" ~> expr ^^ {
+    | UNDER ~> ARROW ~> expr ^^ {
         case body => null // TODO
       }
     | expr1
     )
 
   lazy val expr1: Parser[Expr] =
-    ( "if" ~> ("(" ~> expr <~ ")") ~ expr ~ ((";" ?) ~ "else" ~> expr ?) ^^ {
+    ( IF ~> (LPAREN ~> expr <~ RPAREN) ~ expr ~ ((SEMI ?) ~ ELSE ~> expr ?) ^^ {
         case test ~ trueClause ~ Some(falseClause) => IfThenElseExpr(test, trueClause, falseClause)
         case test ~ trueClause ~ None => IfThenExpr(test, trueClause)
       }
-    | "while" ~> ("(" ~> expr <~ ")") ~ expr ^^ {
+    | WHILE ~> (LPAREN ~> expr <~ RPAREN) ~ expr ^^ {
         case test ~ body => WhileExpr(test, body, false)
       }
-    | "do" ~> expr ~ ((";" ?) ~ "while" ~ "(" ~> expr <~ ")") ^^ {
+    | DO ~> expr ~ ((SEMI ?) ~ WHILE ~ LPAREN ~> expr <~ RPAREN) ^^ {
         case body ~ test => WhileExpr(test, body, true)
       }
-    | "for" ~> ("(" ~> enumerators <~ ")") ~ expr ^^ {
+    | FOR ~> (LPAREN ~> enumerators <~ RPAREN) ~ expr ^^ {
         case _ => null // TODO
       }
-    | "for" ~> ("{" ~> enumerators <~ "}") ~ ("yield" ~> expr) ^^ {
+    | FOR ~> (LBRACE ~> enumerators <~ RBRACE) ~ (YIELD ~> expr) ^^ {
         case _ => null // TODO
       }
-    | "throw" ~> expr ^^ {
+    | THROW ~> expr ^^ {
         case _ => null // TODO
       }
-    | "return" ~> expr ^^ {
+    | RETURN ~> expr ^^ {
         case _ => null // TODO
       }
-    | "return" ^^ {
+    | RETURN ^^ {
         case _ => null // TODO
       }
-    | simpleExpr1 ~ assignop ~ expr ^^ {
+    | simpleExpr1 ~ EQUAL ~ expr ^^ {
         case p ~ a ~ e => AssignExpr(p, a, e)
       }
-    | postfixExpr ~ ("match" ~ "{" ~> caseClauses <~ "}") ^^ {
+    | postfixExpr ~ (MATCH ~ LBRACE ~> caseClauses <~ RBRACE) ^^ {
         case _ => null // TODO
       }
     | postfixExpr
     )
 
   lazy val postfixExpr: Parser[Expr] =
-	( infixExpr ~ id ^^ {
-	    case _ => null
-	  }
-    | infixExpr
+	( infixExpr ~ (ASSIGN ~ infixExpr *) ~ (id ?) ^^ {
+        case e ~ rest ~ Some(post) =>
+          PostOpExpr(post, (e /: rest){ case (e1, op ~ e2) => BinOpExpr(op, e1, e2) })
+        case e ~ rest ~ None =>
+          (e /: rest){ case (e1, op ~ e2) => BinOpExpr(op, e1, e2) }
+      }
     )
 
   lazy val infixExpr: Parser[Expr] =
@@ -238,54 +224,63 @@ object Parser extends RegexParsers {
     )
         
   lazy val prefixExpr: Parser[Expr] =
-    ( "-" ~ simpleExpr ^^ {
+    ( Token(OP, "-") ~ simpleExpr ^^ {
         case op ~ expr => UnOpExpr(op, expr)
       }
-    | "+" ~ simpleExpr ^^ {
+    | Token(OP, "+") ~ simpleExpr ^^ {
         case op ~ expr => UnOpExpr(op, expr)
       }
-    | "~" ~ simpleExpr ^^ {
+    | Token(OP, "~") ~ simpleExpr ^^ {
         case op ~ expr => UnOpExpr(op, expr)
       }
-    | "!" ~ simpleExpr ^^ {
+    | Token(OP, "!") ~ simpleExpr ^^ {
         case op ~ expr => UnOpExpr(op, expr)
       }
     | simpleExpr
     )
 
   lazy val simpleExpr: Parser[Expr] =
-    ( "new" ~> classTemplate ^^ { //TODO what if stms is not Nil? Then create an anonymous subclass, and do a classExpr on that
+    ( NEW ~> classTemplate ^^ { //TODO what if stms is not Nil? Then create an anonymous subclass, and do a classExpr on that
         case Tuple3(ClassInstance(name, args), types, stms) => ClassExpr(name, args)
       }
     | blockExpr
-    | simpleExpr1 <~ "_" // TODO mark this somehow?
+    | simpleExpr1 <~ UNDER // TODO mark this somehow?
     | simpleExpr1
     )
 
-  lazy val simpleExpr1: Parser[Expr] =
+  lazy val simpleExpr1: Parser[Expr] = 
+    ( simpleExpr1First ~ (simpleExpr1Rest *) ^^ {
+        case e ~ rest => (e /: rest)((acc, f) => f(acc))
+      }
+    )
+    
+  lazy val simpleExpr1First: Parser[Expr] =
     ( literal
     | path ^^ {
         case p => fieldSplit(VarExpr(p.head), p.tail)
       }
-    | "(" ~> exprs <~ ")" ^^ {
+    | LPAREN ~> exprs <~ RPAREN ^^ {
         case es => if (es.length == 1) es.head else null // TODO handle tuples
       }
-    | "(" ~ ")" ^^ {
+    | LPAREN ~ RPAREN ^^ {
         case _ => null // TODO
       }
-    | simpleExpr1 ~ argumentExprs ^^ { // TODO what about this left recursion?
-        case funcName ~ args => FunExpr(funcName, args)
+    )
+    
+  lazy val simpleExpr1Rest: Parser[Expr => Expr] =
+    ( argumentExprs ^^ {
+        case args => (e: Expr) => FunExpr(e, args)
       }
-    | simpleExpr ~ ("." ~> id) ^^ {
-        case left ~ right => FieldSelectionExpr(left, right)
+    | DOT ~> id ^^ {
+        case i => (e: Expr) => FieldSelectionExpr(e, i)
       }
-    | simpleExpr ~ typeArgs ^^ {
+    | typeArgs ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val exprs: Parser[List[Expr]] =
-    ( expr ~ ("," ~> exprs) ^^ {
+    ( expr ~ (COMMA ~> exprs) ^^ {
         case e ~ es => e :: es
       }
     | expr ^^ {
@@ -294,10 +289,10 @@ object Parser extends RegexParsers {
     )
 
   lazy val argumentExprs: Parser[List[Expr]] =
-    ( "(" ~> exprs <~ ")" ^^ {
+    ( LPAREN ~> exprs <~ RPAREN ^^ {
         case es => es
       }
-    | "(" ~ ")" ^^ {
+    | LPAREN ~ RPAREN ^^ {
         case _ ~ _ => Nil
       }
     | blockExpr ^^ {
@@ -306,16 +301,16 @@ object Parser extends RegexParsers {
     )
 
   lazy val blockExpr: Parser[Expr] =
-    ( "{" ~> caseClauses <~ "}" ^^ {
+    ( LBRACE ~> caseClauses <~ RBRACE ^^ {
         case _ => null // TODO
       }
-    | "{" ~> block <~ "}" ^^ {
+    | LBRACE ~> block <~ RBRACE ^^ {
         case stmt => BlockExpr(stmt)
       }
     )
 
   lazy val block: Parser[List[Stmt]] =
-    ( (blockStat <~ ";" *) ~ (expr ?) ^^ {
+    ( (blockStat <~ SEMI *) ~ (expr ?) ^^ {
         case stmts ~ Some(e) => stmts ++ List(e)
         case stmts ~ None => stmts
       }
@@ -325,18 +320,18 @@ object Parser extends RegexParsers {
     ( importG ^^ {
         case _ => null // TODO
       }
-    | "implicit" ~ defG ^^ {
+    | IMPLICIT ~ defG ^^ {
         case _ => null // TODO
       }
-    | "lazy" ~ defG ^^ {
+    | LAZY ~ defG ^^ {
         case _ => null // TODO
       }
     | defG
-    | (localModifier *) ~ tmplDef ^^ {
+    | localModifier ~ (localModifier *) ~ tmplDef ^^ {
         case _ => null // TODO
       }
     | expr1
-    | "" ^^ {
+    | success("") ^^ {
         case _ => EmptyStmt
       }
     )
@@ -348,10 +343,10 @@ object Parser extends RegexParsers {
     )
     
   lazy val enumeratorsH: Parser[List[Expr]] =
-    ( ";" ~> enumerator ~ enumeratorsH ^^ {
+    ( SEMI ~> enumerator ~ enumeratorsH ^^ {
         case _ => null // TODO
       }
-    | ";" ~> enumerator ^^ {
+    | SEMI ~> enumerator ^^ {
         case _ => null // TODO
       }
     )
@@ -363,13 +358,13 @@ object Parser extends RegexParsers {
     | guard ^^ {
         case _ => null // TODO
       }
-    | "val" ~> pattern1 ~ ("=" ~> expr) ^^ {
+    | VAL ~> pattern1 ~ (EQUAL ~> expr) ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val generator: Parser[Expr] =
-    ( pattern1 ~ ("<-" ~> expr) ^^ {
+    ( pattern1 ~ (WORRA ~> expr) ^^ {
         case _ => null // TODO
       }
     )
@@ -384,19 +379,19 @@ object Parser extends RegexParsers {
     )
 
   lazy val caseClause: Parser[Expr] =
-    ( "case" ~> pattern ~ (guard ?) ~ ("=>" ~> block) ^^ {
+    ( CASE ~> pattern ~ (guard ?) ~ (ARROW ~> block) ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val guard: Parser[Expr] =
-    ( "if" ~> postfixExpr ^^ {
+    ( IF ~> postfixExpr ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val pattern: Parser[Expr] =
-    ( pattern1 ~ ("|" ~> pattern1 *) ^^ {
+    ( pattern1 ~ (Token(OP, "|") ~> pattern1 *) ^^ {
         case _ => null // TODO
       }
     )
@@ -422,7 +417,7 @@ object Parser extends RegexParsers {
     )
 
   lazy val simplePattern: Parser[String] =
-    ( "_" ^^ {
+    ( UNDER ^^ {
         case _ => null // TODO
       }
     | varid ^^ {
@@ -434,19 +429,19 @@ object Parser extends RegexParsers {
     | qualId ^^ {
         case _ => null // TODO
       }
-    | qualId ~ ("(" ~> patterns <~ ")") ^^ {
+    | qualId ~ (LPAREN ~> patterns <~ RPAREN) ^^ {
         case _ => null // TODO
       }
-    | qualId <~ "(" ~ ")" ^^ {
+    | qualId <~ LPAREN ~ RPAREN ^^ {
         case _ => null // TODO
       }
-    | "(" ~> patterns <~ ")" ^^ {
+    | LPAREN ~> patterns <~ RPAREN ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val patterns: Parser[String] =
-    ( pattern ~ ("," ~> pattern *) ^^ {
+    ( pattern ~ (COMMA ~> pattern *) ^^ {
         case _ => null // TODO
       }
     )
@@ -456,57 +451,57 @@ object Parser extends RegexParsers {
     )
 
   lazy val paramClause: Parser[List[ParamDclStmt]] =
-    ( "(" ~> params <~ ")"
-    | "(" ~ ")" ^^ {
+    ( LPAREN ~> params <~ RPAREN
+    | LPAREN ~ RPAREN ^^ {
         case _ => Nil
       }
     )
 
   lazy val params: Parser[List[ParamDclStmt]] =
-    ( param ~ ("," ~> param *) ^^ {
+    ( param ~ (COMMA ~> param *) ^^ {
         case p ~ ps => p :: ps
       }
     )
 
   lazy val param: Parser[ParamDclStmt] =
-    ( id ~ (":" ~> paramType) ^^ {
+    ( id ~ (COLON ~> paramType) ^^ {
         case i ~ t => ParamDclStmt(i, t)
       }
     )
 
   lazy val paramType: Parser[Type] =
     ( typeG
-    | "=>" ~ typeG ^^ {
+    | ARROW ~ typeG ^^ {
         case _ => null
       }
     )
 
   lazy val bindings: Parser[List[ParamDclStmt]] =
-    ( "(" ~> binding ~ bindingsH <~ ")" ^^ {
+    ( LPAREN ~> binding ~ bindingsH <~ RPAREN ^^ {
         case arg ~ args => arg :: args
       }
-    | "(" ~> binding <~ ")" ^^ {
+    | LPAREN ~> binding <~ RPAREN ^^ {
         case arg => List(arg)
       }
     )
     
   lazy val bindingsH: Parser[List[ParamDclStmt]] =
-    ( "," ~> binding ~ bindingsH ^^ {
+    ( COMMA ~> binding ~ bindingsH ^^ {
         case arg ~ args => arg :: args
       }
-    | "," ~> binding ^^ {
+    | COMMA ~> binding ^^ {
         case arg => List(arg)
       }
     )
 
   lazy val binding: Parser[ParamDclStmt] =
-    ( id ~ (":" ~> typeG) ^^ {
+    ( id ~ (COLON ~> typeG) ^^ {
         case arg ~ typeG => ParamDclStmt(arg, typeG)
       }
-    | "_" ~ (":" ~> typeG) ^^ {
+    | UNDER ~ (COLON ~> typeG) ^^ {
         case _ => null // TODO
       }
-    | "_" ^^ {
+    | UNDER ^^ {
         case _ => null // TODO
       }
     )
@@ -518,38 +513,38 @@ object Parser extends RegexParsers {
     | accessModifier ^^ {
         case _ => null // TODO
       }
-    | "override" ^^ {
+    | OVERRIDE ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val localModifier: Parser[Expr] =
-    ( "sealed" ^^ {
+    ( SEALED ^^ {
         case _ => null // TODO
       }
-    | "implicit" ^^ {
+    | IMPLICIT ^^ {
         case _ => null // TODO
       }
-    | "lazy" ^^ {
+    | LAZY ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val accessModifier: Parser[Expr] =
-    ( "private" ^^ {
+    ( PRIVATE ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val templateBody: Parser[List[Stmt]] =
-    ( "{" ~> selfType ~ templateStats <~ "}" ^^ {
+    ( LBRACE ~> selfType ~ templateStats <~ RBRACE ^^ {
         case _ => null // TODO
       }
-    | "{" ~> templateStats <~ "}"
+    | LBRACE ~> templateStats <~ RBRACE
     )
 
   lazy val templateStats: Parser[List[Stmt]] =
-    ( templateStat ~ (";" ~> templateStat *) ^^ {
+    ( templateStat ~ (SEMI ~> templateStat *) ^^ {
         case stat ~ stats => stat :: stats
       }
     )
@@ -569,58 +564,58 @@ object Parser extends RegexParsers {
         case _ => null // TODO
       }
     | expr
-    | "" ^^ {
+    | success("") ^^ {
         case _ => EmptyStmt
       }
     )
 
   lazy val selfType: Parser[Expr] =
-    ( id <~ "=>" ^^ {
+    ( id <~ ARROW ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val importG: Parser[Expr] =
-    ( "import" ~> importExpr ^^ {
+    ( IMPORT ~> importExpr ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val importExpr: Parser[Expr] =
-    ( qualId ~ ("." ~> id) ^^ {
+    ( qualId ~ (DOT ~> id) ^^ {
         case _ => null // TODO
       }
-    | qualId ~ ("." ~> "_") ^^ {
+    | qualId ~ (DOT ~> UNDER) ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val dcl: Parser[Expr] =
-    ( "val" ~ valDcl ^^ {
+    ( VAL ~ valDcl ^^ {
         case _ => null // TODO
       }
-    | "var" ~ varDcl ^^ {
+    | VAR ~ varDcl ^^ {
         case _ => null // TODO
       }
-    | "def" ~ funDcl ^^ {
+    | DEF ~ funDcl ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val valDcl: Parser[Expr] =
-    ( ids ~ (":" ~> typeG) ^^ {
+    ( ids ~ (COLON ~> typeG) ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val varDcl: Parser[Expr] =
-    ( ids ~ (":" ~ typeG) ^^ {
+    ( ids ~ (COLON ~ typeG) ^^ {
         case _ => null // TODO
       }
     )
 
   lazy val funDcl: Parser[Expr] =
-    ( funSig ~ (":" ~> typeG) ^^ {
+    ( funSig ~ (COLON ~> typeG) ^^ {
         case _ => null // TODO
       }
     )
@@ -633,20 +628,20 @@ object Parser extends RegexParsers {
 
     //Called def in the grammar (which is a reserved word, so I used defG)
   lazy val defG: Parser[Stmt] =
-    ( "val" ~> patDef ^^ {
+    ( VAL ~> patDef ^^ {
         case DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "val")
       }
-    | "var" ~> varDef ^^ {
+    | VAR ~> varDef ^^ {
         case DefWrapper(pats, typeG, expr) => ValDefStmt(pats, typeG, expr, "var")
       }
-    | "def" ~> funDef ^^ {
+    | DEF ~> funDef ^^ {
         case FunWrapper(name, paramClauses, retType, body) => FunDefStmt(name, paramClauses, retType, body)
       }
     | tmplDef
     )
 
   lazy val patDef: Parser[DefWrapper] =
-    ( pattern2 ~ ("," ~> pattern2 *) ~ (":" ~> typeG) ~ ("=" ~> expr) ^^ {
+    ( pattern2 ~ (COMMA ~> pattern2 *) ~ (COLON ~> typeG) ~ (EQUAL ~> expr) ^^ {
         case pat ~ pats ~ typeG ~ expr => DefWrapper(pat :: pats, typeG, expr)
       }
     )
@@ -656,30 +651,30 @@ object Parser extends RegexParsers {
     )
 
   lazy val funDef: Parser[FunWrapper] =
-    ( funSig ~ (":" ~> typeG) ~ ("=" ~> expr) ^^ {
+    ( funSig ~ (COLON ~> typeG) ~ (EQUAL ~> expr) ^^ {
         case (name, paramClauses) ~ retType ~ body => FunWrapper(name, paramClauses, retType, body)
       }
     )
 
   lazy val tmplDef: Parser[Stmt] =
         //Assemble the classDefStmt Here
-    ( "case" ~ "class" ~> classDef ^^ {
+    ( CASE ~ CLASS ~> classDef ^^ {
         case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
           ClassDefStmt("case class", name, args, whatExtends, extendsWith, body)
       }
-    | "class" ~> classDef ^^ {
+    | CLASS ~> classDef ^^ {
         case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
           ClassDefStmt("class", name, args, whatExtends, extendsWith, body)
       }
-    | "case" ~ "object" ~> objectDef ^^ {
+    | CASE ~ OBJECT ~> objectDef ^^ {
         case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
           ClassDefStmt("case object", name, args, whatExtends, extendsWith, body)
       }
-    | "object" ~> objectDef ^^ {
+    | OBJECT ~> objectDef ^^ {
         case Tuple3(name, args, Tuple3(whatExtends, extendsWith, body)) =>
           ClassDefStmt("object", name, args, whatExtends, extendsWith, body)
       }
-    | "trait" ~> traitDef ^^ {
+    | TRAIT ~> traitDef ^^ {
         case Tuple2(name, Tuple3(whatExtends, extendsWith, body)) =>
           ClassDefStmt("trait", name, Nil, whatExtends, extendsWith, body)
       }
@@ -707,21 +702,21 @@ object Parser extends RegexParsers {
     )
 
   lazy val classTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
-    ( "extends" ~> classTemplate
+    ( EXTENDS ~> classTemplate
     | templateBody ^^ {
         case stmts => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stmts)
       }
-    | "" ^^ {
+    | success("") ^^ {
         case _ => (ClassInstance(BaseType("AnyRef"), Nil), Nil, Nil)
       }
     )
 
   lazy val traitTemplateOpt: Parser[(ClassInstance, List[Type], List[Stmt])] =
-    ( "extends" ~> traitTemplate
+    ( EXTENDS ~> traitTemplate
     | templateBody ^^ {
         case stmts => (ClassInstance(BaseType("AnyRef"), Nil), Nil, stmts)
       }
-    | "" ^^ {
+    | success("") ^^ {
         case _ => (ClassInstance(BaseType("AnyRef"), Nil), Nil, Nil)
       }
     )
@@ -745,22 +740,22 @@ object Parser extends RegexParsers {
     )
 
   lazy val classParents: Parser[(ClassInstance, List[Type])] =
-    ( constr ~ ("with" ~> simpleType *) ^^ {
+    ( constr ~ (WITH ~> simpleType *) ^^ {
         case (name, args) ~ types => (ClassInstance(name, args), types)
       }
     )
 
   lazy val traitParents: Parser[(ClassInstance, List[Type])] =
-    ( simpleType ~ ("with" ~> simpleType *) ^^ {
+    ( simpleType ~ (WITH ~> simpleType *) ^^ {
         case name ~ types => (ClassInstance(name, Nil), types)
       }
     )
 
   lazy val constr: Parser[(Type, List[Expr])] =
-    ( simpleType ~ ("(" ~> exprs <~ ")") ^^ {
+    ( simpleType ~ (LPAREN ~> exprs <~ RPAREN) ^^ {
         case simpleType ~ args => (simpleType, args)
       }
-    | simpleType <~ "(" ~ ")" ^^ {
+    | simpleType <~ LPAREN ~ RPAREN ^^ {
         case simpleType => (simpleType, Nil)
       }
     | simpleType ^^ { // TODO do these need to be distinguished?
@@ -769,7 +764,7 @@ object Parser extends RegexParsers {
     )
 
   lazy val topStatSeq: Parser[List[Stmt]] =
-    ( topStat ~ (";" ~> topStat *) ^^ {
+    ( topStat ~ (SEMI ~> topStat *) ^^ {
         case s ~ ss => s :: ss
       }
     )
@@ -782,13 +777,13 @@ object Parser extends RegexParsers {
     | importG ^^ {
         case _ => null // TODO
       }
-    | "" ^^ {
+    | success("") ^^ {
         case _ => EmptyStmt
       }
     )
 
   lazy val compilationUnit: Parser[Expr] =
-    ( "package" ~ qualId ~ ";" ~ topStatSeq ^^ {
+    ( PACKAGE ~ qualId ~ SEMI ~ topStatSeq ^^ {
         case _ => null // TODO
       }
     | topStatSeq ^^ {
@@ -833,7 +828,8 @@ object Parser extends RegexParsers {
     )
     
   def getPrecedence(operator: String): Int = {
-    val c = operator.charAt(0)
+    if (isAssignment(operator)) return -1 // Lowest precedence of all
+    val c = operator(0)
     precedence.get(c) match {
       case Some(p) => p
       case None => if (c.isLetter) 0 else 9
@@ -841,36 +837,18 @@ object Parser extends RegexParsers {
   }
   
   def isLeftAssociative(operator: String): Boolean = {
-    val c = operator.charAt(operator.length - 1)
+    val c = operator(operator.length - 1)
     c != ':'
   }
   
-  // Expects first and last characters to be either " or '
-  def deQuotify(s: String): String = {
-    val buf = new StringBuilder
-    var i = 1 // Skip first character
-    while (i < s.length - 1) {
-      s.charAt(i) match {
-        case '\\' => s.charAt(i + 1) match {
-          case 'b' => buf.append('\b'); i += 1
-          case 'f' => buf.append('\f'); i += 1
-          case 'n' => buf.append('\n'); i += 1
-          case 'r' => buf.append('\r'); i += 1
-          case 't' => buf.append('\t'); i += 1
-          case c => buf.append(c); i += 1 // Includes \, ", and ', plus any other
-        }
-        case c => buf.append(c)
-      }
-      i += 1
-    }
-    buf.toString
+  def isAssignment(operator: String): Boolean = {
+    operator(operator.length - 1) == '=' &&
+      operator(0) != '=' &&
+      operator != "<=" &&
+      operator != ">=" &&
+      operator != "!="
   }
 
-  // Expects first and last _three_ characters to be "
-  def deTriquotify(s: String): String = {
-    s.substring(3, s.length - 3)
-  }
-  
   def fieldSplit(base: Expr, fields: List[String]): Expr = fields match {
     case Nil => base
     case f :: fs => fieldSplit(FieldSelectionExpr(base, f), fs)

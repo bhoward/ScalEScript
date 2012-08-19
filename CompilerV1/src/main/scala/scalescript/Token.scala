@@ -4,6 +4,7 @@ sealed trait TokenType
 case object EOF extends TokenType
 case object LID extends TokenType // starts with lower
 case object UID extends TokenType // starts with upper, $, or _
+case object SID extends TokenType // surrounded with ``
 case object INT extends TokenType
 case object DOUBLE extends TokenType
 case object STRING extends TokenType
@@ -77,6 +78,9 @@ object Token {
 
   val id =
     """[A-Za-z0-9$_]+(_[!#%&*+\-/:<=>?@\\^|~]+)?""".r
+    
+  val symid =
+    ("`" + """([^`\p{Cntrl}\\]|\\[\\"'bfnrt])+""" + "`").r
 
   val integerLiteral =
     """\d+""".r
@@ -169,6 +173,7 @@ object Token {
       } else s(0) match {
         case '"' => getStringLiteral(s)
         case ''' => getCharLiteral(s)
+        case '`' => getSymbolId(s)
         case '(' => (Token(LPAREN, "("), s.substring(1))
         case ')' => (Token(RPAREN, ")"), s.substring(1))
         case '[' => (Token(LBRACK, "["), s.substring(1))
@@ -190,6 +195,14 @@ object Token {
         val toktype = keyword.getOrElse(lexeme, if (lexeme(0).isLower) LID else UID)
         (Token(toktype, lexeme), s.substring(lexeme.length))
       case None => throw new Exception("Failed to match identifier or keyword") // should not happen
+    }
+  }
+
+  // pre: s starts with `
+  def getSymbolId(s: String): (Token, String) = {
+    symid.findPrefixOf(s) match {
+      case Some(lexeme) => (Token(SID, deQuotify(lexeme)), s.substring(lexeme.length))
+      case None => throw new Exception("Invalid symbol identifier")
     }
   }
 

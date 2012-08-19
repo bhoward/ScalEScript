@@ -41,12 +41,22 @@ trait TokenParsers {
     }
   }
   
-  implicit def token(tt: TokenType): Parser[Token] = new Parser[Token] {
-    def apply(ts: TokenStream): Result[Token] = {
+  implicit def toktype(tt: TokenType): Parser[String] = new Parser[String] {
+    def apply(ts: TokenStream): Result[String] = {
       if (ts.head.ttype == tt) {
-        Success(ts.head, ts.tail)
+        Success(ts.head.lexeme, ts.tail)
       } else {
         Failure("Expected '%s' got '%s'".format(tt, ts.head.lexeme))
+      }
+    }
+  }
+
+  implicit def token(tok: Token): Parser[String] = new Parser[String] {
+    def apply(ts: TokenStream): Result[String] = {
+      if (ts.head == tok) {
+        Success(ts.head.lexeme, ts.tail)
+      } else {
+        Failure("Expected '%s' got '%s'".format(tok, ts.head))
       }
     }
   }
