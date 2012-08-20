@@ -62,13 +62,13 @@ object Parser extends TokenParsers {
         case boolLit => BoolExpr(boolLit.toBoolean)
       }
     | characterLiteral ^^ {
-        case charLit => CharExpr(charLit.charAt(0))
+        case charLit => CharExpr(charLit(0))
       }
     | stringLiteral ^^ {
         case strLit => StringExpr(strLit)
       }
     | NULL ^^ {
-        case _ => null // TODO
+        case _ => NullExpr
       }
     )
     
@@ -79,11 +79,8 @@ object Parser extends TokenParsers {
     )
   
   lazy val ids: Parser[List[String]] =
-    ( id ~ (COMMA ~> ids) ^^ {
+    ( id ~ (COMMA ~> id *) ^^ {
         case i ~ is => i :: is
-      }
-    | id ^^ { 
-        case i => List(i)
       }
     )
 
@@ -106,18 +103,11 @@ object Parser extends TokenParsers {
     ( LPAREN ~> RPAREN ^^ {
         case _ => Nil
       }
-    | LPAREN ~> functionArgTypesH <~ RPAREN
-    | infixType ^^ {
-        case iType => List(iType)
-      }
-    )
-    
-  lazy val functionArgTypesH: Parser[List[Type]] =
-    ( paramType ~ (COMMA ~> functionArgTypesH) ^^ {
+    | LPAREN ~> paramType ~ (COMMA ~> paramType *) <~ RPAREN ^^ {
         case pType ~ moreTypes => pType :: moreTypes
       }
-    | paramType ^^ {
-        case pType => List(pType)
+    | infixType ^^ {
+        case iType => List(iType)
       }
     )
 
@@ -127,33 +117,37 @@ object Parser extends TokenParsers {
       }
     | simpleType
     )
-
+    
   lazy val simpleType: Parser[Type] =
-    ( qualId ~ (simpleTypeRest *) ^^ {
-        case qid ~ _ => BaseType(qid.mkString(".")) // TODO handle this differently?
+    ( simpleTypeFirst ~ (simpleTypeRest *) ^^ {
+        case t ~ rest => (t /: rest)((acc, f) => f(acc))
       }
-    | LPAREN ~ types ~ RPAREN ~ (simpleTypeRest *) ^^ {
+    )
+
+  lazy val simpleTypeFirst: Parser[Type] =
+    ( qualId ^^ {
+        case qid => BaseType(qid.mkString(".")) // TODO handle this differently?
+      }
+    | LPAREN ~ types ~ RPAREN ^^ {
         case _ => null // TODO also handle ()?
       }
     )
     
-  lazy val simpleTypeRest: Parser[Null] = // TODO
+  lazy val simpleTypeRest: Parser[Type => Type] = // TODO
     ( typeArgs ^^ {
         case _ => null
       }
     | HASH ~ id ^^ {
         case _ => null
-      })
+      }
+    )
 
   lazy val typeArgs: Parser[List[Type]] =
     LBRACK ~> types <~ RBRACK
 
   lazy val types: Parser[List[Type]] =
-    ( typeG ~ (COMMA ~> types) ^^ {
+    ( typeG ~ (COMMA ~> typeG *) ^^ {
         case t ~ ts => t :: ts
-      }
-    | typeG ^^ {
-        case t => List(t)
       }
     )
 
@@ -165,10 +159,10 @@ object Parser extends TokenParsers {
         case args ~ body => AnonFuncExpr(args, body)
       }
     | id ~ (ARROW ~ expr) ^^ {
-        case arg ~ body => null // TODO
+        case arg ~ body => null // TODO needs type inference
       }
     | UNDER ~> ARROW ~> expr ^^ {
-        case body => null // TODO
+        case body => null // TODO needs type inference
       }
     | expr1
     )
@@ -199,7 +193,7 @@ object Parser extends TokenParsers {
     | RETURN ^^ {
         case _ => null // TODO
       }
-    | simpleExpr1 ~ EQUAL ~ expr ^^ {
+    | simpleExpr1 ~ EQUAL ~ expr ^^ { // TODO this doesn't quite match Scala
         case p ~ a ~ e => AssignExpr(p, a, e)
       }
     | postfixExpr ~ (MATCH ~ LBRACE ~> caseClauses <~ RBRACE) ^^ {
@@ -280,11 +274,8 @@ object Parser extends TokenParsers {
     )
 
   lazy val exprs: Parser[List[Expr]] =
-    ( expr ~ (COMMA ~> exprs) ^^ {
+    ( expr ~ (COMMA ~> expr *) ^^ {
         case e ~ es => e :: es
-      }
-    | expr ^^ {
-        case e => List(e)
       }
     )
 
@@ -305,7 +296,7 @@ object Parser extends TokenParsers {
         case _ => null // TODO
       }
     | LBRACE ~> block <~ RBRACE ^^ {
-        case stmt => BlockExpr(stmt)
+        case stmts => BlockExpr(stmts)
       }
     )
 

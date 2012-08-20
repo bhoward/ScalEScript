@@ -33,6 +33,7 @@ case class BoolExpr(bool: Boolean) extends Expr
 case class NumExpr(num: Numeric) extends Expr
 case class StringExpr(str: String) extends Expr
 case class CharExpr(ch: Char) extends Expr
+case object NullExpr extends Expr
 case class VarExpr(id: String) extends Expr
 case class FunExpr(id: Expr, args: List[Expr]) extends Expr
 case class BlockExpr(body: List[Stmt]) extends Expr
