@@ -59,6 +59,7 @@ sealed trait AnnotStmt {
   def symbolTable(): Scope;
 }
 
+case object AnnotEmptyStmt extends AnnotStmt with Tableless
 case class AnnotValDefStmt(ids: List[String], varType: Type, value: AnnotExpr, valTypeflag: String) extends AnnotStmt with Tableless
 case class AnnotFunDefStmt(name: String, params: List[AnnotParamDclStmt], retType: Type, body: AnnotExpr, symbolTable: Scope) extends AnnotStmt
 case class AnnotParamDclStmt(id: String, varType: Type) extends AnnotStmt with Tableless
@@ -94,6 +95,7 @@ sealed trait TypedStmt {
   def symbolTable(): Scope;
 }
 
+case object TypedEmptyStmt extends TypedStmt with Tableless
 case class TypedValDefStmt(ids: List[String], varType: Type, value: TypedExpr, valTypeflag: String) extends TypedStmt with Tableless
 case class TypedFunDefStmt(name: String, params: List[TypedParamDclStmt], retType: Type, body: TypedExpr, symbolTable: Scope) extends TypedStmt
 case class TypedParamDclStmt(id: String, varType: Type) extends TypedStmt with Tableless

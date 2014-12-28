@@ -63,6 +63,7 @@ object CodeGenerator {
         case TypedParamDclStmt(id, vartype) => id
         case TypedValDefStmt(listofvaldecs, valtype, expr, valTypeFlag) => "var " + varProcess(listofvaldecs, expr) +
             " " + varProcessAux(listofvaldecs, expr, cObj)
+        case TypedEmptyStmt => ""
 
         case _ => throw new Exception("No match found for pattern")
 

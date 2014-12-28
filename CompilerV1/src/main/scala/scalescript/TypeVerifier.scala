@@ -20,6 +20,7 @@ object TypeVerifier {
     for (ast <- source) yield verifyStmt(ast, scopes) // TODO does this handle mutual recursion properly at top level?
   }
   def verifyStmt(stmt: AnnotStmt, scopes: List[Scope]): TypedStmt = stmt match {
+    case AnnotEmptyStmt => TypedEmptyStmt
     case AnnotValDefStmt(ids, varType, value, valTypeflag) => verifyValDefStmt(ids, varType, value, valTypeflag, scopes)
     case AnnotParamDclStmt(id, varType) => verifyParamDclStmt(id, varType, scopes)
     case AnnotFunDefStmt(name, params, retType, body, symbolTable) => verifyFunDefStmt(name, params, retType, body, symbolTable, scopes)
