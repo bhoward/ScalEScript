@@ -29,6 +29,8 @@ object ParserTest extends Test {
     // Identifiers
     checkParse("x", VarExpr("x"))
     checkParse("Ab_12_?", VarExpr("Ab_12_?"))
+    checkParse("__", VarExpr("__"))
+    checkParse("__+", VarExpr("__+"))
     checkParse("hello.world", FieldSelectionExpr(VarExpr("hello"), "world"))
     
     //Arithmetic expression
