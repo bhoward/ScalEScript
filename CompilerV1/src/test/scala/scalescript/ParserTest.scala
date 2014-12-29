@@ -26,6 +26,11 @@ object ParserTest extends Test {
     checkParse("1+-*&^%#@!2", BinOpExpr("+-*&^%#@!", NumExpr(NInt(1)), NumExpr(NInt(2))))
     checkParse("\"\"\"This\nis\na\nmultiline\nstring\"\"\"", StringExpr("This\nis\na\nmultiline\nstring"))
     
+    // Identifiers
+    checkParse("x", VarExpr("x"))
+    checkParse("Ab_12_?", VarExpr("Ab_12_?"))
+    checkParse("hello.world", FieldSelectionExpr(VarExpr("hello"), "world"))
+    
     //Arithmetic expression
     checkParse("1", NumExpr(NInt(1)))
     checkParse("1   ", NumExpr(NInt(1)))

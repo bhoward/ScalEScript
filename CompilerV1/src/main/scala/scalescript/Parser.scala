@@ -73,13 +73,13 @@ object Parser extends TokenParsers {
     )
     
   lazy val qualId: Parser[List[String]] =
-    ( id ~ (DOT ~> id *) ^^ {
+    ( id ~ ((DOT ~> id) *) ^^ {
         case i ~ qual => i :: qual
       }
     )
   
   lazy val ids: Parser[List[String]] =
-    ( id ~ (COMMA ~> id *) ^^ {
+    ( id ~ ((COMMA ~> id) *) ^^ {
         case i ~ is => i :: is
       }
     )
